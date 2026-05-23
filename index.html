@@ -3,139 +3,1372 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Firebase Login New</title>
-
+<title>نظام الجامعة</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
 <style>
-body{
-  margin:0;
-  font-family:system-ui;
-  background:#0f172a;
-  color:white;
+
+/* ===========================
+   RESET & BASE
+=========================== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --gold:       #c9a96e;
+  --gold-light: #dfc090;
+  --bg:         #060d1a;
+  --bg2:        #0c1528;
+  --card:       #101e33;
+  --card2:      #0d1a2e;
+  --border:     #1a2d47;
+  --text:       #e8edf5;
+  --muted:      #5a7499;
+  --danger:     #ef4444;
+  --success:    #22c55e;
 }
 
-.box{
-  max-width:350px;
-  margin:100px auto;
-  padding:20px;
-  background:#111827;
-  border-radius:15px;
-  display:flex;
-  flex-direction:column;
-  gap:10px;
+body {
+  font-family: 'Cairo', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
 }
 
-input{
-  padding:12px;
-  border-radius:10px;
-  border:1px solid #2b3548;
-  background:#0f172a;
-  color:white;
+/* ===========================
+   UTILITIES
+=========================== */
+.page { display: none; }
+.page.active { display: block; }
+
+.inp {
+  width: 100%;
+  padding: 13px 16px;
+  border-radius: 14px;
+  border: 1.5px solid var(--border);
+  background: var(--bg2);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 14px;
+  outline: none;
+  transition: border-color .2s, box-shadow .2s;
+}
+.inp:focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(201,169,110,.15);
+}
+.inp::placeholder { color: var(--muted); }
+
+.btn {
+  width: 100%;
+  padding: 13px;
+  border: none;
+  border-radius: 14px;
+  background: var(--gold);
+  color: #060d1a;
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 15px;
+  cursor: pointer;
+  transition: transform .15s, box-shadow .15s, opacity .15s;
+}
+.btn:hover { transform: scale(.98); opacity: .92; }
+.btn:active { transform: scale(.96); }
+
+.btn-dark {
+  background: var(--card);
+  color: var(--text);
+  border: 1.5px solid var(--border);
 }
 
-button{
-  padding:12px;
-  border:none;
-  border-radius:10px;
-  background:#c9a96e;
-  cursor:pointer;
-  font-weight:bold;
+/* ===========================
+   LOGIN PAGE
+=========================== */
+#page-login {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 20px;
+  background:
+    radial-gradient(ellipse 60% 40% at 30% 0%, rgba(201,169,110,.08) 0%, transparent 70%),
+    radial-gradient(ellipse 50% 50% at 80% 100%, rgba(201,169,110,.06) 0%, transparent 70%),
+    var(--bg);
 }
 
-#home{
-  display:none;
-  text-align:center;
-  margin-top:100px;
+.login-card {
+  width: 100%;
+  max-width: 380px;
+  background: rgba(16,30,51,.96);
+  backdrop-filter: blur(20px);
+  border: 1.5px solid var(--border);
+  border-radius: 28px;
+  padding: 32px 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: 0 20px 60px rgba(0,0,0,.6), 0 0 0 1px rgba(201,169,110,.08);
 }
+
+.login-logo {
+  width: 76px; height: 76px;
+  border-radius: 22px;
+  background: linear-gradient(135deg, var(--gold), var(--gold-light));
+  display: flex; justify-content: center; align-items: center;
+  font-size: 34px;
+  margin: 0 auto 4px;
+  box-shadow: 0 8px 24px rgba(201,169,110,.3);
+}
+
+.login-title {
+  text-align: center;
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: .3px;
+}
+
+.login-sub {
+  text-align: center;
+  font-size: 13px;
+  color: var(--muted);
+  margin-top: -8px;
+}
+
+.divider {
+  text-align: center;
+  font-size: 12px;
+  color: var(--muted);
+  position: relative;
+}
+.divider::before, .divider::after {
+  content: '';
+  position: absolute;
+  top: 50%; width: 35%;
+  height: 1px;
+  background: var(--border);
+}
+.divider::before { right: 0; }
+.divider::after  { left: 0; }
+
+.error-msg {
+  background: rgba(239,68,68,.12);
+  border: 1px solid rgba(239,68,68,.3);
+  color: #fca5a5;
+  font-size: 13px;
+  text-align: center;
+  padding: 10px;
+  border-radius: 10px;
+  display: none;
+}
+
+/* ===========================
+   HOME PAGE
+=========================== */
+#page-home { padding-bottom: 75px; min-height: 100vh; }
+
+/* --- TOPBAR --- */
+.topbar {
+  position: sticky; top: 0; z-index: 50;
+  height: 64px;
+  background: rgba(12,21,40,.95);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  gap: 10px;
+}
+
+.topbar-left { display: flex; align-items: center; gap: 12px; }
+
+.avatar {
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--gold), var(--gold-light));
+  display: flex; justify-content: center; align-items: center;
+  font-weight: 700; color: #060d1a;
+  font-size: 17px; overflow: hidden;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 2px rgba(201,169,110,.3);
+}
+.avatar img { width:100%; height:100%; object-fit:cover; }
+
+.topbar-name  { font-size: 15px; font-weight: 700; }
+.topbar-hello { font-size: 11px; color: var(--muted); }
+
+.topbar-right { display: flex; align-items: center; gap: 8px; }
+
+.icon-btn {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text);
+  padding: 8px 13px;
+  font-size: 13px;
+  font-family: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .2s;
+}
+.icon-btn:hover { background: #16273f; }
+
+#adminBtn {
+  display: none;
+  background: var(--gold);
+  color: #060d1a;
+  border-color: transparent;
+  font-weight: 700;
+}
+
+/* --- TABS (horizontal scroll) --- */
+.tabs {
+  display: flex; gap: 8px;
+  padding: 14px 16px 10px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.tabs::-webkit-scrollbar { display: none; }
+
+.tab {
+  flex-shrink: 0;
+  padding: 8px 18px;
+  border-radius: 20px;
+  background: var(--card);
+  border: 1.5px solid var(--border);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all .2s;
+}
+.tab.active {
+  background: var(--gold);
+  color: #060d1a;
+  border-color: transparent;
+  box-shadow: 0 4px 12px rgba(201,169,110,.3);
+}
+
+/* --- TAB CONTENT --- */
+.tab-content { display: none; padding: 14px 16px; }
+.tab-content.active { display: flex; flex-direction: column; gap: 14px; }
+
+/* --- CARD --- */
+.card {
+  background: var(--card);
+  border: 1.5px solid var(--border);
+  border-radius: 20px;
+  padding: 18px;
+  transition: border-color .2s;
+}
+.card:hover { border-color: #253a56; }
+
+.card-icon { font-size: 28px; margin-bottom: 8px; }
+.card-title { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+.card-sub { font-size: 13px; color: var(--muted); }
+
+/* home stat cards grid */
+.home-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+/* --- SECTION HEADER --- */
+.section-header {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--gold);
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 4px;
+}
+
+/* --- ITEM CARD --- */
+.item-card {
+  background: var(--card2);
+  border: 1.5px solid var(--border);
+  border-radius: 16px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.item-card .item-title { font-size: 14px; font-weight: 700; }
+.item-card .item-sub   { font-size: 12px; color: var(--muted); }
+.item-card a {
+  color: var(--gold);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  margin-top: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.item-card a:hover { text-decoration: underline; }
+
+.empty-state {
+  text-align: center;
+  color: var(--muted);
+  font-size: 14px;
+  padding: 30px 0;
+}
+
+/* --- CHAT --- */
+.chat-wrap {
+  background: var(--card);
+  border: 1.5px solid var(--border);
+  border-radius: 20px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.chat-header {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  font-weight: 700;
+  font-size: 15px;
+  background: var(--card2);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.chat-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--success);
+  box-shadow: 0 0 6px var(--success);
+  animation: pulse 2s infinite;
+}
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
+
+.messages {
+  height: 360px;
+  overflow-y: auto;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: var(--bg2);
+  scroll-behavior: smooth;
+}
+
+.messages::-webkit-scrollbar { width: 4px; }
+.messages::-webkit-scrollbar-track { background: transparent; }
+.messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+.msg {
+  max-width: 78%;
+  padding: 10px 14px;
+  border-radius: 18px;
+  word-break: break-word;
+  animation: msgPop .2s ease;
+}
+.msg.me {
+  background: linear-gradient(135deg, var(--gold), var(--gold-light));
+  color: #060d1a;
+  align-self: flex-start;
+  border-bottom-right-radius: 4px;
+}
+.msg.other {
+  background: var(--card);
+  align-self: flex-end;
+  border: 1px solid var(--border);
+  border-bottom-left-radius: 4px;
+}
+@keyframes msgPop {
+  from { transform: scale(.9) translateY(4px); opacity: 0; }
+  to   { transform: scale(1) translateY(0);    opacity: 1; }
+}
+
+.msg-name { font-size: 11px; opacity: .7; margin-bottom: 3px; font-weight: 600; }
+.msg-text { font-size: 14px; line-height: 1.5; }
+.msg-time { font-size: 10px; opacity: .5; margin-top: 3px; }
+.msg.me .msg-time { text-align: left; }
+
+.send-row {
+  display: flex;
+  gap: 8px;
+  padding: 12px;
+  border-top: 1px solid var(--border);
+  background: var(--card);
+}
+.send-row .inp { flex: 1; border-radius: 14px; padding: 11px 14px; }
+
+.send-btn {
+  background: var(--gold);
+  border: none;
+  border-radius: 12px;
+  color: #060d1a;
+  font-family: inherit;
+  font-weight: 700;
+  padding: 0 18px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: opacity .15s;
+}
+.send-btn:hover { opacity: .9; }
+
+.img-btn {
+  background: var(--card2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: var(--text);
+  padding: 0 12px;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+/* --- PROFILE --- */
+.profile-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 0 6px;
+}
+
+.profile-avatar {
+  width: 88px; height: 88px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--gold), var(--gold-light));
+  display: flex; justify-content: center; align-items: center;
+  font-size: 30px; font-weight: 700; color: #060d1a;
+  overflow: hidden;
+  border: 3px solid rgba(201,169,110,.4);
+  box-shadow: 0 0 24px rgba(201,169,110,.2);
+}
+.profile-avatar img { width:100%; height:100%; object-fit:cover; }
+
+.profile-name { font-size: 18px; font-weight: 700; }
+.profile-bio  { font-size: 13px; color: var(--muted); }
+
+.form-group { display: flex; flex-direction: column; gap: 10px; }
+.label { font-size: 12px; color: var(--muted); font-weight: 600; margin-bottom: -4px; }
+
+/* --- BOTTOM NAV --- */
+.bottom-nav {
+  position: fixed; bottom: 0; right: 0;
+  width: 100%; height: 64px;
+  background: rgba(12,21,40,.97);
+  backdrop-filter: blur(12px);
+  border-top: 1px solid var(--border);
+  display: flex; justify-content: space-around; align-items: center;
+  z-index: 100;
+}
+
+.nav-item {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 3px; flex: 1; padding: 8px 0;
+  font-size: 20px; color: var(--muted);
+  cursor: pointer;
+  transition: color .2s;
+}
+.nav-item span { font-size: 10px; font-weight: 600; }
+.nav-item.active { color: var(--gold); }
+
+/* ===========================
+   ADMIN PAGE
+=========================== */
+#page-admin {
+  min-height: 100vh;
+  padding: 0 0 30px;
+  background:
+    radial-gradient(ellipse 50% 40% at 70% 0%, rgba(201,169,110,.06) 0%, transparent 70%),
+    var(--bg);
+}
+
+.admin-topbar {
+  position: sticky; top: 0; z-index: 50;
+  height: 60px;
+  background: rgba(12,21,40,.97);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 12px;
+  padding: 0 16px;
+}
+.admin-topbar h2 { font-size: 18px; font-weight: 700; flex: 1; }
+
+.back-btn {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 8px 14px;
+  cursor: pointer;
+}
+.back-btn:hover { background: #16273f; }
+
+.admin-body { padding: 16px; display: flex; flex-direction: column; gap: 16px; }
+
+.admin-section {
+  background: var(--card);
+  border: 1.5px solid var(--border);
+  border-radius: 20px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.admin-section-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--gold);
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+/* USER CARD */
+.user-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 14px;
+  background: var(--card2);
+  border: 1.5px solid var(--border);
+  border-radius: 14px;
+  gap: 10px;
+}
+
+.user-info { flex: 1; min-width: 0; }
+.user-name  { font-size: 14px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.user-email { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.user-badges { display: flex; gap: 5px; align-items: center; flex-wrap: wrap; margin-top: 3px; }
+
+.badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 20px;
+}
+.badge-admin  { background: rgba(201,169,110,.2); color: var(--gold); border: 1px solid rgba(201,169,110,.3); }
+.badge-banned { background: rgba(239,68,68,.2);   color: #fca5a5;    border: 1px solid rgba(239,68,68,.3); }
+
+.ban-btn {
+  padding: 8px 14px;
+  border-radius: 10px;
+  border: none;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: opacity .15s;
+}
+.ban-btn:hover { opacity: .85; }
+.ban-btn.ban   { background: rgba(239,68,68,.15); color: #fca5a5; border: 1px solid rgba(239,68,68,.3); }
+.ban-btn.unban { background: rgba(34,197,94,.15); color: #86efac;  border: 1px solid rgba(34,197,94,.3); }
+
+/* TOAST */
+.toast {
+  position: fixed;
+  bottom: 80px; left: 50%; transform: translateX(-50%);
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 12px 24px;
+  border-radius: 30px;
+  font-size: 14px;
+  font-weight: 600;
+  z-index: 999;
+  opacity: 0;
+  transition: opacity .3s;
+  pointer-events: none;
+  white-space: nowrap;
+  box-shadow: 0 4px 20px rgba(0,0,0,.5);
+}
+.toast.show { opacity: 1; }
+.toast.success { border-color: rgba(34,197,94,.4); color: #86efac; }
+.toast.error   { border-color: rgba(239,68,68,.4);  color: #fca5a5; }
+
 </style>
 </head>
-
 <body>
 
-<div id="loginBox" class="box">
-  <h3>تسجيل الدخول</h3>
+<!-- ===============================
+     LOGIN PAGE
+=============================== -->
+<div id="page-login" class="page active">
+  <div class="login-card">
 
-  <input id="email" placeholder="الإيميل">
-  <input id="password" type="password" placeholder="كلمة السر">
+    <div class="login-logo">🎓</div>
+    <div class="login-title">نظام الجامعة</div>
+    <div class="login-sub">سجّل دخولك أو أنشئ حساباً جديداً</div>
 
-  <button id="btnLogin">دخول</button>
+    <input class="inp" id="loginName"  placeholder="الاسم الكامل (للتسجيل فقط)">
+    <input class="inp" id="loginEmail" placeholder="البريد الإلكتروني" type="email">
+    <input class="inp" id="loginPass"  placeholder="كلمة المرور" type="password">
+
+    <button class="btn" id="btnLogin">تسجيل الدخول</button>
+    <div class="divider">أو</div>
+    <button class="btn btn-dark" id="btnRegister">إنشاء حساب جديد</button>
+
+    <div id="loginError" class="error-msg"></div>
+
+  </div>
 </div>
 
-<div id="home">
-  <h2>تم تسجيل الدخول 🎉</h2>
-  <button id="logoutBtn">خروج</button>
+<!-- ===============================
+     HOME PAGE
+=============================== -->
+<div id="page-home" class="page">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="avatar" id="avatar">U</div>
+      <div>
+        <div class="topbar-hello">أهلاً بك 👋</div>
+        <div class="topbar-name" id="welcomeText">المستخدم</div>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <button class="icon-btn" id="adminBtn" onclick="showPage('page-admin')">⚙️ أدمن</button>
+      <button class="icon-btn" id="logoutBtn">خروج</button>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <div class="tab active"  data-tab="tab-home">🏠 الرئيسية</div>
+    <div class="tab"         data-tab="tab-chat">💬 الشات</div>
+    <div class="tab"         data-tab="tab-lectures">📚 المحاضرات</div>
+    <div class="tab"         data-tab="tab-exams">📅 الامتحانات</div>
+    <div class="tab"         data-tab="tab-sections">🧑‍🏫 السكاشن</div>
+    <div class="tab"         data-tab="tab-profile">👤 بروفايل</div>
+  </div>
+
+  <!-- TAB: HOME -->
+  <div id="tab-home" class="tab-content active">
+    <div class="home-grid">
+      <div class="card" onclick="goTab('tab-lectures')">
+        <div class="card-icon">📚</div>
+        <div class="card-title">المحاضرات</div>
+        <div class="card-sub">تابع أحدث المحاضرات</div>
+      </div>
+      <div class="card" onclick="goTab('tab-exams')">
+        <div class="card-icon">📅</div>
+        <div class="card-title">الامتحانات</div>
+        <div class="card-sub">جدول الامتحانات</div>
+      </div>
+      <div class="card" onclick="goTab('tab-chat')">
+        <div class="card-icon">💬</div>
+        <div class="card-title">الشات العام</div>
+        <div class="card-sub">تواصل مع الطلاب</div>
+      </div>
+      <div class="card" onclick="goTab('tab-sections')">
+        <div class="card-icon">🧑‍🏫</div>
+        <div class="card-title">السكاشن</div>
+        <div class="card-sub">مواعيد السكاشن</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB: CHAT -->
+  <div id="tab-chat" class="tab-content">
+    <div class="chat-wrap">
+      <div class="chat-header">
+        <div class="chat-dot"></div>
+        الشات العام
+      </div>
+      <div id="messages" class="messages"></div>
+      <div class="send-row">
+        <input class="inp" id="messageInput" placeholder="اكتب رسالة...">
+        <button class="img-btn" id="sendImageBtn" title="إرسال صورة">📷</button>
+        <button class="send-btn" id="sendBtn">إرسال</button>
+      </div>
+    </div>
+    <input type="file" id="chatImage" accept="image/*" style="display:none">
+  </div>
+
+  <!-- TAB: LECTURES -->
+  <div id="tab-lectures" class="tab-content">
+    <div class="section-header">📚 المحاضرات المتاحة</div>
+    <div id="lecturesList"><div class="empty-state">جاري التحميل...</div></div>
+  </div>
+
+  <!-- TAB: EXAMS -->
+  <div id="tab-exams" class="tab-content">
+    <div class="section-header">📅 جدول الامتحانات</div>
+    <div id="examsList"><div class="empty-state">جاري التحميل...</div></div>
+  </div>
+
+  <!-- TAB: SECTIONS -->
+  <div id="tab-sections" class="tab-content">
+    <div class="section-header">🧑‍🏫 السكاشن</div>
+    <div id="sectionsList"><div class="empty-state">جاري التحميل...</div></div>
+  </div>
+
+  <!-- TAB: PROFILE -->
+  <div id="tab-profile" class="tab-content">
+    <div class="profile-header">
+      <div class="profile-avatar" id="profileAvatar">U</div>
+      <div class="profile-name" id="profileName">المستخدم</div>
+      <div class="profile-bio"  id="profileBioText"></div>
+    </div>
+
+    <div class="card form-group">
+      <div class="section-header">✏️ تعديل البيانات</div>
+      <div class="label">الاسم الكامل</div>
+      <input class="inp" id="editName" placeholder="اسمك الكامل">
+      <div class="label">نبذة عنك</div>
+      <input class="inp" id="editBio" placeholder="اكتب نبذة قصيرة...">
+      <button class="btn" id="saveProfile">💾 حفظ التعديلات</button>
+    </div>
+
+    <div class="card form-group">
+      <div class="section-header">🖼️ صورة البروفايل</div>
+      <input type="file" id="imageInput" accept="image/*" class="inp" style="color:var(--muted);padding:10px;">
+      <button class="btn btn-dark" id="uploadBtn">📤 رفع الصورة</button>
+    </div>
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <div class="bottom-nav">
+    <div class="nav-item active" data-nav="tab-home">🏠<span>الرئيسية</span></div>
+    <div class="nav-item"        data-nav="tab-chat">💬<span>الشات</span></div>
+    <div class="nav-item"        data-nav="tab-lectures">📚<span>محاضرات</span></div>
+    <div class="nav-item"        data-nav="tab-profile">👤<span>بروفايل</span></div>
+  </div>
+
 </div>
 
+<!-- ===============================
+     ADMIN PAGE
+=============================== -->
+<div id="page-admin" class="page">
+
+  <div class="admin-topbar">
+    <button class="back-btn" onclick="showPage('page-home')">← رجوع</button>
+    <h2>⚙️ لوحة التحكم</h2>
+  </div>
+
+  <div class="admin-body">
+
+    <!-- USERS -->
+    <div class="admin-section">
+      <div class="admin-section-title">👥 إدارة المستخدمين</div>
+      <div id="usersList"><div class="empty-state">جاري التحميل...</div></div>
+    </div>
+
+    <!-- ADD LECTURE -->
+    <div class="admin-section">
+      <div class="admin-section-title">📚 إضافة محاضرة</div>
+      <input class="inp" id="lecTitle" placeholder="عنوان المحاضرة">
+      <input class="inp" id="lecDesc"  placeholder="وصف المحاضرة (اختياري)">
+      <input class="inp" id="lecPdf"   placeholder="رابط PDF (اختياري)">
+      <button class="btn" onclick="addLecture()">➕ إضافة المحاضرة</button>
+    </div>
+
+    <!-- ADD EXAM -->
+    <div class="admin-section">
+      <div class="admin-section-title">📅 إضافة امتحان</div>
+      <input class="inp" id="examSub"  placeholder="اسم المادة">
+      <input class="inp" id="examDate" placeholder="تاريخ الامتحان (مثال: السبت 15 يونيو)">
+      <input class="inp" id="examTime" placeholder="الوقت (مثال: 10 صباحاً)">
+      <input class="inp" id="examRoom" placeholder="القاعة (اختياري)">
+      <button class="btn" onclick="addExam()">➕ إضافة الامتحان</button>
+    </div>
+
+    <!-- ADD SECTION -->
+    <div class="admin-section">
+      <div class="admin-section-title">🧑‍🏫 إضافة سكشن</div>
+      <input class="inp" id="secName"  placeholder="اسم الدكتور / المساعد">
+      <input class="inp" id="secSubj"  placeholder="اسم المادة">
+      <input class="inp" id="secTime"  placeholder="الوقت (مثال: الأحد 10 صباحاً)">
+      <input class="inp" id="secRoom"  placeholder="القاعة / المكان">
+      <button class="btn" onclick="addSection()">➕ إضافة السكشن</button>
+    </div>
+
+    <!-- DELETE SECTION -->
+    <div class="admin-section">
+      <div class="admin-section-title">🗑️ حذف محتوى</div>
+      <p style="font-size:13px;color:var(--muted);">اضغط على أي عنصر في قوائم المحاضرات أو الامتحانات أو السكاشن لظهور زر الحذف (أدمن فقط).</p>
+    </div>
+
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast" class="toast"></div>
+
+<!-- ===============================
+     FIREBASE
+=============================== -->
 <script type="module">
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { initializeApp }
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+
 import {
   getAuth,
   signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
   signOut,
   onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
-/* 🔥 Firebase بتاعك */
+import {
+  getFirestore,
+  doc, setDoc, getDoc, updateDoc, deleteDoc,
+  collection, addDoc, getDocs,
+  query, orderBy, onSnapshot,
+  serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+import {
+  getStorage,
+  ref, uploadBytes, getDownloadURL
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
+
+/* =============================
+   FIREBASE CONFIG
+============================= */
 const firebaseConfig = {
-  apiKey: "AIzaSyAUkeqz4iGn4LwJf93EJa0JilIUoHHdVOs",
-  authDomain: "ssss-27d97.firebaseapp.com",
-  projectId: "ssss-27d97",
-  storageBucket: "ssss-27d97.firebasestorage.app",
+  apiKey:            "AIzaSyAUkeqz4iGn4LwJf93EJa0JilIUoHHdVOs",
+  authDomain:        "ssss-27d97.firebaseapp.com",
+  projectId:         "ssss-27d97",
+  storageBucket:     "ssss-27d97.firebasestorage.app",
   messagingSenderId: "402050236451",
-  appId: "1:402050236451:web:5f8ad5ddcd6a7c63377196",
-  measurementId: "G-29ENC4J86D"
+  appId:             "1:402050236451:web:5f8ad5ddcd6a7c63377196",
+  measurementId:     "G-29ENC4J86D"
 };
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
+const ADMIN_UID = "dKTc7vqFNGO7vqamubap5dKnn7z1";
 
-/* ===================== */
-/* LOGIN */
-/* ===================== */
+const app     = initializeApp(firebaseConfig);
+const auth    = getAuth(app);
+const db      = getFirestore(app);
+const storage = getStorage(app);
 
-document.getElementById("btnLogin").addEventListener("click", async () => {
+let currentUser = null;
+let isAdmin     = false;
+
+/* =============================
+   TOAST
+============================= */
+function toast(msg, type = "success") {
+  const el = document.getElementById("toast");
+  el.textContent = msg;
+  el.className = `toast show ${type}`;
+  setTimeout(() => el.classList.remove("show"), 2500);
+}
+
+/* =============================
+   PAGE NAVIGATION
+============================= */
+window.showPage = (id) => {
+  document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+  if (id === "page-admin") loadUsers();
+};
+
+/* =============================
+   TAB NAVIGATION
+============================= */
+function goTab(tabId) {
+  // activate tab-content
+  document.querySelectorAll(".tab-content").forEach(t => t.classList.remove("active"));
+  document.getElementById(tabId)?.classList.add("active");
+
+  // activate .tab button
+  document.querySelectorAll(".tab").forEach(t => {
+    t.classList.toggle("active", t.dataset.tab === tabId);
+  });
+
+  // activate bottom nav
+  document.querySelectorAll(".nav-item").forEach(n => {
+    n.classList.toggle("active", n.dataset.nav === tabId);
+  });
+}
+window.goTab = goTab;
+
+// wire up tab buttons
+document.querySelectorAll(".tab").forEach(t => {
+  t.addEventListener("click", () => goTab(t.dataset.tab));
+});
+
+// wire up bottom nav
+document.querySelectorAll(".nav-item").forEach(n => {
+  n.addEventListener("click", () => goTab(n.dataset.nav));
+});
+
+/* =============================
+   HELPERS
+============================= */
+function setAvatarUI(src, isUrl) {
+  const av  = document.getElementById("avatar");
+  const pav = document.getElementById("profileAvatar");
+  if (isUrl) {
+    const imgHtml = `<img src="${src}">`;
+    av.innerHTML = pav.innerHTML = imgHtml;
+  } else {
+    av.textContent = pav.textContent = src;
+  }
+}
+
+function showLoginError(msg) {
+  const el = document.getElementById("loginError");
+  el.textContent = msg;
+  el.style.display = "block";
+}
+function hideLoginError() {
+  document.getElementById("loginError").style.display = "none";
+}
+
+/* =============================
+   AUTH: REGISTER
+============================= */
+document.getElementById("btnRegister").addEventListener("click", async () => {
+  hideLoginError();
+  const name  = document.getElementById("loginName").value.trim();
+  const email = document.getElementById("loginEmail").value.trim();
+  const pass  = document.getElementById("loginPass").value;
+
+  if (!name)        return showLoginError("اكتب اسمك الكامل أولاً");
+  if (!email)       return showLoginError("اكتب البريد الإلكتروني");
+  if (!pass)        return showLoginError("اكتب كلمة المرور");
+  if (pass.length < 6) return showLoginError("كلمة المرور 6 أحرف على الأقل");
+
   try {
-    const email = document.getElementById("email").value;
-    const pass = document.getElementById("password").value;
+    const cred = await createUserWithEmailAndPassword(auth, email, pass);
+    await setDoc(doc(db, "users", cred.user.uid), {
+      uid: cred.user.uid, name, email,
+      photo: "", bio: "",
+      isAdmin: false, isBanned: false,
+      createdAt: serverTimestamp()
+    });
+    toast("تم إنشاء الحساب بنجاح 🎉");
+  } catch (e) {
+    const msgs = {
+      "auth/email-already-in-use": "البريد الإلكتروني مستخدم من قبل",
+      "auth/invalid-email":        "تنسيق البريد الإلكتروني غلط"
+    };
+    showLoginError(msgs[e.code] || e.message);
+  }
+});
 
-    if (!email || !pass) {
-      alert("اكتب البيانات");
+/* =============================
+   AUTH: LOGIN
+============================= */
+document.getElementById("btnLogin").addEventListener("click", async () => {
+  hideLoginError();
+  const email = document.getElementById("loginEmail").value.trim();
+  const pass  = document.getElementById("loginPass").value;
+
+  if (!email || !pass) return showLoginError("اكتب البريد الإلكتروني وكلمة المرور");
+
+  try {
+    await signInWithEmailAndPassword(auth, email, pass);
+  } catch (e) {
+    const msgs = {
+      "auth/invalid-credential":   "بريد إلكتروني أو كلمة مرور غلط",
+      "auth/user-not-found":       "الحساب مش موجود",
+      "auth/wrong-password":       "كلمة المرور غلط",
+      "auth/too-many-requests":    "كتير أوي، استنى شوية"
+    };
+    showLoginError(msgs[e.code] || e.message);
+  }
+});
+
+/* Enter key on password */
+document.getElementById("loginPass").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") document.getElementById("btnLogin").click();
+});
+
+/* =============================
+   AUTH: LOGOUT
+============================= */
+document.getElementById("logoutBtn").addEventListener("click", () => signOut(auth));
+
+/* =============================
+   AUTH STATE CHANGE
+============================= */
+onAuthStateChanged(auth, async (user) => {
+  if (!user) {
+    showPage("page-login");
+    currentUser = null;
+    isAdmin     = false;
+    return;
+  }
+
+  currentUser = user;
+
+  // check banned
+  const snap = await getDoc(doc(db, "users", user.uid));
+  if (snap.exists() && snap.data().isBanned) {
+    toast("تم حظر حسابك. تواصل مع الأدمن.", "error");
+    await signOut(auth);
+    return;
+  }
+
+  // populate UI
+  if (snap.exists()) {
+    const data = snap.data();
+    const initLetter = (data.name || "U").charAt(0).toUpperCase();
+
+    document.getElementById("welcomeText").textContent  = data.name || "مستخدم";
+    document.getElementById("profileName").textContent  = data.name || "مستخدم";
+    document.getElementById("profileBioText").textContent = data.bio || "";
+    document.getElementById("editName").value           = data.name || "";
+    document.getElementById("editBio").value            = data.bio  || "";
+
+    if (data.photo) {
+      setAvatarUI(data.photo, true);
+    } else {
+      setAvatarUI(initLetter, false);
+    }
+  }
+
+  // admin?
+  isAdmin = (user.uid === ADMIN_UID);
+  if (isAdmin) document.getElementById("adminBtn").style.display = "block";
+
+  showPage("page-home");
+
+  loadMessages();
+  loadLectures();
+  loadExams();
+  loadSections();
+});
+
+/* =============================
+   CHAT: SEND TEXT
+============================= */
+document.getElementById("sendBtn").addEventListener("click", sendMsg);
+document.getElementById("messageInput").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") sendMsg();
+});
+
+async function sendMsg() {
+  const text = document.getElementById("messageInput").value.trim();
+  if (!text || !currentUser) return;
+
+  const snap = await getDoc(doc(db, "users", currentUser.uid));
+  const name = snap.exists() ? snap.data().name : "مستخدم";
+
+  await addDoc(collection(db, "messages"), {
+    text, uid: currentUser.uid, name,
+    time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+    createdAt: serverTimestamp()
+  });
+
+  document.getElementById("messageInput").value = "";
+}
+
+/* =============================
+   CHAT: SEND IMAGE
+============================= */
+document.getElementById("sendImageBtn").addEventListener("click", () => {
+  document.getElementById("chatImage").click();
+});
+
+document.getElementById("chatImage").addEventListener("change", async () => {
+  const file = document.getElementById("chatImage").files[0];
+  if (!file || !currentUser) return;
+
+  const snap = await getDoc(doc(db, "users", currentUser.uid));
+  const name = snap.exists() ? snap.data().name : "مستخدم";
+
+  const imgRef = ref(storage, `chat/${Date.now()}_${file.name}`);
+  await uploadBytes(imgRef, file);
+  const url = await getDownloadURL(imgRef);
+
+  await addDoc(collection(db, "messages"), {
+    image: url, uid: currentUser.uid, name,
+    time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+    createdAt: serverTimestamp()
+  });
+
+  document.getElementById("chatImage").value = "";
+});
+
+/* =============================
+   CHAT: LOAD (realtime)
+============================= */
+function loadMessages() {
+  const q = query(collection(db, "messages"), orderBy("createdAt", "asc"));
+
+  onSnapshot(q, (snapshot) => {
+    const container = document.getElementById("messages");
+    container.innerHTML = "";
+
+    snapshot.forEach((docItem) => {
+      const d   = docItem.data();
+      const div = document.createElement("div");
+      div.className = `msg ${d.uid === currentUser?.uid ? "me" : "other"}`;
+
+      if (d.image) {
+        div.innerHTML = `
+          <div class="msg-name">${d.name || "مستخدم"}</div>
+          <img src="${d.image}" style="width:100%;border-radius:12px;margin-top:4px;">
+          <div class="msg-time">${d.time || ""}</div>
+        `;
+      } else {
+        div.innerHTML = `
+          <div class="msg-name">${d.name || "مستخدم"}</div>
+          <div class="msg-text">${d.text}</div>
+          <div class="msg-time">${d.time || ""}</div>
+        `;
+      }
+
+      container.appendChild(div);
+    });
+
+    container.scrollTop = container.scrollHeight;
+  });
+}
+
+/* =============================
+   PROFILE: UPLOAD PHOTO
+============================= */
+document.getElementById("uploadBtn").addEventListener("click", async () => {
+  const file = document.getElementById("imageInput").files[0];
+  if (!file)          return toast("اختار صورة الأول", "error");
+  if (!currentUser)   return;
+
+  try {
+    const storageRef = ref(storage, `profile/${currentUser.uid}`);
+    await uploadBytes(storageRef, file);
+    const url = await getDownloadURL(storageRef);
+    await setDoc(doc(db, "users", currentUser.uid), { photo: url }, { merge: true });
+    setAvatarUI(url, true);
+    toast("تم رفع الصورة ✔");
+  } catch (e) {
+    toast("فشل رفع الصورة", "error");
+    console.error(e);
+  }
+});
+
+/* =============================
+   PROFILE: SAVE
+============================= */
+document.getElementById("saveProfile").addEventListener("click", async () => {
+  if (!currentUser) return;
+  const name = document.getElementById("editName").value.trim();
+  const bio  = document.getElementById("editBio").value.trim();
+
+  if (!name) return toast("اكتب اسمك", "error");
+
+  await setDoc(doc(db, "users", currentUser.uid), { name, bio }, { merge: true });
+
+  document.getElementById("welcomeText").textContent    = name;
+  document.getElementById("profileName").textContent    = name;
+  document.getElementById("profileBioText").textContent = bio;
+
+  toast("تم حفظ التعديلات ✔");
+});
+
+/* =============================
+   LECTURES
+============================= */
+async function loadLectures() {
+  try {
+    const q    = query(collection(db, "lectures"), orderBy("createdAt", "desc"));
+    const snap = await getDocs(q);
+    const list = document.getElementById("lecturesList");
+    list.innerHTML = "";
+
+    if (snap.empty) {
+      list.innerHTML = `<div class="empty-state">لا توجد محاضرات بعد</div>`;
       return;
     }
 
-    await signInWithEmailAndPassword(auth, email, pass);
+    snap.forEach((docu) => {
+      const d   = docu.data();
+      const div = document.createElement("div");
+      div.className = "item-card";
+      div.innerHTML = `
+        <div class="item-title">📘 ${d.title}</div>
+        ${d.description ? `<div class="item-sub">${d.description}</div>` : ""}
+        ${d.pdf         ? `<a href="${d.pdf}" target="_blank">📄 فتح PDF ←</a>` : ""}
+        ${isAdmin       ? `<button class="btn btn-dark" style="margin-top:6px;font-size:12px;padding:7px;" onclick="deleteItem('lectures','${docu.id}',this)">🗑️ حذف</button>` : ""}
+      `;
+      list.appendChild(div);
+    });
+  } catch (e) { console.error(e); }
+}
 
-    alert("تم تسجيل الدخول");
+window.addLecture = async () => {
+  const title = document.getElementById("lecTitle").value.trim();
+  const desc  = document.getElementById("lecDesc").value.trim();
+  const pdf   = document.getElementById("lecPdf").value.trim();
 
+  if (!title) return toast("اكتب عنوان المحاضرة", "error");
+
+  await addDoc(collection(db, "lectures"), { title, description: desc, pdf, createdAt: serverTimestamp() });
+  toast("تمت إضافة المحاضرة ✔");
+  document.getElementById("lecTitle").value = "";
+  document.getElementById("lecDesc").value  = "";
+  document.getElementById("lecPdf").value   = "";
+  loadLectures();
+};
+
+/* =============================
+   EXAMS
+============================= */
+async function loadExams() {
+  try {
+    const snap = await getDocs(collection(db, "exams"));
+    const list = document.getElementById("examsList");
+    list.innerHTML = "";
+
+    if (snap.empty) {
+      list.innerHTML = `<div class="empty-state">لا توجد امتحانات بعد</div>`;
+      return;
+    }
+
+    snap.forEach((docu) => {
+      const d   = docu.data();
+      const div = document.createElement("div");
+      div.className = "item-card";
+      div.innerHTML = `
+        <div class="item-title">📌 ${d.subject}</div>
+        ${d.date ? `<div class="item-sub">📆 ${d.date}</div>` : ""}
+        ${d.time ? `<div class="item-sub">🕐 ${d.time}</div>` : ""}
+        ${d.room ? `<div class="item-sub">🏫 ${d.room}</div>` : ""}
+        ${isAdmin ? `<button class="btn btn-dark" style="margin-top:6px;font-size:12px;padding:7px;" onclick="deleteItem('exams','${docu.id}',this)">🗑️ حذف</button>` : ""}
+      `;
+      list.appendChild(div);
+    });
+  } catch (e) { console.error(e); }
+}
+
+window.addExam = async () => {
+  const subject = document.getElementById("examSub").value.trim();
+  const date    = document.getElementById("examDate").value.trim();
+  const time    = document.getElementById("examTime").value.trim();
+  const room    = document.getElementById("examRoom").value.trim();
+
+  if (!subject) return toast("اكتب اسم المادة", "error");
+
+  await addDoc(collection(db, "exams"), { subject, date, time, room, createdAt: serverTimestamp() });
+  toast("تمت إضافة الامتحان ✔");
+  document.getElementById("examSub").value  = "";
+  document.getElementById("examDate").value = "";
+  document.getElementById("examTime").value = "";
+  document.getElementById("examRoom").value = "";
+  loadExams();
+};
+
+/* =============================
+   SECTIONS
+============================= */
+async function loadSections() {
+  try {
+    const snap = await getDocs(collection(db, "sections"));
+    const list = document.getElementById("sectionsList");
+    list.innerHTML = "";
+
+    if (snap.empty) {
+      list.innerHTML = `<div class="empty-state">لا توجد سكاشن بعد</div>`;
+      return;
+    }
+
+    snap.forEach((docu) => {
+      const d   = docu.data();
+      const div = document.createElement("div");
+      div.className = "item-card";
+      div.innerHTML = `
+        <div class="item-title">👨‍🏫 ${d.name}</div>
+        ${d.subject ? `<div class="item-sub">📖 ${d.subject}</div>` : ""}
+        ${d.time    ? `<div class="item-sub">⏰ ${d.time}</div>`    : ""}
+        ${d.room    ? `<div class="item-sub">🏫 ${d.room}</div>`    : ""}
+        ${isAdmin   ? `<button class="btn btn-dark" style="margin-top:6px;font-size:12px;padding:7px;" onclick="deleteItem('sections','${docu.id}',this)">🗑️ حذف</button>` : ""}
+      `;
+      list.appendChild(div);
+    });
+  } catch (e) { console.error(e); }
+}
+
+window.addSection = async () => {
+  const name    = document.getElementById("secName").value.trim();
+  const subject = document.getElementById("secSubj").value.trim();
+  const time    = document.getElementById("secTime").value.trim();
+  const room    = document.getElementById("secRoom").value.trim();
+
+  if (!name) return toast("اكتب اسم الدكتور", "error");
+
+  await addDoc(collection(db, "sections"), { name, subject, time, room, createdAt: serverTimestamp() });
+  toast("تمت إضافة السكشن ✔");
+  document.getElementById("secName").value  = "";
+  document.getElementById("secSubj").value  = "";
+  document.getElementById("secTime").value  = "";
+  document.getElementById("secRoom").value  = "";
+  loadSections();
+};
+
+/* =============================
+   DELETE ITEM (admin)
+============================= */
+window.deleteItem = async (collectionName, id, btn) => {
+  if (!isAdmin) return;
+  if (!confirm("مؤكد الحذف؟")) return;
+  try {
+    await deleteDoc(doc(db, collectionName, id));
+    btn.closest(".item-card").remove();
+    toast("تم الحذف ✔");
   } catch (e) {
-    alert(e.message);
-    console.log(e.code);
+    toast("فشل الحذف", "error");
+    console.error(e);
   }
-});
+};
 
-/* ===================== */
-/* LOGOUT */
-/* ===================== */
+/* =============================
+   ADMIN: LOAD USERS
+============================= */
+async function loadUsers() {
+  const snap = await getDocs(collection(db, "users"));
+  const list = document.getElementById("usersList");
+  list.innerHTML = "";
 
-document.getElementById("logoutBtn").addEventListener("click", async () => {
-  await signOut(auth);
-});
-
-/* ===================== */
-/* STATE */
-/* ===================== */
-
-onAuthStateChanged(auth, (user) => {
-  if (user) {
-    document.getElementById("loginBox").style.display = "none";
-    document.getElementById("home").style.display = "block";
-  } else {
-    document.getElementById("loginBox").style.display = "block";
-    document.getElementById("home").style.display = "none";
+  if (snap.empty) {
+    list.innerHTML = `<div class="empty-state">لا يوجد مستخدمون</div>`;
+    return;
   }
-});
+
+  snap.forEach((docu) => {
+    const u   = docu.data();
+    const div = document.createElement("div");
+    div.className = "user-card";
+
+    const badges = [
+      u.isAdmin  ? `<span class="badge badge-admin">أدمن</span>` : "",
+      u.isBanned ? `<span class="badge badge-banned">محظور</span>` : ""
+    ].join("");
+
+    div.innerHTML = `
+      <div class="user-info">
+        <div class="user-name">${u.name || "—"}</div>
+        <div class="user-email">${u.email || "—"}</div>
+        <div class="user-badges">${badges}</div>
+      </div>
+      <button
+        class="ban-btn ${u.isBanned ? "unban" : "ban"}"
+        onclick="banUser('${u.uid}', ${u.isBanned})">
+        ${u.isBanned ? "✅ رفع الحظر" : "🚫 حظر"}
+      </button>
+    `;
+
+    list.appendChild(div);
+  });
+}
+
+window.banUser = async (uid, isBanned) => {
+  await updateDoc(doc(db, "users", uid), { isBanned: !isBanned });
+  toast(isBanned ? "تم رفع الحظر ✔" : "تم حظر المستخدم");
+  loadUsers();
+};
 
 </script>
-
 </body>
 </html>
