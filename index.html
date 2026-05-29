@@ -270,15 +270,41 @@ body {
   gap:8px; padding:10px 0 6px;
 }
 .prof-avatar {
-  width:88px; height:88px; border-radius:50%;
+  width:96px; height:96px; border-radius:50%;
   background:linear-gradient(135deg,var(--gold),var(--goldL));
   display:flex; justify-content:center; align-items:center;
   font-size:30px; font-weight:700; color:#060d1a;
-  overflow:hidden; border:3px solid rgba(201,169,110,.4);
-  box-shadow:0 0 24px rgba(201,169,110,.2); cursor:pointer;
+  overflow:hidden; cursor:pointer;
+  position: relative;
   transition: transform .2s, box-shadow .2s;
 }
-.prof-avatar:hover { transform: scale(1.05); box-shadow:0 0 34px rgba(201,169,110,.35); }
+/* Gender-based glow on profile avatar */
+.prof-avatar.gender-male {
+  border: 3px solid rgba(59,130,246,.5);
+  box-shadow: 0 0 0 3px rgba(59,130,246,.08), 0 0 24px rgba(59,130,246,.25), 0 8px 20px rgba(0,0,0,.4);
+}
+.prof-avatar.gender-female {
+  border: 3px solid rgba(236,72,153,.5);
+  box-shadow: 0 0 0 3px rgba(236,72,153,.08), 0 0 24px rgba(236,72,153,.25), 0 8px 20px rgba(0,0,0,.4);
+}
+.prof-avatar.gender-none {
+  border: 3px solid rgba(201,169,110,.4);
+  box-shadow: 0 0 24px rgba(201,169,110,.2);
+}
+.prof-avatar:hover { transform: scale(1.05); }
+.prof-avatar.gender-male:hover  { box-shadow: 0 0 0 4px rgba(59,130,246,.15), 0 0 34px rgba(59,130,246,.4); }
+.prof-avatar.gender-female:hover { box-shadow: 0 0 0 4px rgba(236,72,153,.15), 0 0 34px rgba(236,72,153,.4); }
+/* Camera overlay on hover */
+.prof-avatar::after {
+  content: '\f030';
+  font-family: 'Font Awesome 6 Free'; font-weight: 900;
+  position: absolute; inset: 0;
+  background: rgba(0,0,0,.55); color: white;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; border-radius: 50%;
+  opacity: 0; transition: opacity .2s;
+}
+.prof-avatar:hover::after { opacity: 1; }
 .prof-avatar img { width:100%; height:100%; object-fit:cover; }
 .prof-name { font-size:18px; font-weight:700; }
 .prof-bio  { font-size:13px; color:var(--muted); }
@@ -989,93 +1015,110 @@ body {
 }
 
 /* ══════════════════════════════════════════
-   GENDER SELECTION — Modern Segmented Control
+   GENDER SELECTION — Premium Glassmorphism Design
 ══════════════════════════════════════════ */
 .gender-row {
   display: none;
   flex-direction: column;
-  gap: 0;
+  gap: 10px;
 }
 .gender-row.show { display: flex; }
 
-/* Segmented track */
+/* Label above */
+.gender-seg-label {
+  font-size: 11px; font-weight: 700; color: var(--muted);
+  letter-spacing: .5px; text-transform: uppercase;
+  padding-right: 2px;
+}
+
+/* Segmented track — glassmorph */
 .gender-seg-track {
   position: relative;
   display: flex;
-  background: rgba(255,255,255,.04);
-  border: 1.5px solid rgba(26,45,71,.9);
-  border-radius: 18px;
-  padding: 4px;
-  gap: 0;
+  background: rgba(6,13,26,.6);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(201,169,110,.18);
+  border-radius: 20px;
+  padding: 5px;
+  gap: 5px;
   overflow: hidden;
+  box-shadow: 0 4px 24px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.04);
 }
 
 /* Animated sliding pill */
 .gender-seg-thumb {
   position: absolute;
-  top: 4px; bottom: 4px;
-  width: calc(50% - 4px);
+  top: 5px; bottom: 5px;
+  width: calc(50% - 7.5px);
   border-radius: 14px;
-  transition: transform .28s cubic-bezier(.34,1.56,.64,1),
-              background .28s ease,
-              box-shadow .28s ease;
+  transition: transform .3s cubic-bezier(.34,1.4,.64,1),
+              background .3s ease,
+              box-shadow .3s ease;
   pointer-events: none;
   z-index: 0;
   /* RTL: start on the right side (male = right in RTL) */
-  right: 4px;
+  right: 5px;
 }
 .gender-seg-thumb.male-active {
   transform: translateX(0);
-  background: linear-gradient(135deg, rgba(59,130,246,.25), rgba(37,99,235,.18));
-  box-shadow: 0 2px 12px rgba(59,130,246,.3), inset 0 1px 0 rgba(255,255,255,.08);
-  border: 1px solid rgba(59,130,246,.35);
+  background: linear-gradient(135deg, rgba(37,99,235,.3), rgba(30,58,138,.2));
+  box-shadow: 0 2px 16px rgba(59,130,246,.35), inset 0 1px 0 rgba(147,197,253,.2);
+  border: 1px solid rgba(59,130,246,.4);
 }
 /* RTL — female is on the LEFT (visually right in RTL) */
 .gender-seg-thumb.female-active {
   transform: translateX(calc(-100%));
-  background: linear-gradient(135deg, rgba(236,72,153,.22), rgba(219,39,119,.15));
-  box-shadow: 0 2px 12px rgba(236,72,153,.3), inset 0 1px 0 rgba(255,255,255,.08);
-  border: 1px solid rgba(236,72,153,.35);
+  background: linear-gradient(135deg, rgba(190,24,93,.28), rgba(131,24,67,.18));
+  box-shadow: 0 2px 16px rgba(236,72,153,.35), inset 0 1px 0 rgba(249,168,212,.2);
+  border: 1px solid rgba(236,72,153,.4);
 }
 
 /* Each option button */
 .gender-seg-opt {
   flex: 1;
   display: flex; align-items: center; justify-content: center;
-  gap: 9px;
-  padding: 12px 8px;
+  gap: 10px;
+  padding: 13px 10px;
   border-radius: 14px;
   cursor: pointer;
   user-select: none;
   position: relative; z-index: 1;
-  transition: color .22s ease;
-  font-family: inherit; font-size: 14px; font-weight: 700;
+  transition: color .22s ease, transform .15s ease;
+  font-family: inherit; font-size: 13px; font-weight: 700;
   color: var(--muted);
   border: none; background: transparent;
 }
-.gender-seg-opt:hover { color: var(--text); }
-.gender-seg-opt.active-male  { color: #93c5fd; }
+.gender-seg-opt:hover { color: var(--text); transform: scale(1.02); }
+.gender-seg-opt.active-male   { color: #93c5fd; }
 .gender-seg-opt.active-female { color: #f9a8d4; }
 
 /* Avatar inside option */
-.gender-seg-opt .gender-avatar-svg {
-  width: 30px; height: 30px; flex-shrink: 0;
-  filter: grayscale(0.5) opacity(.7);
-  transition: filter .22s ease, transform .22s ease;
+.gender-seg-opt .gender-avatar-preview {
+  width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
+  overflow: hidden;
+  filter: grayscale(.55) brightness(.7);
+  transition: filter .28s ease, transform .28s cubic-bezier(.34,1.4,.64,1),
+              box-shadow .28s ease;
+  box-shadow: 0 2px 8px rgba(0,0,0,.3);
 }
-.gender-seg-opt.active-male .gender-avatar-svg,
-.gender-seg-opt.active-female .gender-avatar-svg {
-  filter: grayscale(0) opacity(1);
-  transform: scale(1.08);
+.gender-seg-opt.active-male .gender-avatar-preview {
+  filter: grayscale(0) brightness(1);
+  transform: scale(1.12) translateY(-2px);
+  box-shadow: 0 4px 14px rgba(59,130,246,.4);
+}
+.gender-seg-opt.active-female .gender-avatar-preview {
+  filter: grayscale(0) brightness(1);
+  transform: scale(1.12) translateY(-2px);
+  box-shadow: 0 4px 14px rgba(236,72,153,.4);
 }
 
-/* Label */
-.gender-seg-label { letter-spacing: .2px; }
+/* Gender type label */
+.gender-type-label { font-size: 13px; font-weight: 700; letter-spacing: .2px; }
 
-/* Gender label above track */
+/* Header label above track */
 .gender-seg-header {
   font-size: 12px; color: var(--muted); font-weight: 600;
-  margin-bottom: 6px;
+  margin-bottom: 2px; display: flex; align-items: center; gap: 5px;
 }
 .gender-avatar-svg { width: 28px; height: 28px; flex-shrink: 0; }
 
@@ -1312,7 +1355,19 @@ body {
   animation: blink 2.2s ease-in-out infinite;
   box-shadow: 0 0 6px var(--success);
 }
+.status-dot.offline { background: var(--muted); box-shadow: none; animation: none; }
 @keyframes blink { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.35;transform:scale(.75)} }
+
+/* Online presence dot on DM avatar */
+.dm-online-dot {
+  position: absolute; bottom: 1px; left: 1px;
+  width: 10px; height: 10px; border-radius: 50%;
+  background: var(--success); box-shadow: 0 0 5px var(--success);
+  border: 2px solid #0b1726;
+  opacity: 0; transition: opacity .3s;
+}
+.dm-item.is-online .dm-online-dot { opacity: 1; }
+.dm-avatar-wrap { position: relative; flex-shrink: 0; }
 
 .chat-topbar-actions { display: flex; gap: 6px; }
 .chat-action-btn {
@@ -2052,9 +2107,11 @@ body {
   position: absolute; bottom: 2px; left: 2px;
   width: 11px; height: 11px; border-radius: 50%;
   background: var(--success); border: 2px solid #0b1726;
-  box-shadow: 0 0 6px rgba(34,197,94,.5); display: none;
+  box-shadow: 0 0 6px rgba(34,197,94,.5);
+  opacity: 0; transition: opacity .3s;
 }
-.dm-avatar-wrap.online .dm-online-dot { display: block; }
+.dm-item.is-online .dm-online-dot,
+.dm-avatar-wrap.online .dm-online-dot { opacity: 1; }
 
 .dm-info { flex: 1; min-width: 0; }
 .dm-top-row {
@@ -2314,6 +2371,178 @@ body {
   100%     { opacity:0;  transform:scaleX(0) translateY(var(--ty,0px)); }
 }
 
+/* ══════════════════════════════════════════
+   ⚡ ROOMS SYSTEM — Discord-style
+══════════════════════════════════════════ */
+.room-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 14px; cursor: pointer;
+  border-bottom: 1px solid rgba(26,45,71,.3);
+  transition: background .15s; position: relative;
+}
+.room-item:hover { background: rgba(255,255,255,.04); }
+.room-item.active {
+  background: linear-gradient(90deg, rgba(201,169,110,.12), rgba(201,169,110,.04));
+  border-right: 3px solid var(--gold);
+}
+.room-icon {
+  width: 36px; height: 36px; border-radius: 10px; flex-shrink: 0;
+  background: linear-gradient(135deg, #1e3a5f, #162d4a);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 17px;
+  border: 1px solid rgba(26,45,71,.8);
+}
+.room-item.active .room-icon {
+  background: linear-gradient(135deg, rgba(201,169,110,.25), rgba(201,169,110,.12));
+  border-color: rgba(201,169,110,.4);
+}
+.room-info { flex: 1; min-width: 0; }
+.room-name { font-size: 13px; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.room-meta { font-size: 10px; color: var(--muted); margin-top: 1px; }
+.room-online-badge {
+  font-size: 9px; font-weight: 800; padding: 2px 7px; border-radius: 20px;
+  background: rgba(34,197,94,.15); color: #4ade80;
+  border: 1px solid rgba(34,197,94,.25);
+}
+
+/* Rooms sidebar tab */
+.stab-rooms-panel { flex: 1; overflow-y: auto; padding-bottom: 8px; }
+.stab-rooms-panel::-webkit-scrollbar { width: 2px; }
+.stab-rooms-panel::-webkit-scrollbar-thumb { background: rgba(201,169,110,.15); border-radius: 4px; }
+
+.rooms-section-hdr {
+  font-size: 9px; font-weight: 800; color: var(--muted);
+  padding: 10px 14px 4px; letter-spacing: .8px; text-transform: uppercase;
+  display: flex; align-items: center; justify-content: space-between;
+}
+
+/* ══════════════════════════════════════════
+   VIP ASSIGNMENT MODAL — Owner assigns VIP to any user
+══════════════════════════════════════════ */
+.vip-assign-modal-backdrop {
+  position: fixed; inset: 0; z-index: 500;
+  background: rgba(0,0,0,.75); backdrop-filter: blur(8px);
+  display: none; align-items: center; justify-content: center; padding: 20px;
+}
+.vip-assign-modal-backdrop.show { display: flex; }
+.vip-assign-modal {
+  width: 100%; max-width: 360px;
+  background: linear-gradient(145deg, #0e1c30, #0c1828);
+  border: 1.5px solid rgba(201,169,110,.25);
+  border-radius: 24px; padding: 24px 20px;
+  box-shadow: 0 24px 60px rgba(0,0,0,.7), 0 0 0 1px rgba(201,169,110,.08);
+  animation: modalSlideIn .2s cubic-bezier(.34,1.4,.64,1);
+}
+@keyframes modalSlideIn {
+  from { opacity:0; transform: scale(.9) translateY(12px); }
+  to   { opacity:1; transform: scale(1) translateY(0); }
+}
+.vip-modal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 16px;
+}
+.vip-modal-title {
+  font-size: 14px; font-weight: 800; color: var(--gold);
+  display: flex; align-items: center; gap: 7px;
+}
+.vip-modal-close {
+  background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.08);
+  border-radius: 8px; color: var(--muted); font-size: 14px;
+  cursor: pointer; padding: 4px 8px; transition: all .15s; line-height: 1;
+}
+.vip-modal-close:hover { background: rgba(255,255,255,.12); color: var(--text); }
+.vip-modal-target {
+  font-size: 12px; color: var(--muted); margin-bottom: 16px;
+  background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.06);
+  border-radius: 10px; padding: 8px 12px;
+  display: flex; align-items: center; gap: 7px;
+}
+.vip-modal-target strong { color: var(--text); font-weight: 700; }
+
+/* Type tabs */
+.vip-modal-type-tabs { display: flex; gap: 8px; margin-bottom: 14px; }
+.vip-modal-type-btn {
+  flex: 1; padding: 9px 0; border-radius: 12px;
+  border: 1.5px solid rgba(255,255,255,.08);
+  background: rgba(255,255,255,.04);
+  font-family: inherit; font-size: 13px; font-weight: 800;
+  color: var(--muted); cursor: pointer; transition: all .18s;
+}
+.vip-modal-type-btn.av { border-color: var(--gold); background: rgba(201,169,110,.15); color: var(--gold); }
+.vip-modal-type-btn.as { border-color: rgba(255,255,220,.5); background: rgba(255,255,220,.1); color: #fffde0; }
+
+/* Level grid */
+.vip-modal-grid {
+  display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-bottom: 16px;
+}
+.vip-modal-lv-btn {
+  aspect-ratio: 1; border-radius: 10px;
+  border: 1.5px solid rgba(255,255,255,.08);
+  background: rgba(255,255,255,.04);
+  font-family: inherit; font-size: 14px; font-weight: 800;
+  color: var(--muted); cursor: pointer; transition: all .15s;
+  display: flex; align-items: center; justify-content: center; min-height: 40px;
+}
+.vip-modal-lv-btn:hover { border-color: rgba(201,169,110,.4); color: var(--text); }
+.vip-modal-lv-btn.sel-v { border-color: var(--gold); background: rgba(201,169,110,.2); color: var(--gold); }
+.vip-modal-lv-btn.sel-s { border-color: rgba(255,255,200,.5); background: rgba(255,255,200,.12); color: #fffde0; }
+
+/* Preview */
+.vip-modal-preview {
+  background: rgba(0,0,0,.25); border: 1px solid rgba(255,255,255,.06);
+  border-radius: 12px; padding: 12px; text-align: center; margin-bottom: 16px;
+  min-height: 44px; display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.vip-modal-save-btn {
+  width: 100%; padding: 12px;
+  background: linear-gradient(135deg, #c9a96e, #fde080, #c9a96e);
+  background-size: 200% auto; animation: rankBtnShimmer 3s linear infinite;
+  border: none; border-radius: 12px; color: #060d1a;
+  font-family: inherit; font-weight: 900; font-size: 14px; cursor: pointer;
+  transition: transform .15s, box-shadow .2s;
+  box-shadow: 0 4px 16px rgba(201,169,110,.35);
+}
+.vip-modal-save-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 22px rgba(201,169,110,.5); }
+.vip-modal-save-btn:disabled { opacity: .45; cursor: not-allowed; transform: none; animation: none; }
+
+/* Remove VIP btn */
+.vip-modal-remove-btn {
+  width: 100%; padding: 9px; margin-top: 8px;
+  background: rgba(239,68,68,.1); border: 1px solid rgba(239,68,68,.25);
+  border-radius: 10px; color: #fca5a5;
+  font-family: inherit; font-size: 12px; font-weight: 700; cursor: pointer;
+  transition: background .15s;
+}
+.vip-modal-remove-btn:hover { background: rgba(239,68,68,.2); }
+
+/* ══════════════════════════════════════════
+   CREATE ROOM PANEL — in Owner panel
+══════════════════════════════════════════ */
+.room-create-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px;
+}
+.room-icon-btn {
+  padding: 10px; border-radius: 12px;
+  border: 1.5px solid rgba(26,45,71,.8);
+  background: rgba(255,255,255,.03);
+  font-size: 20px; cursor: pointer; text-align: center;
+  transition: all .15s;
+}
+.room-icon-btn:hover { border-color: rgba(201,169,110,.4); background: rgba(201,169,110,.08); }
+.room-icon-btn.sel { border-color: var(--gold); background: rgba(201,169,110,.15); }
+
+/* ══════════════════════════════════════════
+   GLOBAL VIP LISTENER badge update
+══════════════════════════════════════════ */
+.vip-assign-act-btn {
+  background: linear-gradient(135deg, rgba(201,169,110,.15), rgba(201,169,110,.08));
+  border: 1px solid rgba(201,169,110,.35);
+  border-radius: 8px; color: var(--gold);
+  font-family: inherit; font-size: 11px; font-weight: 800; cursor: pointer;
+  padding: 5px 10px; transition: all .15s; white-space: nowrap;
+}
+.vip-assign-act-btn:hover { background: rgba(201,169,110,.28); box-shadow: 0 0 12px rgba(201,169,110,.2); }
+
 </style>
 </head>
 <body>
@@ -2334,48 +2563,32 @@ body {
 
     <div id="nameRow"><input class="inp" id="loginName" placeholder="الاسم الكامل"></div>
 
-    <!-- Gender Selection — Register only — Modern Segmented Control -->
+    <!-- Gender Selection — Register only — Premium Glassmorphism Design -->
     <div id="genderRow" class="gender-row">
-      <div class="gender-seg-header">الجنس</div>
+      <div class="gender-seg-header">
+        <i class="fa-solid fa-user-circle" style="color:var(--gold);font-size:12px;"></i>
+        اختر نوع حسابك
+      </div>
       <div class="gender-seg-track">
         <!-- Animated sliding thumb -->
         <div class="gender-seg-thumb male-active" id="genderThumb"></div>
 
         <!-- Male option -->
         <button type="button" class="gender-seg-opt active-male" id="genderMale" onclick="selectGender('male')">
-          <svg class="gender-avatar-svg" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="30" cy="30" r="30" fill="#1a2d47"/>
-            <rect x="16" y="38" width="28" height="16" rx="8" fill="#2563eb"/>
-            <rect x="26" y="32" width="8" height="8" rx="3" fill="#c9a96e"/>
-            <circle cx="30" cy="24" r="10" fill="#c9a96e"/>
-            <path d="M20 22 Q22 12 30 12 Q38 12 40 22 Q36 18 30 19 Q24 18 20 22Z" fill="#2d1e0f"/>
-            <circle cx="26.5" cy="23" r="1.2" fill="#1a0e00"/>
-            <circle cx="33.5" cy="23" r="1.2" fill="#1a0e00"/>
-            <path d="M26.5 27.5 Q30 30 33.5 27.5" stroke="#1a0e00" stroke-width="1.2" stroke-linecap="round" fill="none"/>
-            <path d="M26 38 L30 43 L34 38" stroke="white" stroke-width="1.5" fill="none" stroke-linejoin="round"/>
-          </svg>
-          <span class="gender-seg-label">طالب</span>
+          <div class="gender-avatar-preview" id="genderMaleAvatarPreview"></div>
+          <div>
+            <div class="gender-type-label">طالب</div>
+            <div style="font-size:10px;opacity:.65;font-weight:600;">Male</div>
+          </div>
         </button>
 
         <!-- Female option -->
         <button type="button" class="gender-seg-opt" id="genderFemale" onclick="selectGender('female')">
-          <svg class="gender-avatar-svg" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="30" cy="30" r="30" fill="#1a1a2e"/>
-            <rect x="14" y="37" width="32" height="17" rx="9" fill="#374151"/>
-            <path d="M18 28 Q18 14 30 14 Q42 14 42 28 Q42 38 30 40 Q18 38 18 28Z" fill="#4b5563"/>
-            <path d="M18 28 Q20 36 30 38 Q40 36 42 28 Q38 34 30 35 Q22 34 18 28Z" fill="#374151"/>
-            <ellipse cx="30" cy="26" rx="9" ry="10" fill="#c9a96e"/>
-            <circle cx="26.5" cy="25" r="1.3" fill="#1a0e00"/>
-            <circle cx="33.5" cy="25" r="1.3" fill="#1a0e00"/>
-            <path d="M25.2 23.5 L24.5 22.5" stroke="#1a0e00" stroke-width=".8" stroke-linecap="round"/>
-            <path d="M26.5 23.2 L26.5 22" stroke="#1a0e00" stroke-width=".8" stroke-linecap="round"/>
-            <path d="M34.8 23.5 L35.5 22.5" stroke="#1a0e00" stroke-width=".8" stroke-linecap="round"/>
-            <path d="M33.5 23.2 L33.5 22" stroke="#1a0e00" stroke-width=".8" stroke-linecap="round"/>
-            <path d="M27 28.5 Q30 31 33 28.5" stroke="#7a4f30" stroke-width="1.2" stroke-linecap="round" fill="none"/>
-            <circle cx="24" cy="27" r="2.5" fill="rgba(236,72,153,.18)"/>
-            <circle cx="36" cy="27" r="2.5" fill="rgba(236,72,153,.18)"/>
-          </svg>
-          <span class="gender-seg-label">طالبة</span>
+          <div class="gender-avatar-preview" id="genderFemaleAvatarPreview"></div>
+          <div>
+            <div class="gender-type-label">طالبة</div>
+            <div style="font-size:10px;opacity:.65;font-weight:600;">Female</div>
+          </div>
         </button>
       </div>
     </div>
@@ -2474,6 +2687,7 @@ body {
     </div>
     <div class="info-row"><i class="fa-solid fa-envelope"></i> البريد: <span id="profileEmail">—</span></div>
     <div class="info-row"><i class="fa-solid fa-shield-halved"></i> الصلاحية: <span id="profileRole">—</span></div>
+    <div class="info-row" id="profileGenderRow" style="display:none"><i class="fa-solid fa-user-circle"></i> النوع: <span id="profileGenderText">—</span></div>
 
     <!-- ══ XP CARD — MMORPG Style ══ -->
     <div class="prof-xp-card" id="profXpCard">
@@ -2616,6 +2830,10 @@ body {
         <span class="st-icon"><i class="fa-solid fa-comments"></i></span>الشات
       </button>
 
+      <button class="sidebar-tab" id="stab-rooms" onclick="switchSidebarTab('rooms')">
+        <span class="st-icon"><i class="fa-solid fa-layer-group"></i></span>الغرف
+      </button>
+
       <button class="sidebar-tab" id="stab-members" onclick="switchSidebarTab('members')">
         <span class="st-icon"><i class="fa-solid fa-users"></i></span>الأعضاء
       </button>
@@ -2628,6 +2846,13 @@ body {
         </div>
       </div>
       <div class="dm-list" id="dmList">
+        <!-- Populated by JS -->
+      </div>
+    </div>
+
+    <!-- Panel 2: Rooms List -->
+    <div class="sidebar-panel" id="spanel-rooms">
+      <div class="stab-rooms-panel" id="roomsList">
         <!-- Populated by JS -->
       </div>
     </div>
@@ -2790,6 +3015,24 @@ body {
     </div>
 
     <div class="panel-sec">
+      <div class="panel-sec-title"><i class="fa-solid fa-layer-group"></i> إنشاء غرفة شات جديدة</div>
+      <div class="label">اسم الغرفة *</div>
+      <input class="inp" id="oRoomName" placeholder="مثال: Anime Room, VIP Lounge...">
+      <div class="label">اختر أيقونة الغرفة</div>
+      <div class="room-create-grid" id="roomIconGrid">
+        <button class="room-icon-btn sel" data-icon="💬" onclick="selectRoomIcon(this)">💬</button>
+        <button class="room-icon-btn" data-icon="⚡" onclick="selectRoomIcon(this)">⚡</button>
+        <button class="room-icon-btn" data-icon="🎮" onclick="selectRoomIcon(this)">🎮</button>
+        <button class="room-icon-btn" data-icon="🎵" onclick="selectRoomIcon(this)">🎵</button>
+        <button class="room-icon-btn" data-icon="🌸" onclick="selectRoomIcon(this)">🌸</button>
+        <button class="room-icon-btn" data-icon="👑" onclick="selectRoomIcon(this)">👑</button>
+        <button class="room-icon-btn" data-icon="🔥" onclick="selectRoomIcon(this)">🔥</button>
+        <button class="room-icon-btn" data-icon="🎭" onclick="selectRoomIcon(this)">🎭</button>
+      </div>
+      <button class="btn" id="oCreateRoomBtn"><i class="fa-solid fa-plus"></i> إنشاء الغرفة</button>
+    </div>
+
+    <div class="panel-sec">
       <div class="panel-sec-title"><i class="fa-solid fa-users"></i> إدارة المستخدمين الكاملة</div>
       <input class="inp" id="ownerSearchInput" placeholder="بحث باسم أو بريد...">
       <div id="ownerUsersList"><div class="spinner"></div></div>
@@ -2841,6 +3084,36 @@ body {
       <button class="btn" id="oAddSecBtn"><i class="fa-solid fa-plus"></i> إضافة</button>
     </div>
 
+  </div>
+</div>
+
+<!-- VIP Assignment Modal -->
+<div id="vipAssignModal" class="vip-assign-modal-backdrop">
+  <div class="vip-assign-modal">
+    <div class="vip-modal-header">
+      <div class="vip-modal-title"><i class="fa-solid fa-crown"></i> تعيين مستوى VIP</div>
+      <button class="vip-modal-close" onclick="closeVipModal()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="vip-modal-target">
+      <i class="fa-solid fa-circle-user" style="color:var(--gold)"></i>
+      المستخدم: <strong id="vipModalTargetName">—</strong>
+    </div>
+    <div class="vip-modal-type-tabs">
+      <button class="vip-modal-type-btn av" id="vipModalVipBtn" onclick="setVipModalType('VIP')">⭐ VIP</button>
+      <button class="vip-modal-type-btn" id="vipModalSvipBtn" onclick="setVipModalType('SVIP')">✦ SVIP</button>
+    </div>
+    <div class="vip-modal-grid" id="vipModalGrid">
+      <!-- Populated by JS -->
+    </div>
+    <div class="vip-modal-preview" id="vipModalPreview">
+      <!-- Preview badge -->
+    </div>
+    <button class="vip-modal-save-btn" id="vipModalSaveBtn" onclick="saveVipAssignment()">
+      <i class="fa-solid fa-floppy-disk"></i> حفظ وتطبيق فوراً
+    </button>
+    <button class="vip-modal-remove-btn" onclick="removeVipAssignment()">
+      <i class="fa-solid fa-trash"></i> إزالة VIP (إعادة لـ Auto)
+    </button>
   </div>
 </div>
 
@@ -3047,6 +3320,13 @@ window.openChatPage = function() {
   showPage("page-chat");
   buildDmList();
   startChatListener("public");
+  startRoomsListener(); // ensure rooms are loaded
+  // Update online presence
+  if (currentUser?.uid) {
+    updateDoc(doc(db, "users", currentUser.uid), {
+      isOnline: true, lastSeen: serverTimestamp()
+    }).catch(() => {});
+  }
 };
 window.closeChatPage = function() { showPage("page-home"); };
 
@@ -3087,6 +3367,19 @@ window.selectGender = function(g) {
     }
   }
 };
+
+// Inject premium SVG avatars into gender selector previews
+function _initGenderPreviews() {
+  const mPreview = document.getElementById("genderMaleAvatarPreview");
+  const fPreview = document.getElementById("genderFemaleAvatarPreview");
+  if (mPreview) mPreview.innerHTML = _maleSVG(36);
+  if (fPreview) fPreview.innerHTML = _femaleSVG(36);
+}
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", _initGenderPreviews);
+} else {
+  _initGenderPreviews();
+}
 
 window.setAuthMode = (mode) => {
   authMode = mode;
@@ -3182,9 +3475,20 @@ async function doLogin() {
    AUTH — LOGOUT
 ══════════════════════════════════════════ */
 async function doLogout() {
+  // تحديث الحضور: offline قبل تسجيل الخروج
+  if (currentUser?.uid) {
+    try {
+      await updateDoc(doc(db, "users", currentUser.uid), { isOnline: false, lastSeen: serverTimestamp() });
+    } catch(e) {}
+  }
+
   if (msgUnsub)         { msgUnsub();         msgUnsub         = null; }
   if (_privateChatUnsub){ _privateChatUnsub(); _privateChatUnsub = null; }
   if (_ownerVipUnsub)   { _ownerVipUnsub();   _ownerVipUnsub   = null; }
+  if (_roomsUnsub)      { _roomsUnsub();       _roomsUnsub      = null; }
+  if (_selfListenerUnsub){ _selfListenerUnsub(); _selfListenerUnsub = null; }
+  // clean up all global VIP listeners
+  Object.keys(_globalVipListeners).forEach(uid => { _globalVipListeners[uid](); delete _globalVipListeners[uid]; });
   _acceptedPeers  = {};
   _userCache      = {};
   _allUsersCache  = null;
@@ -3202,35 +3506,137 @@ document.getElementById("logoutBtnProfile").addEventListener("click", doLogout);
    DEFAULT AVATAR SVGs
 ══════════════════════════════════════════ */
 function _maleSVG(size) {
-  return `<svg width="${size}" height="${size}" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg" style="border-radius:50%">
-    <circle cx="30" cy="30" r="30" fill="#1a2d47"/>
-    <rect x="16" y="38" width="28" height="16" rx="8" fill="#2563eb"/>
-    <rect x="26" y="32" width="8" height="8" rx="3" fill="#c9a96e"/>
-    <circle cx="30" cy="24" r="10" fill="#c9a96e"/>
-    <path d="M20 22 Q22 12 30 12 Q38 12 40 22 Q36 18 30 19 Q24 18 20 22Z" fill="#2d1e0f"/>
-    <circle cx="26.5" cy="23" r="1.2" fill="#1a0e00"/>
-    <circle cx="33.5" cy="23" r="1.2" fill="#1a0e00"/>
-    <path d="M26.5 27.5 Q30 30 33.5 27.5" stroke="#1a0e00" stroke-width="1.2" stroke-linecap="round" fill="none"/>
-    <path d="M26 38 L30 43 L34 38" stroke="white" stroke-width="1.5" fill="none" stroke-linejoin="round"/>
+  // Premium Male Avatar — Deep blue theme with gold accent
+  return `<svg width="${size}" height="${size}" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg" style="border-radius:50%;display:block;">
+    <defs>
+      <radialGradient id="mgBg${size}" cx="40%" cy="35%" r="65%">
+        <stop offset="0%" stop-color="#0f2044"/>
+        <stop offset="100%" stop-color="#060d1a"/>
+      </radialGradient>
+      <radialGradient id="mgSkin${size}" cx="45%" cy="35%" r="60%">
+        <stop offset="0%" stop-color="#e8c97a"/>
+        <stop offset="100%" stop-color="#c9a557"/>
+      </radialGradient>
+      <linearGradient id="mgShirt${size}" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#1d4ed8"/>
+        <stop offset="100%" stop-color="#1e3a8a"/>
+      </linearGradient>
+      <radialGradient id="mgGlow${size}" cx="50%" cy="45%" r="50%">
+        <stop offset="0%" stop-color="rgba(59,130,246,0.18)"/>
+        <stop offset="100%" stop-color="transparent"/>
+      </radialGradient>
+    </defs>
+    <!-- Background -->
+    <circle cx="40" cy="40" r="40" fill="url(#mgBg${size})"/>
+    <circle cx="40" cy="40" r="40" fill="url(#mgGlow${size})"/>
+    <!-- Body / Shirt -->
+    <path d="M13 80 Q14 54 40 50 Q66 54 67 80Z" fill="url(#mgShirt${size})"/>
+    <!-- Collar & tie detail -->
+    <path d="M34 51 L40 56 L46 51 L42 51 L40 53 L38 51Z" fill="#93c5fd"/>
+    <path d="M38.5 53 L40 70 L41.5 53 L40 56Z" fill="#bfdbfe" opacity="0.6"/>
+    <!-- Neck -->
+    <rect x="35" y="43" width="10" height="10" rx="4" fill="url(#mgSkin${size})"/>
+    <!-- Head -->
+    <ellipse cx="40" cy="30" rx="14" ry="15" fill="url(#mgSkin${size})"/>
+    <!-- Hair — short masculine -->
+    <path d="M26 29 Q26 14 40 13 Q54 14 54 29 Q52 20 40 19 Q28 20 26 29Z" fill="#2d1810"/>
+    <!-- Ear left -->
+    <ellipse cx="26.5" cy="30" rx="2" ry="3" fill="#c9a557"/>
+    <!-- Ear right -->
+    <ellipse cx="53.5" cy="30" rx="2" ry="3" fill="#c9a557"/>
+    <!-- Eye Left -->
+    <ellipse cx="34.5" cy="29" rx="2.2" ry="2" fill="#1a0e00"/>
+    <circle cx="35" cy="28.5" r=".7" fill="white" opacity=".5"/>
+    <!-- Eye Right -->
+    <ellipse cx="45.5" cy="29" rx="2.2" ry="2" fill="#1a0e00"/>
+    <circle cx="46" cy="28.5" r=".7" fill="white" opacity=".5"/>
+    <!-- Eyebrows -->
+    <path d="M32 26 Q34.5 24.8 37 26" stroke="#2d1810" stroke-width="1.2" stroke-linecap="round" fill="none"/>
+    <path d="M43 26 Q45.5 24.8 48 26" stroke="#2d1810" stroke-width="1.2" stroke-linecap="round" fill="none"/>
+    <!-- Nose -->
+    <path d="M39 31 Q38.5 35 39.5 36 Q40.5 36 41.5 35 Q42.5 34 40 31" stroke="#b8883d" stroke-width=".8" fill="none" opacity=".6"/>
+    <!-- Smile -->
+    <path d="M35.5 38 Q40 41.5 44.5 38" stroke="#8b5e24" stroke-width="1.3" stroke-linecap="round" fill="none"/>
+    <!-- Cheek blush -->
+    <circle cx="30" cy="35" r="3.5" fill="rgba(255,200,100,0.15)"/>
+    <circle cx="50" cy="35" r="3.5" fill="rgba(255,200,100,0.15)"/>
   </svg>`;
 }
 
 function _femaleSVG(size) {
-  return `<svg width="${size}" height="${size}" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg" style="border-radius:50%">
-    <circle cx="30" cy="30" r="30" fill="#1a1a2e"/>
-    <rect x="14" y="37" width="32" height="17" rx="9" fill="#374151"/>
-    <path d="M18 28 Q18 14 30 14 Q42 14 42 28 Q42 38 30 40 Q18 38 18 28Z" fill="#4b5563"/>
-    <path d="M18 28 Q20 36 30 38 Q40 36 42 28 Q38 34 30 35 Q22 34 18 28Z" fill="#374151"/>
-    <ellipse cx="30" cy="26" rx="9" ry="10" fill="#c9a96e"/>
-    <circle cx="26.5" cy="25" r="1.3" fill="#1a0e00"/>
-    <circle cx="33.5" cy="25" r="1.3" fill="#1a0e00"/>
-    <path d="M25.2 23.5 L24.5 22.5" stroke="#1a0e00" stroke-width=".8" stroke-linecap="round"/>
-    <path d="M26.5 23.2 L26.5 22" stroke="#1a0e00" stroke-width=".8" stroke-linecap="round"/>
-    <path d="M34.8 23.5 L35.5 22.5" stroke="#1a0e00" stroke-width=".8" stroke-linecap="round"/>
-    <path d="M33.5 23.2 L33.5 22" stroke="#1a0e00" stroke-width=".8" stroke-linecap="round"/>
-    <path d="M27 28.5 Q30 31 33 28.5" stroke="#7a4f30" stroke-width="1.2" stroke-linecap="round" fill="none"/>
-    <circle cx="24" cy="27" r="2.5" fill="rgba(236,72,153,.2)"/>
-    <circle cx="36" cy="27" r="2.5" fill="rgba(236,72,153,.2)"/>
+  // Premium Female Avatar — Rose-navy theme with warm pink accent
+  return `<svg width="${size}" height="${size}" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg" style="border-radius:50%;display:block;">
+    <defs>
+      <radialGradient id="fgBg${size}" cx="40%" cy="35%" r="65%">
+        <stop offset="0%" stop-color="#1a0a2e"/>
+        <stop offset="100%" stop-color="#0d0618"/>
+      </radialGradient>
+      <radialGradient id="fgSkin${size}" cx="45%" cy="35%" r="60%">
+        <stop offset="0%" stop-color="#f0c987"/>
+        <stop offset="100%" stop-color="#d4a055"/>
+      </radialGradient>
+      <linearGradient id="fgShirt${size}" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#be185d"/>
+        <stop offset="100%" stop-color="#831843"/>
+      </linearGradient>
+      <radialGradient id="fgGlow${size}" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stop-color="rgba(236,72,153,0.14)"/>
+        <stop offset="100%" stop-color="transparent"/>
+      </radialGradient>
+      <radialGradient id="fgHair${size}" cx="50%" cy="20%" r="70%">
+        <stop offset="0%" stop-color="#3d1a1a"/>
+        <stop offset="100%" stop-color="#1a0a0a"/>
+      </radialGradient>
+    </defs>
+    <!-- Background -->
+    <circle cx="40" cy="40" r="40" fill="url(#fgBg${size})"/>
+    <circle cx="40" cy="40" r="40" fill="url(#fgGlow${size})"/>
+    <!-- Body -->
+    <path d="M11 80 Q13 52 40 49 Q67 52 69 80Z" fill="url(#fgShirt${size})"/>
+    <!-- Neckline detail -->
+    <path d="M33 50 Q40 53 47 50 Q43 55 40 55 Q37 55 33 50Z" fill="#fb7185" opacity=".6"/>
+    <!-- Neck -->
+    <rect x="35.5" y="43" width="9" height="9" rx="4" fill="url(#fgSkin${size})"/>
+    <!-- Long hair behind (back layer) -->
+    <path d="M22 30 Q21 48 26 62 Q30 70 35 72 Q38 73 40 73 Q42 73 45 72 Q50 70 54 62 Q59 48 58 30 Q55 40 40 41 Q25 40 22 30Z" fill="url(#fgHair${size})"/>
+    <!-- Head -->
+    <ellipse cx="40" cy="28" rx="13.5" ry="14.5" fill="url(#fgSkin${size})"/>
+    <!-- Hair top -->
+    <path d="M27 27 Q27 13 40 12 Q53 13 53 27 Q51 18 40 17 Q29 18 27 27Z" fill="url(#fgHair${size})"/>
+    <!-- Hair side sweeps -->
+    <path d="M26.5 25 Q24 30 25 38 Q27 26 29 24Z" fill="url(#fgHair${size})"/>
+    <path d="M53.5 25 Q56 30 55 38 Q53 26 51 24Z" fill="url(#fgHair${size})"/>
+    <!-- Small curls / fringe -->
+    <path d="M28 20 Q30 15 33 17" stroke="#3d1a1a" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <path d="M47 17 Q50 15 52 20" stroke="#3d1a1a" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <!-- Ears -->
+    <ellipse cx="26.5" cy="28.5" rx="2.2" ry="2.8" fill="#d4a055"/>
+    <ellipse cx="53.5" cy="28.5" rx="2.2" ry="2.8" fill="#d4a055"/>
+    <!-- Ear rings -->
+    <circle cx="26.5" cy="31" r="1.2" fill="#f9a8d4" opacity=".9"/>
+    <circle cx="53.5" cy="31" r="1.2" fill="#f9a8d4" opacity=".9"/>
+    <!-- Eye Left -->
+    <ellipse cx="34" cy="27.5" rx="2.5" ry="2.2" fill="#1a0e00"/>
+    <circle cx="34.6" cy="27" r=".8" fill="white" opacity=".5"/>
+    <!-- Eye Right -->
+    <ellipse cx="46" cy="27.5" rx="2.5" ry="2.2" fill="#1a0e00"/>
+    <circle cx="46.6" cy="27" r=".8" fill="white" opacity=".5"/>
+    <!-- Lashes upper left -->
+    <path d="M31.5 25.5 Q34 24 36.5 25.5" stroke="#1a0e00" stroke-width="1.2" stroke-linecap="round" fill="none"/>
+    <!-- Lashes upper right -->
+    <path d="M43.5 25.5 Q46 24 48.5 25.5" stroke="#1a0e00" stroke-width="1.2" stroke-linecap="round" fill="none"/>
+    <!-- Eyebrow Left (arched) -->
+    <path d="M31 23.5 Q34 21.5 37 23.5" stroke="#3d1a1a" stroke-width="1.3" stroke-linecap="round" fill="none"/>
+    <!-- Eyebrow Right (arched) -->
+    <path d="M43 23.5 Q46 21.5 49 23.5" stroke="#3d1a1a" stroke-width="1.3" stroke-linecap="round" fill="none"/>
+    <!-- Nose -->
+    <path d="M39 31 Q38.5 34 39.5 35 Q40.5 35.2 41.5 34 Q42.5 33 40 31" stroke="#b8883d" stroke-width=".8" fill="none" opacity=".5"/>
+    <!-- Smile with lipstick -->
+    <path d="M35.5 37.5 Q40 41 44.5 37.5" stroke="#c2185b" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+    <path d="M35.5 37.5 Q40 38.5 44.5 37.5" stroke="#e91e8c" stroke-width=".6" fill="none" opacity=".4"/>
+    <!-- Cheek blush -->
+    <ellipse cx="29" cy="33" rx="4" ry="2.5" fill="rgba(236,72,153,0.2)"/>
+    <ellipse cx="51" cy="33" rx="4" ry="2.5" fill="rgba(236,72,153,0.2)"/>
   </svg>`;
 }
 
@@ -3242,7 +3648,7 @@ function _defaultAvatarHTML(gender, size) {
 /* ══════════════════════════════════════════
    AVATAR HELPERS
 ══════════════════════════════════════════ */
-function setAvatarUI(src, isUrl) {
+function setAvatarUI(src, isUrl, gender) {
   // isUrl=null means SVG content directly
   ["avatar","profileAvatar"].forEach(id => {
     const el = document.getElementById(id);
@@ -3251,6 +3657,13 @@ function setAvatarUI(src, isUrl) {
       el.innerHTML = src; // raw SVG
     } else {
       el.innerHTML = isUrl ? `<img src="${src}" alt="">` : src;
+    }
+    // Apply gender glow class to profile avatar
+    if (id === "profileAvatar") {
+      el.classList.remove("gender-male","gender-female","gender-none");
+      if (gender === "male")   el.classList.add("gender-male");
+      else if (gender === "female") el.classList.add("gender-female");
+      else el.classList.add("gender-none");
     }
   });
 }
@@ -3323,13 +3736,25 @@ onAuthStateChanged(auth, async (user) => {
   const roleLabels = { owner:"<i class=\"fa-solid fa-crown\"></i> أونر (Super Admin)", admin:"<i class=\"fa-solid fa-gear\"></i> أدمن", user:"<i class=\"fa-solid fa-circle-user\"></i> مستخدم" };
   document.getElementById("profileRole").innerHTML = roleLabels[currentRole] || currentRole;
 
+  // Show gender
+  const gEl = document.getElementById("profileGenderRow");
+  const gTxt = document.getElementById("profileGenderText");
+  if (gEl && gTxt && userData.gender) {
+    gEl.style.display = "flex";
+    const gIcon = userData.gender === "female"
+      ? `<i class="fa-solid fa-venus" style="color:#f9a8d4;"></i>`
+      : `<i class="fa-solid fa-mars" style="color:#93c5fd;"></i>`;
+    gTxt.innerHTML = userData.gender === "female"
+      ? `${gIcon} طالبة` : `${gIcon} طالب`;
+  }
+
   const badgeEl    = document.getElementById("roleBadgeTop");
   const badgeClass = { owner:"owner", admin:"admin", user:"user" }[currentRole] || "user";
   const badgeText  = { owner:"<i class=\"fa-solid fa-crown\"></i> Owner", admin:"<i class=\"fa-solid fa-gear\"></i> Admin", user:"<i class=\"fa-solid fa-circle-user\"></i> User" }[currentRole] || "User";
   badgeEl.innerHTML = `<span class="role-badge ${badgeClass}">${badgeText}</span>`;
 
-  if (photo) setAvatarUI(photo, true);
-  else       setAvatarUI(_defaultAvatarHTML(userData.gender, 88), null);
+  if (photo) setAvatarUI(photo, true, userData.gender);
+  else       setAvatarUI(_defaultAvatarHTML(userData.gender, 96), null, userData.gender);
 
   document.getElementById("ownerBtn").style.display = isOwner() ? "inline-block" : "none";
   document.getElementById("adminBtn").style.display = isAdmin() && !isOwner() ? "inline-block" : "none";
@@ -3338,6 +3763,18 @@ onAuthStateChanged(auth, async (user) => {
   // يستمع دائماً لتغييرات VIP/SVIP على حساب المالك
   // ويحدّث كل DOM فورياً عند أي تغيير
   _startOwnerVipListener(OWNER_UID);
+
+  // ── Self-Listener: مراقبة التغييرات على حسابنا الخاص في realtime ──
+  // يكشف: حظر الشات، رفع الحظر، تغيير الصورة، تغيير الاسم
+  _startSelfListener(user.uid);
+
+  // ── بدء مستمع الغرف الحية ──────────────────────────────────
+  startRoomsListener();
+
+  // ── تحديث الحضور الإلكتروني (isOnline) ───────────────────
+  updateDoc(doc(db, "users", user.uid), {
+    isOnline: true, lastSeen: serverTimestamp()
+  }).catch(() => {});
 
   // ── Owner Rank Control Panel ──────────────────────
   const isVerOwner = _isVerifiedOwner(user.uid);
@@ -3363,11 +3800,12 @@ onAuthStateChanged(auth, async (user) => {
    SIDEBAR TAB SWITCHER
 ══════════════════════════════════════════ */
 function switchSidebarTab(tab) {
-  ["chats","members"].forEach(t => {
+  ["chats","rooms","members"].forEach(t => {
     document.getElementById(`stab-${t}`)?.classList.toggle("active", t === tab);
     document.getElementById(`spanel-${t}`)?.classList.toggle("active", t === tab);
   });
   if (tab === "members") renderMembersList("");
+  if (tab === "rooms")   renderRoomsList();
 }
 
 /* ══════════════════════════════════════════
@@ -3665,10 +4103,11 @@ function _updateDmItemUI(uid) {
   const timeStr = _fmtDmTime(meta.lastMessageAt);
   const cached = _userCache[uid];
   const u = cached?.data || cached || {};
+  const isOnline = u.isOnline || false;
 
   el.innerHTML = `
     <div class="dm-avatar-wrap">
-      <div class="dm-avatar">${u.photo ? `<img src="${esc(u.photo)}" alt="">` : _defaultAvatarHTML(u.gender, 46)}</div>
+      <div class="dm-avatar">${u.photo ? `<img src="${esc(u.photo)}" alt="">` : _defaultAvatarHTML(u.gender, 48)}</div>
       <div class="dm-online-dot"></div>
     </div>
     <div class="dm-info">
@@ -3684,6 +4123,9 @@ function _updateDmItemUI(uid) {
   `;
   el.onclick = () => selectChat(uid, u.name, u.photo);
   el.dataset.roomId = roomId;
+  // Online indicator
+  if (isOnline) el.classList.add("is-online");
+  else el.classList.remove("is-online");
   _sortDmItems();
 }
 
@@ -3764,6 +4206,9 @@ async function _rebuildDmItems(peerIds) {
 
     // Attach real-time meta listener (last message + unread)
     _attachDmMetaListener(uid);
+
+    // ── Attach global VIP listener so badge updates instantly ──
+    _ensureVipListener(uid);
   });
 
   // Clean up listeners for removed peers
@@ -4097,6 +4542,7 @@ function dmRoomId(otherUid) { return privateChatId(otherUid); }
 // Collection path helper — يستخدم chatId المرتب
 function chatColPath(chatId) {
   if (chatId === "public") return "messages";
+  if (chatId && chatId.startsWith("room:")) return `rooms/${chatId.slice(5)}/messages`;
   return `privateChats/${privateChatId(chatId)}/messages`;
 }
 
@@ -4242,7 +4688,7 @@ function appendChatMsg(container, docId, d, prevDate, setDate) {
       }
       return d.gender;
     })();
-    avatarHtml = `<div class="msg-avatar-sm">${d.photo ? `<img src="${esc(d.photo)}" alt="">` : _defaultAvatarHTML(_msgGender, 32)}</div>`;
+    avatarHtml = `<div class="msg-avatar-sm" data-avatar-uid="${esc(d.uid)}">${d.photo ? `<img src="${esc(d.photo)}" alt="">` : _defaultAvatarHTML(_msgGender, 32)}</div>`;
   }
 
   // Bubble content
@@ -4311,6 +4757,9 @@ function appendChatMsg(container, docId, d, prevDate, setDate) {
   `;
 
   container.appendChild(row);
+
+  // ── Ensure VIP listener is active for this sender ──
+  if (d.uid && d.uid !== currentUser?.uid) _ensureVipListener(d.uid);
 }
 
 /* ══════════════════════════════════════════
@@ -4461,6 +4910,8 @@ window.adminDeleteMsg = async function(docId) {
   if (!ok) return;
   try {
     await deleteDoc(doc(db, chatColPath(_currentChatId), docId));
+    // ✅ إزالة فورية من الـ DOM — الـ liveQ لا يكتشف حذف الرسائل القديمة
+    document.getElementById(`msg-${docId}`)?.remove();
     toast("تم حذف الرسالة");
   } catch(e) { toast("فشل الحذف", "error"); }
 };
@@ -4659,7 +5110,7 @@ document.getElementById("uploadBtn").addEventListener("click", async () => {
     const url = await getDownloadURL(r);
     await updateDoc(doc(db, "users", currentUser.uid), { photo: url });
     currentPhoto = url;
-    setAvatarUI(url, true);
+    setAvatarUI(url, true, window._currentUserData?.gender);
     toast("تم رفع الصورة");
   } catch(e) { toast("فشل رفع الصورة", "error"); }
 });
@@ -4925,6 +5376,18 @@ function renderOwnerUsers(users) {
     const actionsEl = div.querySelector(`#oactions-${uid}`);
 
     if (!isSelf && !isOwnerDoc && canModifyUser(currentRole, uRole)) {
+
+      // ── VIP Assignment Button (Owner only) ──
+      if (isOwner()) {
+        const vipBtn = document.createElement("button");
+        vipBtn.className = "vip-assign-act-btn";
+        const cv = u.vipType && u.vipLevel
+          ? `${u.vipType}${u.vipLevel}`
+          : "بدون VIP";
+        vipBtn.innerHTML = `<i class="fa-solid fa-star"></i> VIP (${cv})`;
+        vipBtn.addEventListener("click", () => openVipModal(uid, u.name || "مستخدم"));
+        actionsEl.appendChild(vipBtn);
+      }
 
       // Ban / Unban (account)
       const banBtn = document.createElement("button");
@@ -5253,14 +5716,21 @@ async function _awardXP(uid, amount = XP_PER_MSG) {
     const oldXP   = d.xp   ?? 0;
     const newXP   = oldXP + amount;
     const newLv   = calcLevel(newXP);
-    const vip     = calcVIP(newLv);
 
-    await updateDoc(doc(db, "users", uid), {
+    // Only auto-update vipLevel/vipType if NOT manually overridden by owner
+    const isManual = d.vipManual === true;
+    const vip      = isManual ? { type: d.vipType || "VIP", n: d.vipLevel || 1 } : calcVIP(newLv);
+
+    const updatePayload = {
       xp:       newXP,
       level:    newLv,
-      vipLevel: vip.n,
-      vipType:  vip.type
-    });
+    };
+    if (!isManual) {
+      updatePayload.vipLevel = vip.n;
+      updatePayload.vipType  = vip.type;
+    }
+
+    await updateDoc(doc(db, "users", uid), updatePayload);
 
     // تحديث الـ cache المحلي لعرض فوري
     const cached = _userCache[uid];
@@ -5268,8 +5738,7 @@ async function _awardXP(uid, amount = XP_PER_MSG) {
       const obj = cached?.data || cached;
       obj.xp       = newXP;
       obj.level    = newLv;
-      obj.vipLevel = vip.n;
-      obj.vipType  = vip.type;
+      if (!isManual) { obj.vipLevel = vip.n; obj.vipType = vip.type; }
     }
 
     // تحديث واجهة البروفايل فوراً إذا كان هو المستخدم الحالي
@@ -5583,70 +6052,83 @@ window.updateOwnerRank = async function(type, level) {
 };
 
 /* ══════════════════════════════════════════
-   _applyVipUpdateToDOM(uid, newData)
-   ↳ تحديث كامل وفوري لكل عناصر DOM
-      المرتبطة بـ uid معين عند تغيير VIP
-   ══════════════════════════════════════════
-   يستدعيها:
-     - _startOwnerVipListener (realtime)
-     - saveOwnerRank (بعد الحفظ)
+   _startOwnerVipListener — kept for compatibility
 ══════════════════════════════════════════ */
-function _applyVipUpdateToDOM(uid, newData) {
-  if (!uid || !newData) return;
+/* ══════════════════════════════════════════
+   _startSelfListener(myUid)
+   ↳ مراقبة بيانات المستخدم الحالي في realtime
+   ↳ يكشف: isChatBanned, isBanned, name, photo, role
+   ↳ يُحدّث كل UI فوراً بدون Refresh
+══════════════════════════════════════════ */
+let _selfListenerUnsub = null;
 
-  // 1. تحديث _userCache فوراً
-  if (_userCache[uid]) {
-    const cacheEntry = _userCache[uid];
-    const obj = cacheEntry?.data || cacheEntry;
-    obj.vipType  = newData.vipType;
-    obj.vipLevel = newData.vipLevel;
-    if (newData.level !== undefined) obj.level = newData.level;
-    if (newData.xp    !== undefined) obj.xp    = newData.xp;
-    if (newData.name  !== undefined) obj.name  = newData.name;
-    if (newData.photo !== undefined) obj.photo = newData.photo;
-  } else {
-    // نضع نسخة في الـ cache إذا لم تكن موجودة
-    _userCache[uid] = { data: { ...newData, uid }, ts: Date.now() };
-  }
+function _startSelfListener(myUid) {
+  if (_selfListenerUnsub) { _selfListenerUnsub(); _selfListenerUnsub = null; }
+  if (!myUid) return;
 
-  // 2. تحديث window._currentUserData إذا كان هو نفس المستخدم
-  if (currentUser && uid === currentUser.uid && window._currentUserData) {
-    window._currentUserData.vipType  = newData.vipType;
-    window._currentUserData.vipLevel = newData.vipLevel;
-    if (newData.level !== undefined) window._currentUserData.level = newData.level;
-    if (newData.xp    !== undefined) window._currentUserData.xp    = newData.xp;
-  }
+  let _prevSelfKey = null;
+  _selfListenerUnsub = onSnapshot(doc(db, "users", myUid), snap => {
+    if (!snap.exists()) return;
+    const d = snap.data();
 
-  // 3. تحديث كل .msg-sender-name[data-sender-uid="uid"] في الشات
-  document.querySelectorAll(`.msg-sender-name[data-sender-uid="${uid}"]`).forEach(el => {
-    const cachedUser = (_userCache[uid]?.data) || _userCache[uid] || newData;
-    el.innerHTML = renderUserDisplay(cachedUser.name || newData.name || "", cachedUser, uid);
-  });
+    // كشف حظر الحساب الكامل (isBanned) — يُسجّل الخروج فورياً
+    if (d.isBanned && !_isVerifiedOwner(myUid)) {
+      toast("⛔ تم حظر حسابك — تواصل مع الإدارة", "error");
+      setTimeout(() => doLogout(), 1500);
+      return;
+    }
 
-  // 4. تحديث Topbar + Profile إذا كان هو المستخدم الحالي
-  if (currentUser && uid === currentUser.uid) {
-    const displayData = window._currentUserData || newData;
-    const nameToShow  = displayData.name || currentName || "";
+    const key = `${d.isChatBanned||false}_${d.name||""}_${d.photo||""}_${d.role||"user"}_${d.vipType||"VIP"}_${d.vipLevel||1}`;
+    if (_prevSelfKey === key) return;
+    _prevSelfKey = key;
+
+    // حظر الشات — تحديث realtime
+    const newChatBanned = d.isChatBanned || false;
+    if (typeof _isChatBanned !== "undefined" && newChatBanned !== _isChatBanned) {
+      _isChatBanned = newChatBanned;
+      updateChatBannedState();
+      if (newChatBanned) toast("⛔ تم حظرك من إرسال الرسائل", "error");
+      else toast("✅ تم رفع حظر الشات عنك", "success");
+    }
+
+    // تحديث بيانات المستخدم الحالي
+    if (window._currentUserData) Object.assign(window._currentUserData, d);
+    currentName  = d.name  || currentName;
+    currentPhoto = d.photo || currentPhoto;
+    currentRole  = d.role  || currentRole;
+
+    // تحديث الـ cache
+    _userCache[myUid] = { data: { ...d, uid: myUid }, ts: Date.now() };
+
+    // تحديث UI
     document.getElementById("welcomeText").innerHTML =
-      renderUserDisplay(nameToShow, displayData, uid);
+      renderUserDisplay(d.name || currentName, d, myUid);
     document.getElementById("profileName").innerHTML =
-      renderUserDisplay(nameToShow, displayData, uid);
-    updateProfileXP(displayData);
-  }
+      renderUserDisplay(d.name || currentName, d, myUid);
+    if (d.bio !== undefined)
+      document.getElementById("profileBioText").textContent = d.bio || "";
+    if (d.photo) setAvatarUI(d.photo, true, d.gender);
+    else if (d.gender) setAvatarUI(_defaultAvatarHTML(d.gender, 96), null, d.gender);
 
-  // 5. تحديث عناصر DM sidebar — dm-item + members list
-  // (نستخدم _updateDmItemUI إذا كان في قائمة المحادثات)
-  if (_acceptedPeers && _acceptedPeers[uid]) {
-    _updateDmItemUI(uid);
-  }
+    updateProfileXP(d);
 
-  // 6. تحديث قائمة الأعضاء إذا كانت مفتوحة
-  const membersPanel = document.getElementById("spanel-members");
-  if (membersPanel && membersPanel.classList.contains("active")) {
-    // مسح الـ cache ليُعاد البناء بالبيانات الجديدة
-    _allUsersCache = null;
-    renderMembersList(document.getElementById("membersSearch")?.value || "");
-  }
+    // Role badge
+    const badgeEl    = document.getElementById("roleBadgeTop");
+    const badgeClass = { owner:"owner", admin:"admin", user:"user" }[d.role] || "user";
+    const badgeText  = { owner:"<i class=\"fa-solid fa-crown\"></i> Owner", admin:"<i class=\"fa-solid fa-gear\"></i> Admin", user:"<i class=\"fa-solid fa-circle-user\"></i> User" }[d.role] || "User";
+    if (badgeEl) badgeEl.innerHTML = `<span class="role-badge ${badgeClass}">${badgeText}</span>`;
+
+    // Owner/Admin buttons
+    document.getElementById("ownerBtn").style.display = (d.role === "owner") ? "inline-block" : "none";
+    document.getElementById("adminBtn").style.display = (d.role === "admin") ? "inline-block" : "none";
+
+    // تحديث كل رسائل المستخدم الحالي في الشات
+    document.querySelectorAll(`.msg-sender-name[data-sender-uid="${myUid}"]`).forEach(el => {
+      el.innerHTML = renderUserDisplay(d.name || "", d, myUid);
+    });
+  }, err => {
+    if (err.code !== "permission-denied") console.warn("selfListener:", err.code);
+  });
 }
 
 /* ══════════════════════════════════════════
@@ -5693,6 +6175,474 @@ function _startOwnerVipListener(ownerUid) {
 /* — Also expose setRankLevel/setRankType globally for HTML onclick — */
 window.setRankType  = window.setRankType  || function(){};
 window.setRankLevel = window.setRankLevel || function(){};
+
+/* ══════════════════════════════════════════
+   ⚡ ROOMS SYSTEM
+   ✓ Owner creates rooms (stored in Firestore)
+   ✓ All users see rooms realtime
+   ✓ Each room has its own messages subcollection
+   ✓ Discord-style room switching
+══════════════════════════════════════════ */
+let _roomsUnsub = null;
+let _allRooms   = [];       // live rooms array
+let _selectedRoomIcon = "💬";
+
+// Start realtime listener for rooms collection
+function startRoomsListener() {
+  if (_roomsUnsub) return; // already listening
+  const q = query(collection(db, "rooms"), orderBy("createdAt", "asc"));
+  _roomsUnsub = onSnapshot(q, snap => {
+    _allRooms = [];
+    snap.forEach(d => _allRooms.push({ id: d.id, ...d.data() }));
+    renderRoomsList();
+  }, err => {
+    if (err.code !== "permission-denied") console.warn("roomsListener:", err.code);
+  });
+}
+
+// Render rooms list in sidebar panel
+function renderRoomsList() {
+  const el = document.getElementById("roomsList");
+  if (!el) return;
+  el.innerHTML = "";
+
+  // Add "Public Chat" at top as a room-like item
+  const pubDiv = document.createElement("div");
+  pubDiv.className = `room-item${_currentChatId === "public" ? " active" : ""}`;
+  pubDiv.innerHTML = `
+    <div class="room-icon" style="font-size:18px;">🎓</div>
+    <div class="room-info">
+      <div class="room-name">الشات العام</div>
+      <div class="room-meta">دردشة مشتركة للجميع</div>
+    </div>
+    ${_currentChatId === "public" ? `<div class="room-online-badge">مباشر</div>` : ""}
+  `;
+  pubDiv.onclick = () => selectChat("public");
+  el.appendChild(pubDiv);
+
+  if (!_allRooms.length) {
+    const empty = document.createElement("div");
+    empty.style.cssText = "padding:20px 16px;text-align:center;color:var(--muted);font-size:12px;";
+    empty.innerHTML = `<i class="fa-solid fa-layer-group" style="font-size:24px;display:block;margin-bottom:8px;opacity:.3;"></i>لا توجد غرف بعد<br><small style="opacity:.6;">المالك فقط يستطيع إنشاء الغرف</small>`;
+    el.appendChild(empty);
+    return;
+  }
+
+  // Section header
+  const hdr = document.createElement("div");
+  hdr.className = "rooms-section-hdr";
+  hdr.innerHTML = `<span><i class="fa-solid fa-layer-group" style="color:var(--gold);margin-left:4px;font-size:11px;"></i> الغرف المتاحة (${_allRooms.length})</span>`;
+  el.appendChild(hdr);
+
+  _allRooms.forEach(room => {
+    const isActive = _currentChatId === `room:${room.id}`;
+    const div = document.createElement("div");
+    div.className = `room-item${isActive ? " active" : ""}`;
+    div.innerHTML = `
+      <div class="room-icon">${esc(room.icon || "💬")}</div>
+      <div class="room-info">
+        <div class="room-name">${esc(room.name)}</div>
+        <div class="room-meta">${room.description ? esc(room.description) : "غرفة شات عامة"}</div>
+      </div>
+      ${isActive ? `<div class="room-online-badge">مباشر</div>` : ""}
+    `;
+    div.onclick = (e) => {
+      if (e.target.closest(".room-del-btn")) return;
+      selectRoomChat(room.id, room.name, room.icon || "💬");
+    };
+    el.appendChild(div);
+
+    // Owner: delete room button
+    if (isOwner()) {
+      const delBtn = document.createElement("button");
+      delBtn.className = "room-del-btn";
+      delBtn.title = "حذف الغرفة";
+      delBtn.style.cssText = "background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.25);border-radius:7px;color:rgba(239,68,68,.7);cursor:pointer;font-size:12px;padding:5px 8px;flex-shrink:0;transition:all .15s;margin-right:4px;";
+      delBtn.innerHTML = `<i class="fa-solid fa-trash"></i>`;
+      delBtn.onmouseover = () => { delBtn.style.background = "rgba(239,68,68,.22)"; delBtn.style.color = "#fca5a5"; };
+      delBtn.onmouseout = () => { delBtn.style.background = "rgba(239,68,68,.1)"; delBtn.style.color = "rgba(239,68,68,.7)"; };
+      delBtn.onclick = async (e) => {
+        e.stopPropagation();
+        const ok = await confirm("حذف الغرفة", `هل تريد حذف غرفة "${esc(room.name)}"؟ لا يمكن التراجع.`);
+        if (!ok) return;
+        try {
+          await deleteDoc(doc(db, "rooms", room.id));
+          toast("تم حذف الغرفة");
+          if (_currentChatId === `room:${room.id}`) selectChat("public");
+        } catch(e) { toast("فشل الحذف", "error"); }
+      };
+      div.appendChild(delBtn);
+    }
+  });
+}
+
+// Select a Room as the active chat
+function selectRoomChat(roomId, roomName, roomIcon) {
+  _currentChatId   = `room:${roomId}`;
+  _currentChatName = roomName;
+  _currentChatPhoto = "";
+
+  document.getElementById("chatTopName").textContent = roomName;
+  const topAvatar = document.getElementById("chatTopAvatar");
+  topAvatar.innerHTML = `<span style="font-size:22px">${roomIcon}</span>`;
+  const statusText = document.getElementById("chatTopOnline");
+  if (statusText) statusText.textContent = "غرفة عامة";
+
+  document.querySelectorAll(".dm-item").forEach(el => el.classList.remove("active"));
+  document.querySelectorAll(".room-item").forEach(el => el.classList.remove("active"));
+
+  closeSidebar();
+  startChatListener(`room:${roomId}`);
+  renderRoomsList(); // refresh to update active state
+}
+window.selectRoomChat = selectRoomChat;
+
+// Create Room (Owner only)
+async function createRoom() {
+  if (!isOwner()) { toast("المالك فقط يستطيع إنشاء الغرف", "error"); return; }
+  const name = document.getElementById("oRoomName")?.value.trim();
+  if (!name) { toast("اكتب اسم الغرفة أولاً", "error"); return; }
+  if (name.length > 40) { toast("اسم الغرفة طويل جداً (40 حرف كحد أقصى)", "error"); return; }
+
+  const btn = document.getElementById("oCreateRoomBtn");
+  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-hourglass-half fa-spin"></i> جاري الإنشاء...'; }
+
+  try {
+    await addDoc(collection(db, "rooms"), {
+      name,
+      icon:        _selectedRoomIcon,
+      description: "",
+      createdBy:   currentUser.uid,
+      createdAt:   serverTimestamp(),
+      updatedAt:   serverTimestamp()
+    });
+    toast(`✦ تم إنشاء غرفة "${name}"`, "success");
+    document.getElementById("oRoomName").value = "";
+    // Reset icon selection
+    _selectedRoomIcon = "💬";
+    document.querySelectorAll(".room-icon-btn").forEach((b, i) => b.classList.toggle("sel", i === 0));
+  } catch(e) {
+    toast("فشل إنشاء الغرفة: " + (e.code || e.message), "error");
+  } finally {
+    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-plus"></i> إنشاء الغرفة'; }
+  }
+}
+
+window.selectRoomIcon = function(btn) {
+  document.querySelectorAll(".room-icon-btn").forEach(b => b.classList.remove("sel"));
+  btn.classList.add("sel");
+  _selectedRoomIcon = btn.dataset.icon;
+};
+
+document.getElementById("oCreateRoomBtn")?.addEventListener("click", createRoom);
+
+// Patch chatColPath to support room: prefix
+const _origChatColPath = chatColPath;
+// override chatColPath to handle room: prefix
+window._origChatColPath = _origChatColPath;
+
+/* ══════════════════════════════════════════
+   VIP ASSIGNMENT SYSTEM
+   Owner assigns VIP/SVIP to any user
+   Saves to Firestore users/{uid}
+   Propagates realtime everywhere
+══════════════════════════════════════════ */
+let _vipModalUid  = null;
+let _vipModalName = "";
+let _vipModalType = "VIP";
+let _vipModalLevel = 1;
+
+window.openVipModal = function(uid, name) {
+  if (!isOwner()) return;
+  _vipModalUid  = uid;
+  _vipModalName = name;
+
+  // Load current VIP from cache
+  const cached = _userCache[uid];
+  const u = cached?.data || cached || {};
+  _vipModalType  = u.vipType  || "VIP";
+  _vipModalLevel = u.vipLevel || 1;
+
+  document.getElementById("vipModalTargetName").textContent = name;
+  _buildVipModalGrid();
+  _syncVipModalTypeTabs();
+  _updateVipModalPreview();
+
+  document.getElementById("vipAssignModal").classList.add("show");
+};
+
+window.closeVipModal = function() {
+  document.getElementById("vipAssignModal").classList.remove("show");
+  _vipModalUid = null;
+};
+
+window.setVipModalType = function(t) {
+  _vipModalType = t;
+  _syncVipModalTypeTabs();
+  _buildVipModalGrid();
+  _updateVipModalPreview();
+};
+
+function _syncVipModalTypeTabs() {
+  document.getElementById("vipModalVipBtn")?.classList.toggle("av",  _vipModalType === "VIP");
+  document.getElementById("vipModalSvipBtn")?.classList.toggle("as", _vipModalType === "SVIP");
+  document.getElementById("vipModalVipBtn")?.classList.toggle("as",  false);
+  document.getElementById("vipModalSvipBtn")?.classList.toggle("av", false);
+}
+
+function _buildVipModalGrid() {
+  const grid = document.getElementById("vipModalGrid");
+  if (!grid) return;
+  grid.innerHTML = "";
+  for (let i = 1; i <= 10; i++) {
+    const btn = document.createElement("button");
+    btn.className = "vip-modal-lv-btn";
+    btn.textContent = i;
+    btn.dataset.lv = i;
+    const isActive = i === _vipModalLevel;
+    if (isActive) btn.classList.add(_vipModalType === "SVIP" ? "sel-s" : "sel-v");
+    btn.onclick = () => {
+      _vipModalLevel = i;
+      _buildVipModalGrid();
+      _updateVipModalPreview();
+    };
+    grid.appendChild(btn);
+  }
+}
+
+function _updateVipModalPreview() {
+  const preview = document.getElementById("vipModalPreview");
+  if (!preview) return;
+  const vipText = renderVIPText(_vipModalLevel, _vipModalType);
+  preview.innerHTML = `
+    <span style="font-size:14px;font-weight:700;color:var(--text)">${esc(_vipModalName)}</span>
+    ${vipText}
+  `;
+}
+
+window.saveVipAssignment = async function() {
+  if (!isOwner() || !_vipModalUid) return;
+  const btn = document.getElementById("vipModalSaveBtn");
+  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-hourglass-half fa-spin"></i> جاري الحفظ...'; }
+
+  try {
+    await updateDoc(doc(db, "users", _vipModalUid), {
+      vipType:   _vipModalType,
+      vipLevel:  _vipModalLevel,
+      vipManual: true,  // flag: manually set by owner (don't override with XP)
+      updatedAt: serverTimestamp()
+    });
+
+    // Update local cache immediately
+    if (_userCache[_vipModalUid]) {
+      const obj = _userCache[_vipModalUid]?.data || _userCache[_vipModalUid];
+      obj.vipType   = _vipModalType;
+      obj.vipLevel  = _vipModalLevel;
+      obj.vipManual = true;
+    }
+
+    // Apply DOM update immediately
+    const cached = _userCache[_vipModalUid];
+    const fullData = { ...(cached?.data || cached || {}), vipType: _vipModalType, vipLevel: _vipModalLevel };
+    _applyVipUpdateToDOM(_vipModalUid, fullData);
+
+    toast(`✦ تم تعيين ${_vipModalType}${_vipModalLevel} لـ "${_vipModalName}"`, "success");
+    closeVipModal();
+
+    // Reload owner/admin user lists to reflect new badges
+    if (typeof loadOwnerUsers === "function") {
+      _allOwnerUsers = _allOwnerUsers.map(u =>
+        (u.uid || u.id) === _vipModalUid
+          ? { ...u, vipType: _vipModalType, vipLevel: _vipModalLevel }
+          : u
+      );
+      renderOwnerUsers(_allOwnerUsers);
+    }
+  } catch(e) {
+    toast("فشل حفظ VIP: " + (e.code || e.message), "error");
+  } finally {
+    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> حفظ وتطبيق فوراً'; }
+  }
+};
+
+window.removeVipAssignment = async function() {
+  if (!isOwner() || !_vipModalUid) return;
+  const ok = await confirm("إزالة VIP", `هل تريد إزالة VIP من "${_vipModalName}" وإعادته للنظام التلقائي؟`);
+  if (!ok) return;
+
+  try {
+    const snap = await getDoc(doc(db, "users", _vipModalUid));
+    if (!snap.exists()) return;
+    const d    = snap.data();
+    const lv   = _getLevelFromUser(d);
+    const auto = calcVIP(lv);
+    await updateDoc(doc(db, "users", _vipModalUid), {
+      vipType:   auto.type,
+      vipLevel:  auto.n,
+      vipManual: false,
+      updatedAt: serverTimestamp()
+    });
+    if (_userCache[_vipModalUid]) {
+      const obj = _userCache[_vipModalUid]?.data || _userCache[_vipModalUid];
+      obj.vipType = auto.type; obj.vipLevel = auto.n; obj.vipManual = false;
+    }
+    _applyVipUpdateToDOM(_vipModalUid, { ...d, vipType: auto.type, vipLevel: auto.n });
+    toast("تم إزالة VIP — عاد للنظام التلقائي");
+    closeVipModal();
+  } catch(e) { toast("فشل الإزالة: " + e.message, "error"); }
+};
+
+/* ══════════════════════════════════════════
+   GLOBAL USER REALTIME LISTENERS
+   ↳ يستمع لتغييرات جميع بيانات أي مستخدم
+      الظاهر حالياً (ليس فقط VIP)
+   ↳ يُستدعى عند تحميل بيانات أي مستخدم
+   ↳ يمنع duplicate listeners
+   ↳ يحدّث: VIP, اسم, صورة, دور, في كل مكان
+══════════════════════════════════════════ */
+const _globalVipListeners = {};  // uid → unsub
+
+function _startUserVipListener(uid) {
+  if (!uid || _globalVipListeners[uid]) return; // already listening
+
+  let _prevKey = null;
+  const uRef = doc(db, "users", uid);
+  _globalVipListeners[uid] = onSnapshot(uRef, snap => {
+    if (!snap.exists()) return;
+    const d = snap.data();
+    // عنصر الكشف — يشمل جميع البيانات المرئية
+    const key = `${d.vipType||"VIP"}_${d.vipLevel||1}_${d.name||""}_${d.photo||""}_${d.role||"user"}_${d.isOnline||false}`;
+    if (_prevKey === key) return;
+    _prevKey = key;
+
+    // 1. تحديث cache بجميع البيانات
+    const cached = _userCache[uid];
+    const obj = cached?.data || cached || {};
+    Object.assign(obj, {
+      uid, name: d.name, photo: d.photo, role: d.role,
+      gender: d.gender, vipType: d.vipType, vipLevel: d.vipLevel,
+      level: d.level, xp: d.xp, isBanned: d.isBanned, isChatBanned: d.isChatBanned,
+      isOnline: d.isOnline
+    });
+    if (!_userCache[uid]) _userCache[uid] = { data: obj, ts: Date.now() };
+    else _userCache[uid].ts = Date.now();
+
+    // 2. تطبيق التحديث على كل DOM
+    _applyFullUserUpdateToDOM(uid, d);
+  }, () => {}); // silently ignore errors
+}
+
+// Start VIP listener for any uid encountered (DM sidebar, members list, messages)
+function _ensureVipListener(uid) {
+  if (!uid || uid === currentUser?.uid) return;
+  _startUserVipListener(uid);
+}
+
+// Stop VIP listeners for disconnected users (cleanup)
+function _cleanupVipListeners(keepUids) {
+  const keepSet = new Set(keepUids || []);
+  Object.keys(_globalVipListeners).forEach(uid => {
+    if (!keepSet.has(uid)) {
+      _globalVipListeners[uid]();
+      delete _globalVipListeners[uid];
+    }
+  });
+}
+
+/* ══════════════════════════════════════════
+   _applyFullUserUpdateToDOM(uid, data)
+   ↳ تحديث شامل لكل عناصر DOM المرتبطة بـ uid
+   يغطي:
+     - اسم المرسل في الرسائل
+     - صورة المرسل في الرسائل
+     - عنصر DM sidebar (اسم + صورة + badge)
+     - قائمة الأعضاء
+     - الـ Topbar والبروفايل إذا كان المستخدم الحالي
+══════════════════════════════════════════ */
+function _applyFullUserUpdateToDOM(uid, data) {
+  if (!uid || !data) return;
+
+  const d = data;
+
+  // 1. تحديث كل .msg-sender-name[data-sender-uid]
+  document.querySelectorAll(`.msg-sender-name[data-sender-uid="${uid}"]`).forEach(el => {
+    const cachedUser = _userCache[uid]?.data || _userCache[uid] || d;
+    el.innerHTML = renderUserDisplay(d.name || "", cachedUser, uid);
+  });
+
+  // 2. تحديث صور المرسل في الرسائل [data-avatar-uid]
+  document.querySelectorAll(`.msg-avatar-sm[data-avatar-uid="${uid}"]`).forEach(el => {
+    if (d.photo) {
+      el.innerHTML = `<img src="${esc(d.photo)}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+    } else {
+      el.innerHTML = _defaultAvatarHTML(d.gender, 32);
+    }
+  });
+
+  // 3. تحديث عنصر DM sidebar إذا موجود
+  if (_acceptedPeers && _acceptedPeers[uid]) {
+    _updateDmItemUI(uid);
+  }
+
+  // 4. تحديث الـ topbar والبروفايل إذا كان هو المستخدم الحالي
+  if (currentUser && uid === currentUser.uid) {
+    currentName  = d.name  || currentName;
+    currentPhoto = d.photo || currentPhoto;
+    if (window._currentUserData) Object.assign(window._currentUserData, d);
+
+    document.getElementById("welcomeText").innerHTML =
+      renderUserDisplay(d.name || currentName, d, uid);
+    document.getElementById("profileName").innerHTML =
+      renderUserDisplay(d.name || currentName, d, uid);
+    if (d.bio !== undefined) {
+      document.getElementById("profileBioText").textContent = d.bio || "";
+    }
+    if (d.photo) setAvatarUI(d.photo, true, d.gender);
+    else if (d.gender) setAvatarUI(_defaultAvatarHTML(d.gender, 96), null, d.gender);
+
+    updateProfileXP(d);
+
+    // تحديث حالة الحظر من الشات بشكل realtime
+    const newChatBanned = d.isChatBanned || false;
+    if (newChatBanned !== _isChatBanned) {
+      _isChatBanned = newChatBanned;
+      updateChatBannedState();
+      if (newChatBanned) toast("⛔ تم حظرك من إرسال الرسائل", "error");
+      else toast("✅ تم رفع حظر الشات عنك", "success");
+    }
+  }
+
+  // 5. تحديث قائمة الأعضاء إذا كانت مفتوحة
+  const membersPanel = document.getElementById("spanel-members");
+  if (membersPanel && membersPanel.classList.contains("active")) {
+    _allUsersCache = null;
+    renderMembersList(document.getElementById("membersSearch")?.value || "");
+  }
+}
+
+/* ══════════════════════════════════════════
+   _applyVipUpdateToDOM — Legacy wrapper
+   يستدعي الآن _applyFullUserUpdateToDOM
+══════════════════════════════════════════ */
+function _applyVipUpdateToDOM(uid, newData) {
+  if (!uid || !newData) return;
+
+  // 1. تحديث _userCache
+  if (_userCache[uid]) {
+    const obj = _userCache[uid]?.data || _userCache[uid];
+    Object.assign(obj, newData);
+  } else {
+    _userCache[uid] = { data: { ...newData, uid }, ts: Date.now() };
+  }
+
+  // 2. تحديث window._currentUserData
+  if (currentUser && uid === currentUser.uid && window._currentUserData) {
+    Object.assign(window._currentUserData, newData);
+  }
+
+  // 3. تطبيق كامل
+  _applyFullUserUpdateToDOM(uid, newData);
+}
 
 function esc(str) {
   return String(str ?? "")
@@ -5993,6 +6943,28 @@ service cloud.firestore {
     match /lectures/{docId} { allow read: if isAuth() && notAcctBanned(); allow write: if isAdmin(); }
     match /exams/{docId}    { allow read: if isAuth() && notAcctBanned(); allow write: if isAdmin(); }
     match /sections/{docId} { allow read: if isAuth() && notAcctBanned(); allow write: if isAdmin(); }
+
+    // ════════════════════════════════════════
+    //  rooms/{roomId}  (الغرف)
+    // ════════════════════════════════════════
+    match /rooms/{roomId} {
+      allow read:   if isAuth() && notAcctBanned();
+      allow create: if isOwner();
+      allow update: if isOwner();
+      allow delete: if isOwner();
+
+      match /messages/{messageId} {
+        allow read: if isAuth() && notAcctBanned();
+        allow create: if isAuth() &&
+          notBanned() &&
+          validTextMsg() &&
+          request.resource.data.uid       == request.auth.uid &&
+          request.resource.data.keys().hasAll(["uid","createdAt"]) &&
+          request.resource.data.createdAt is timestamp;
+        allow update: if false;
+        allow delete: if isAdmin();
+      }
+    }
 
   }
 }
