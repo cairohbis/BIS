@@ -8788,7 +8788,7 @@ function _buildUploadCard(file) {
         setTimeout(() => { row.remove(); }, 450);
       }, 1400);
     },
-    markFailed() {
+    markFailed(reason) {
       const card = document.getElementById(`_upcard_${row.id}`);
       const status = document.getElementById(`_upstatus_${row.id}`);
       const pct  = document.getElementById(`_uppct_${row.id}`);
@@ -8796,7 +8796,7 @@ function _buildUploadCard(file) {
       card.classList.remove("uploading");
       card.classList.add("failed");
       if (pct) pct.textContent = "✗";
-      if (status) status.textContent = "فشل الإرسال";
+      if (status) status.textContent = "فشل الإرسال" + (reason ? ": " + reason : "");
       setTimeout(() => {
         if (card) card.classList.add("fade-out");
         setTimeout(() => { row.remove(); }, 450);
@@ -11896,7 +11896,7 @@ document.getElementById("chatFileInput").addEventListener("change", async () => 
 
     upCard.markDone();
   } catch(e) {
-    upCard.markFailed();
+    upCard.markFailed(e.message || e.name || String(e));
     console.error("Upload error:", e);
   }
   document.getElementById("chatFileInput").value = "";
@@ -12049,10 +12049,30 @@ document.getElementById("chatFileInput").addEventListener("change", async () => 
     let upCard = null;
     try {
       upCard = (typeof _buildUploadCard === "function" ? _buildUploadCard : window._buildUploadCard)(file);
-      const result = await uploadToCloudinaryWithProgress(file, function(prog) {
-        if (upCard) upCard.update(prog);
-      });
+
+      console.log("[VoiceRec] ── بدء الرفع إلى Cloudinary ──");
+      console.log("[VoiceRec] file.name:", file.name, "| file.type:", file.type, "| file.size:", file.size);
+
+      let result;
+      try {
+        result = await uploadToCloudinaryWithProgress(file, function(prog) {
+          if (upCard) upCard.update(prog);
+        });
+      } catch(uploadErr) {
+        console.error("[VoiceRec] ✖ فشل الرفع إلى Cloudinary:");
+        console.error("[VoiceRec] error.name:", uploadErr.name);
+        console.error("[VoiceRec] error.message:", uploadErr.message);
+        console.error("[VoiceRec] error.code:", uploadErr.code);
+        console.error("[VoiceRec] error.stack:", uploadErr.stack);
+        console.error("[VoiceRec] full error object:", uploadErr);
+        throw uploadErr;
+      }
+
+      console.log("[VoiceRec] ── انتهى الرفع ──");
+      console.log("[VoiceRec] result:", result);
+
       const url = result.url;
+      console.log("[VoiceRec] ── تم استلام رابط Cloudinary ──", url);
 
       const isPrivate = window._currentChatId !== "public";
       const colPath   = chatColPath(window._currentChatId);
@@ -12074,7 +12094,29 @@ document.getElementById("chatFileInput").addEventListener("change", async () => 
         })
       };
 
-      await addDoc(collection(db, colPath), msgData);
+      console.log("[VoiceRec] ── قبل addDoc ──");
+      console.log("[VoiceRec] colPath:", colPath);
+      console.log("[VoiceRec] isPrivate:", isPrivate);
+      console.log("[VoiceRec] msgData:", JSON.stringify(msgData, function(k, v) {
+        // serverTimestamp غير قابل للتحويل JSON — نعرضه كنص
+        if (v && typeof v === "object" && v.constructor && v.constructor.name === "Fb") return "[serverTimestamp]";
+        return v;
+      }, 2));
+
+      try {
+        await addDoc(collection(db, colPath), msgData);
+      } catch(addErr) {
+        console.error("[VoiceRec] ✖ فشل addDoc:");
+        console.error("[VoiceRec] error.name:", addErr.name);
+        console.error("[VoiceRec] error.message:", addErr.message);
+        console.error("[VoiceRec] error.code:", addErr.code);
+        console.error("[VoiceRec] error.stack:", addErr.stack);
+        console.error("[VoiceRec] full error object:", addErr);
+        console.error("[VoiceRec] msgData at failure:", msgData);
+        throw addErr;
+      }
+
+      console.log("[VoiceRec] ── addDoc نجح ──");
 
       if (typeof window._awardXP === "function") {
         window._awardXP(window.currentUser.uid, isPrivate ? window.XP_PER_DM_MSG : window.XP_PER_PUBLIC_MSG);
@@ -12091,8 +12133,15 @@ document.getElementById("chatFileInput").addEventListener("change", async () => 
 
       if (upCard) upCard.markDone();
     } catch(e) {
-      if (upCard) upCard.markFailed();
-      console.error("Voice upload error:", e);
+      console.error("VOICE SEND ERROR", e);
+      console.error("VOICE SEND ERROR MESSAGE", e && e.message);
+      console.error("VOICE SEND ERROR NAME", e && e.name);
+      console.error("VOICE SEND ERROR CODE", e && e.code);
+      let _reason = (e && e.message) || (e && e.name);
+      if (!_reason) {
+        try { _reason = JSON.stringify(e); } catch(_j) { _reason = String(e); }
+      }
+      if (upCard) upCard.markFailed(_reason);
     }
   };
 
