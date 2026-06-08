@@ -12074,8 +12074,8 @@ document.getElementById("chatFileInput").addEventListener("change", async () => 
       const url = result.url;
       console.log("[VoiceRec] ── تم استلام رابط Cloudinary ──", url);
 
-      const isPrivate = window._currentChatId !== "public";
-      const colPath   = chatColPath(window._currentChatId);
+      const isPrivate = _currentChatId !== "public";
+      const colPath   = chatColPath(_currentChatId);
 
       const msgData = {
         uid:       currentUser.uid,
@@ -12118,12 +12118,10 @@ document.getElementById("chatFileInput").addEventListener("change", async () => 
 
       console.log("[VoiceRec] ── addDoc نجح ──");
 
-      if (typeof window._awardXP === "function") {
-        window._awardXP(currentUser.uid, isPrivate ? window.XP_PER_DM_MSG : window.XP_PER_PUBLIC_MSG);
-      }
+      _awardXP(currentUser.uid, isPrivate ? XP_PER_DM_MSG : XP_PER_PUBLIC_MSG);
 
       if (isPrivate) {
-        const roomRef = doc(db, "privateChats", privateChatId(window._currentChatId));
+        const roomRef = doc(db, "privateChats", privateChatId(_currentChatId));
         updateDoc(roomRef, {
           lastMessage:   "🎤 صوت",
           lastMessageAt: serverTimestamp(),
