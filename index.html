@@ -8457,6 +8457,65 @@ async function _sendNotification(recipientUid, title, body, data) {
   } catch(e) {}
 }
 
+/* ── DM notification ── */
+async function _notifyPrivateMsg(peerUid, senderName, text) {
+  const preview = text.length > 80 ? text.slice(0, 80) + "…" : text;
+  await _sendNotification(peerUid,
+    `💬 رسالة خاصة من ${senderName}`,
+    preview,
+    { chatType: "private", senderUid: currentUser?.uid || "", tag: "dm_" + (currentUser?.uid || "") }
+  );
+}
+
+/* ── Mention notification (@name) ── */
+async function _notifyMentions(text, senderName) {
+  const mentionRe = /@([\u0600-\u06FFa-zA-Z0-9_\u200c]+)/g;
+  let m;
+  const notified = new Set();
+  while ((m = mentionRe.exec(text)) !== null) {
+    const handle = m[1].toLowerCase();
+    try {
+      const all = await _getAllUsers();
+      for (const u of all) {
+        const uid = u.uid || u.id;
+        if (!uid || uid === currentUser?.uid) continue;
+        if (notified.has(uid)) continue;
+        const uName = (u.name || u.displayName || "").toLowerCase();
+        if (uName.includes(handle) || handle.includes(uName.split(" ")[0])) {
+          notified.add(uid);
+          const preview = text.length > 80 ? text.slice(0, 80) + "…" : text;
+          await _sendNotification(uid,
+            `📣 ${senderName} ذكرك في الشات`,
+            preview,
+            { chatType: "mention", senderUid: currentUser?.uid || "", tag: "mention_" + uid }
+          );
+        }
+      }
+    } catch(e) {}
+  }
+}
+
+/* ── Reply notification ── */
+async function _notifyReply(replyData, senderName, text) {
+  if (!replyData) return;
+  /* Try to find the owner of the replied message */
+  try {
+    const colPath = chatColPath(_currentChatId);
+    let targetUid = null;
+    if (replyData.docId) {
+      const snap = await getDoc(doc(db, colPath, replyData.docId));
+      if (snap.exists()) targetUid = snap.data().uid || null;
+    }
+    if (!targetUid || targetUid === currentUser?.uid) return;
+    const preview = text.length > 80 ? text.slice(0, 80) + "…" : text;
+    await _sendNotification(targetUid,
+      `↩️ ${senderName} رد على رسالتك`,
+      preview,
+      { chatType: "reply", senderUid: currentUser?.uid || "", tag: "reply_" + targetUid }
+    );
+  } catch(e) {}
+}
+
 let _fcmNotifsUnsub = null;
 const _fcmShownIds = new Set();
 
@@ -9561,8 +9620,11 @@ const isAdmin = () => currentRole === ROLES.ADMIN || currentRole === ROLES.OWNER
 // المستخدمون العاديون: يحترمون showOnline.
 function _isOnlineVisible(u) {
   if (!u) return false;
-  if (isAdmin()) return !!(u.isOnline);          // المالك/الأدمن: حقيقي دائماً
-  return !!(u.isOnline && u.showOnline !== false); // المستخدم العادي: يحترم الإعداد
+  // اعتبار المستخدم offline إذا تجاوز lastSeen 12 ثانية (heartbeat كل 8s)
+  const _lsMs = u.lastSeen?.toMillis?.() || (u.lastSeen?.seconds ? u.lastSeen.seconds * 1000 : 0);
+  const _alive = u.isOnline && (_lsMs > 0 ? (Date.now() - _lsMs) < 12000 : true);
+  if (isAdmin()) return !!_alive;
+  return !!(_alive && u.showOnline !== false);
 }
 
 function canModifyUser(actorRole, targetRole) {
@@ -9904,6 +9966,12 @@ async function doLogout() {
       await updateDoc(doc(db, "users", currentUser.uid), { isOnline: false, lastSeen: serverTimestamp() });
     } catch(e) {}
   }
+
+  // إيقاف نظام الحضور
+  if (window._presenceHBInterval)  { clearInterval(window._presenceHBInterval);  window._presenceHBInterval  = null; }
+  if (window._presenceOfflineTimer) { clearTimeout(window._presenceOfflineTimer); window._presenceOfflineTimer = null; }
+  if (window._presenceVisHandler)    { document.removeEventListener("visibilitychange", window._presenceVisHandler);   window._presenceVisHandler    = null; }
+  if (window._presenceUnloadHandler) { window.removeEventListener("beforeunload", window._presenceUnloadHandler); window.removeEventListener("pagehide", window._presenceUnloadHandler); window._presenceUnloadHandler = null; }
 
   if (msgUnsub)         { msgUnsub();         msgUnsub         = null; }
   if (_privateChatUnsub){ _privateChatUnsub(); _privateChatUnsub = null; }
@@ -10261,6 +10329,69 @@ onAuthStateChanged(auth, async (user) => {
   updateDoc(doc(db, "users", user.uid), {
     isOnline: true, lastSeen: serverTimestamp(), showOnline: _showOnlinePref
   }).catch(() => {});
+
+  // ── Presence Heartbeat: يحدّث lastSeen كل 8 ثوانٍ ──
+  // وعند إغلاق/إخفاء الصفحة يضع isOnline=false فوراً
+  // بحيث يُعتبر المستخدم offline خلال ~10 ثوانٍ من خروجه
+  (function _startPresenceSystem(uid) {
+    // أوقف أي heartbeat سابق
+    if (window._presenceHBInterval) clearInterval(window._presenceHBInterval);
+    if (window._presenceOfflineTimer) clearTimeout(window._presenceOfflineTimer);
+
+    function _setOffline() {
+      if (!uid) return;
+      navigator.sendBeacon
+        ? (function(){
+            // sendBeacon لا يدعم Firestore مباشرة — نستخدم updateDoc
+          })()
+        : null;
+      updateDoc(doc(db, "users", uid), {
+        isOnline: false, lastSeen: serverTimestamp()
+      }).catch(() => {});
+    }
+
+    function _setOnline() {
+      if (!uid) return;
+      const sp = typeof _privPrefs === "undefined" || _privPrefs.showOnline !== false;
+      updateDoc(doc(db, "users", uid), {
+        isOnline: true, lastSeen: serverTimestamp(), showOnline: sp
+      }).catch(() => {});
+    }
+
+    // Heartbeat كل 8 ثوانٍ — يضمن أن lastSeen حديث دائماً
+    window._presenceHBInterval = setInterval(() => {
+      if (currentUser?.uid === uid && !document.hidden) _setOnline();
+    }, 8000);
+
+    // عند إخفاء الصفحة (tab switch / minimize / phone lock)
+    function _onVisibility() {
+      if (!currentUser?.uid) return;
+      if (document.hidden) {
+        _setOffline();
+      } else {
+        _setOnline();
+      }
+    }
+
+    // عند إغلاق أو مغادرة الصفحة
+    function _onUnload() {
+      if (!currentUser?.uid) return;
+      _setOffline();
+    }
+
+    // إزالة المستمعين القديمة لتجنب التكرار
+    document.removeEventListener("visibilitychange", window._presenceVisHandler);
+    window.removeEventListener("beforeunload", window._presenceUnloadHandler);
+    window.removeEventListener("pagehide", window._presenceUnloadHandler);
+
+    window._presenceVisHandler    = _onVisibility;
+    window._presenceUnloadHandler = _onUnload;
+
+    document.addEventListener("visibilitychange", window._presenceVisHandler);
+    window.addEventListener("beforeunload",       window._presenceUnloadHandler);
+    window.addEventListener("pagehide",           window._presenceUnloadHandler);
+
+  })(user.uid);
 
   // ── Owner Rank Control Panel ──────────────────────
   const isVerOwner = _isVerifiedOwner(user.uid);
@@ -11884,6 +12015,11 @@ document.getElementById("chatFileInput").addEventListener("change", async () => 
     await addDoc(collection(db, colPath), msgData);
     _awardXP(currentUser.uid, isPrivate ? XP_PER_DM_MSG : XP_PER_PUBLIC_MSG);
 
+    if (isPrivate && !_currentChatId.startsWith("room:")) {
+      const _fileLabel = isPDF ? "📄 أرسل لك ملف PDF" : cat === "audio" ? "🎵 أرسل لك ملف صوتي" : cat === "doc" ? "📎 أرسل لك ملف" : "📷 أرسل لك صورة";
+      _notifyPrivateMsg(_currentChatId, currentName, _fileLabel).catch(() => {});
+    }
+
     if (isPrivate) {
       const roomRef = doc(db, "privateChats", privateChatId(_currentChatId));
       const label = isPDF ? `📄 PDF` : cat === "audio" ? `🎵 صوت` : cat === "doc" ? `📎 ملف` : cat === "zip" ? `🗜 ملف مضغوط` : `📷 صورة`;
@@ -12121,6 +12257,10 @@ document.getElementById("chatFileInput").addEventListener("change", async () => 
       _awardXP(currentUser.uid, isPrivate ? XP_PER_DM_MSG : XP_PER_PUBLIC_MSG);
 
       if (isPrivate) {
+        const _isTrueDMVoice = !_currentChatId.startsWith("room:");
+        if (_isTrueDMVoice) {
+          _notifyPrivateMsg(_currentChatId, currentName, "🎤 أرسل لك رسالة صوتية").catch(() => {});
+        }
         const roomRef = doc(db, "privateChats", privateChatId(_currentChatId));
         updateDoc(roomRef, {
           lastMessage:   "🎤 صوت",
@@ -13208,9 +13348,10 @@ async function loadAnalytics(period) {
     usersSnap.forEach(d => {
       const u = { id: d.id, ...d.data() };
       allUsers.push(u);
-      const ls = u.lastSeen?.toMillis?.() || 0;
-      // التحليلات: تعتمد على isOnline الحقيقي بغض النظر عن إعداد showOnline
-      if (u.isOnline || (nowTs - ls < 300000)) onlineCount++;
+      const ls = u.lastSeen?.toMillis?.() || (u.lastSeen?.seconds ? u.lastSeen.seconds * 1000 : 0);
+      // المتصلون الحقيقيون فقط: isOnline=true + lastSeen لم يتجاوز 12 ثانية (heartbeat كل 8s)
+      const _alive = u.isOnline && (ls > 0 ? (nowTs - ls) < 12000 : false);
+      if (_alive) onlineCount++;
     });
 
     const onlineEl = document.getElementById("statOnlineNow");
@@ -13430,6 +13571,7 @@ function _miniLineChart(canvas, labels, data, color, gridColor, labelColor) {
   return { destroy: () => ctx.clearRect(0, 0, cw, ch) };
 }
 
+let _allOwnerUsers = [];
 async function loadOwnerUsers() {
   const list = document.getElementById("ownerUsersList");
   list.innerHTML = `<div class="spinner"></div>`;
@@ -17071,6 +17213,13 @@ window.sendChatMsg = async function() {
     };
     await addDoc(collection(db, colPath), msgData);
     _awardXP(currentUser.uid, isPrivate ? XP_PER_DM_MSG : XP_PER_PUBLIC_MSG);
+    const _isTrueDM2 = isPrivate && !_currentChatId.startsWith("room:");
+    if (_isTrueDM2) {
+      _notifyPrivateMsg(_currentChatId, currentName, text).catch(() => {});
+    } else {
+      if (_replyData) _notifyReply(_replyData, currentName, text).catch(() => {});
+      _notifyMentions(text, currentName).catch(() => {});
+    }
     if (isPrivate) {
       const roomRef = doc(db, "privateChats", privateChatId(_currentChatId));
       updateDoc(roomRef, {
@@ -18576,13 +18725,14 @@ try { _listenPinnedMsg(); } catch(e) {}
   };
 
   /* ── Patch showInAppNotif to also store in panel ── */
-  document.addEventListener("DOMContentLoaded", function() {
+  function _patchIAN() {
     const _origIAN = window.showInAppNotif;
-    if (typeof _origIAN === "function") {
+    if (typeof _origIAN === "function" && !_origIAN._npPatched) {
       window.showInAppNotif = function(title, body, data, onClick) {
         window._npAddNotif(title, body, data, onClick);
         return _origIAN.apply(this, arguments);
       };
+      window.showInAppNotif._npPatched = true;
     }
     // Also patch toggleNotifPanel (old bell) to open new panel
     window.toggleNotifPanel = function() {
@@ -18590,7 +18740,13 @@ try { _listenPinnedMsg(); } catch(e) {}
     };
     _renderNotifs();
     _updateProfileBadge();
-  });
+  }
+  // Try immediately first; fallback to DOMContentLoaded
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", _patchIAN);
+  } else {
+    _patchIAN();
+  }
 
   /* ── ESC to close ── */
   document.addEventListener("keydown", function(e) {
@@ -18894,8 +19050,78 @@ try { _listenPinnedMsg(); } catch(e) {}
 })();
 
 /* ══════════════════════════════════════════
-   SKELETON LOADING — Helper Utilities
+   INTERNET CONNECTIVITY DETECTION
+   ↳ Shows banner on disconnect, hides on reconnect
 ══════════════════════════════════════════ */
+(function() {
+  /* ── Create the offline banner element ── */
+  const banner = document.createElement("div");
+  banner.id = "_offlineBanner";
+  banner.style.cssText = [
+    "position:fixed",
+    "bottom:0","left:0","right:0",
+    "z-index:999999",
+    "background:linear-gradient(135deg,#1a0a0a,#2d0f0f)",
+    "color:#fca5a5",
+    "text-align:center",
+    "font-family:inherit",
+    "font-size:14px",
+    "font-weight:700",
+    "padding:12px 16px",
+    "border-top:1.5px solid rgba(239,68,68,.4)",
+    "box-shadow:0 -4px 24px rgba(239,68,68,.2)",
+    "display:none",
+    "align-items:center",
+    "justify-content:center",
+    "gap:10px",
+    "transition:opacity .3s ease,transform .3s ease",
+    "opacity:0",
+    "transform:translateY(100%)"
+  ].join(";");
+  banner.innerHTML = '<i class="fa-solid fa-wifi" style="opacity:.7"></i> <span>لا يوجد اتصال بالإنترنت — يُرجى التحقق من شبكتك</span>';
+  document.body.appendChild(banner);
+
+  let _bannerVisible = false;
+  let _reconnectTimer = null;
+
+  function _showBanner() {
+    if (_bannerVisible) return;
+    _bannerVisible = true;
+    banner.style.display = "flex";
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      banner.style.opacity = "1";
+      banner.style.transform = "translateY(0)";
+    }));
+  }
+
+  function _hideBanner() {
+    if (!_bannerVisible) return;
+    banner.style.opacity = "0";
+    banner.style.transform = "translateY(100%)";
+    setTimeout(() => {
+      banner.style.display = "none";
+      _bannerVisible = false;
+    }, 320);
+  }
+
+  function _onOffline() {
+    clearTimeout(_reconnectTimer);
+    _showBanner();
+  }
+
+  function _onOnline() {
+    clearTimeout(_reconnectTimer);
+    _reconnectTimer = setTimeout(_hideBanner, 900);
+  }
+
+  window.addEventListener("offline", _onOffline);
+  window.addEventListener("online",  _onOnline);
+
+  /* Check initial state in case page loaded while offline */
+  if (!navigator.onLine) _showBanner();
+})();
+
+
 (function() {
 
   /* ── Build message skeleton HTML ── */
