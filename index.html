@@ -9620,9 +9620,9 @@ const isAdmin = () => currentRole === ROLES.ADMIN || currentRole === ROLES.OWNER
 // المستخدمون العاديون: يحترمون showOnline.
 function _isOnlineVisible(u) {
   if (!u) return false;
-  // اعتبار المستخدم offline إذا تجاوز lastSeen 12 ثانية (heartbeat كل 8s)
+  // heartbeat كل 8s → نعطي هامش 20s لتفادي false-offline بسبب تأخير الشبكة
   const _lsMs = u.lastSeen?.toMillis?.() || (u.lastSeen?.seconds ? u.lastSeen.seconds * 1000 : 0);
-  const _alive = u.isOnline && (_lsMs > 0 ? (Date.now() - _lsMs) < 12000 : true);
+  const _alive = u.isOnline && (_lsMs > 0 ? (Date.now() - _lsMs) < 20000 : true);
   if (isAdmin()) return !!_alive;
   return !!(_alive && u.showOnline !== false);
 }
@@ -9978,6 +9978,8 @@ async function doLogout() {
   if (_ownerVipUnsub)   { _ownerVipUnsub();   _ownerVipUnsub   = null; }
   if (_roomsUnsub)      { _roomsUnsub();       _roomsUnsub      = null; }
   if (_selfListenerUnsub){ _selfListenerUnsub(); _selfListenerUnsub = null; }
+  // إيقاف timer تحديث حالة DM
+  if (window._dmOnlineRefreshTimer) { clearInterval(window._dmOnlineRefreshTimer); window._dmOnlineRefreshTimer = null; }
   // clean up all global VIP listeners
   Object.keys(_globalVipListeners).forEach(uid => { _globalVipListeners[uid](); delete _globalVipListeners[uid]; });
   // تنظيف مستمعي الاستطلاعات
@@ -10763,7 +10765,7 @@ function _updateDmItemUI(uid) {
   const timeStr = _fmtDmTime(meta.lastMessageAt);
   const cached = _userCache[uid];
   const u = cached?.data || cached || {};
-  const isOnline = _isOnlineVisible(u); // يحترم showOnline للمستخدمين العاديين
+  const isOnline = _isOnlineVisible(u); // يحترم showOnline وlastSeen الحديث
 
   el.innerHTML = `
     <div class="dm-avatar-wrap">
@@ -10929,9 +10931,8 @@ async function _getAllUsers() {
   const snap = await getDocs(collection(db, "users"));
   _allUsersCache = [];
   snap.forEach(d => {
-    const u = { id: d.id, ...d.data() };
-    const uid = u.uid || d.id;
-    _userCache[uid] = { data: u, ts: Date.now() };
+    const u = { id: d.id, uid: d.id, ...d.data() };
+    _userCache[d.id] = { data: u, ts: Date.now() };
     _allUsersCache.push(u);
   });
   _allUsersCacheTs = Date.now();
@@ -13349,8 +13350,8 @@ async function loadAnalytics(period) {
       const u = { id: d.id, ...d.data() };
       allUsers.push(u);
       const ls = u.lastSeen?.toMillis?.() || (u.lastSeen?.seconds ? u.lastSeen.seconds * 1000 : 0);
-      // المتصلون الحقيقيون فقط: isOnline=true + lastSeen لم يتجاوز 12 ثانية (heartbeat كل 8s)
-      const _alive = u.isOnline && (ls > 0 ? (nowTs - ls) < 12000 : false);
+      // المتصلون الحقيقيون فقط: isOnline=true + lastSeen لم يتجاوز 20 ثانية (heartbeat كل 8s + هامش)
+      const _alive = u.isOnline && (ls > 0 ? (nowTs - ls) < 20000 : false);
       if (_alive) onlineCount++;
     });
 
@@ -14402,7 +14403,7 @@ function _startSelfListener(myUid) {
       return;
     }
 
-    const key = `${d.isChatBanned||false}_${d.name||""}_${d.photo||""}_${d.role||"user"}_${d.vipType||"VIP"}_${d.vipLevel||1}_${d.publicId||""}`;
+    const key = `${d.isChatBanned||false}_${d.name||""}_${d.photo||""}_${d.role||"user"}_${d.vipType||"VIP"}_${d.vipLevel||1}_${d.publicId||""}_${d.isOnline||false}_${d.lastSeen?.toMillis?.() || d.lastSeen?.seconds || 0}`;
     if (_prevSelfKey === key) return;
     _prevSelfKey = key;
 
@@ -14421,8 +14422,8 @@ function _startSelfListener(myUid) {
     currentPhoto = d.photo || currentPhoto;
     currentRole  = d.role  || currentRole;
 
-    // تحديث الـ cache
-    _userCache[myUid] = { data: { ...d, uid: myUid }, ts: Date.now() };
+    // تحديث الـ cache بما فيه lastSeen و showOnline
+    _userCache[myUid] = { data: { ...(_userCache[myUid]?.data || {}), ...d, uid: myUid }, ts: Date.now() };
 
     // تحديث UI
     document.getElementById("welcomeText").innerHTML =
@@ -14889,25 +14890,37 @@ function _startUserVipListener(uid) {
   _globalVipListeners[uid] = onSnapshot(uRef, snap => {
     if (!snap.exists()) return;
     const d = snap.data();
-    // عنصر الكشف — يشمل جميع البيانات المرئية
-    const key = `${d.vipType||"VIP"}_${d.vipLevel||1}_${d.name||""}_${d.photo||""}_${d.role||"user"}_${d.isOnline||false}_${d.showOnline!==false}`;
+    // عنصر الكشف — يشمل lastSeen لكشف تغييرات الحالة فوراً
+    const _lsMs = d.lastSeen?.toMillis?.() || (d.lastSeen?.seconds ? d.lastSeen.seconds * 1000 : 0);
+    const key = `${d.vipType||"VIP"}_${d.vipLevel||1}_${d.name||""}_${d.photo||""}_${d.role||"user"}_${d.isOnline||false}_${d.showOnline!==false}_${_lsMs}`;
     if (_prevKey === key) return;
     _prevKey = key;
 
-    // 1. تحديث cache بجميع البيانات
+    // 1. تحديث cache بجميع البيانات بما فيها lastSeen و showOnline
     const cached = _userCache[uid];
     const obj = cached?.data || cached || {};
     Object.assign(obj, {
       uid, name: d.name, photo: d.photo, role: d.role,
       gender: d.gender, vipType: d.vipType, vipLevel: d.vipLevel,
       level: d.level, xp: d.xp, isBanned: d.isBanned, isChatBanned: d.isChatBanned,
-      isOnline: d.isOnline
+      isOnline: d.isOnline, lastSeen: d.lastSeen, showOnline: d.showOnline
     });
     if (!_userCache[uid]) _userCache[uid] = { data: obj, ts: Date.now() };
     else _userCache[uid].ts = Date.now();
 
     // 2. تطبيق التحديث على كل DOM
     _applyFullUserUpdateToDOM(uid, d);
+
+    // 3. تحديث allUsersCache إن وُجد لتجنب عرض بيانات قديمة
+    if (_allUsersCache) {
+      const idx = _allUsersCache.findIndex(u => (u.uid || u.id) === uid);
+      if (idx !== -1) {
+        Object.assign(_allUsersCache[idx], {
+          isOnline: d.isOnline, lastSeen: d.lastSeen, showOnline: d.showOnline,
+          name: d.name, photo: d.photo, role: d.role
+        });
+      }
+    }
   }, () => {}); // silently ignore errors
 }
 
@@ -14927,6 +14940,27 @@ function _cleanupVipListeners(keepUids) {
     }
   });
 }
+
+// ── تحديث دوري للحالة في قائمة DM كل 15 ثانية ──
+// يُعيد حساب isOnline بناءً على lastSeen الحالي في الـ cache
+// يُصحّح حالات: مستخدم انقطع إنترنته ولم يُرسل isOnline=false لـ Firestore بعد
+(function _startDmOnlineRefreshTimer() {
+  if (window._dmOnlineRefreshTimer) clearInterval(window._dmOnlineRefreshTimer);
+  window._dmOnlineRefreshTimer = setInterval(() => {
+    if (!document.getElementById("page-chat")?.classList.contains("active")) return;
+    const list = document.getElementById("dmList");
+    if (!list) return;
+    list.querySelectorAll(".dm-item:not(#dm-public)").forEach(el => {
+      const uid = el.id?.replace(/^dm-/, "");
+      if (!uid) return;
+      const cached = _userCache[uid];
+      const u = cached?.data || cached;
+      if (!u) return;
+      const isOnline = _isOnlineVisible(u);
+      el.classList.toggle("is-online", isOnline);
+    });
+  }, 15000);
+})();
 
 /* ══════════════════════════════════════════
    _applyFullUserUpdateToDOM(uid, data)
@@ -15397,18 +15431,26 @@ window.openProfileViewModal = async function(uid, preloadedData) {
   `;
   modal.classList.add("show");
 
-  // ── Cache-First Strategy ──
+  // ── دائماً اقرأ من Firestore للحصول على lastSeen الحديث (للحالة الصحيحة) ──
   let userData = null;
-  const cached = _userCache[uid];
-  if (cached && (Date.now() - (cached.ts || 0) < CACHE_TTL_MS)) {
-    userData = cached.data || cached;
-  } else if (preloadedData) {
-    userData = preloadedData;
-    // حدّث الـ cache
-    _userCache[uid] = { data: { ...preloadedData, uid }, ts: Date.now() };
-  } else {
-    // اقرأ من Firebase فقط إذا لم يكن في الـ cache
-    userData = await _getUser(uid);
+  try {
+    const snap = await getDoc(doc(db, "users", uid));
+    if (snap.exists()) {
+      userData = { ...snap.data(), uid };
+      // حدّث الـ cache بالبيانات الطازجة
+      _userCache[uid] = { data: userData, ts: Date.now() };
+    }
+  } catch(e) {
+    // fallback للـ cache إذا فشلت القراءة
+    const cached = _userCache[uid];
+    if (cached && (Date.now() - (cached.ts || 0) < CACHE_TTL_MS)) {
+      userData = cached.data || cached;
+    } else if (preloadedData) {
+      userData = { ...preloadedData, uid };
+      _userCache[uid] = { data: userData, ts: Date.now() };
+    } else {
+      userData = await _getUser(uid);
+    }
   }
 
   if (!userData) {
