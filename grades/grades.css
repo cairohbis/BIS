@@ -1,49 +1,35 @@
 /* ══════════════════════════════════════════
    GRADES MODULE — درجاتي
-   المرحلة 0: البنية التحتية والربط
-   
-   ✅ جميع أنماط درجاتي معزولة هنا
-   ✅ بادئة .grades- لمنع التعارض
-   ✅ يستخدم متغيرات CSS الموجودة في الموقع
+   المرحلة 1: الواجهة الأساسية
 ══════════════════════════════════════════ */
 
-/* ─────────────────────────────────────────
-   الحاوية الجذر
-───────────────────────────────────────── */
+/* ─── الحاوية الجذر ─── */
 #grades-app-root {
   display: none;
   position: fixed;
   inset: 0;
   z-index: 1500;
-  flex-direction: column;
   align-items: flex-end;
   justify-content: flex-end;
 }
+#grades-app-root.grades-open { display: flex; }
 
-#grades-app-root.grades-open {
-  display: flex;
-}
-
-/* ─────────────────────────────────────────
-   خلفية شفافة (overlay)
-───────────────────────────────────────── */
+/* ─── Overlay ─── */
 .grades-overlay {
   position: absolute;
   inset: 0;
-  background: rgba(0, 0, 0, 0.55);
+  background: rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
   animation: grades-fade-in 0.22s ease;
 }
 
-/* ─────────────────────────────────────────
-   الصفحة الرئيسية (Bottom Sheet)
-───────────────────────────────────────── */
+/* ─── Bottom Sheet ─── */
 .grades-sheet {
   position: relative;
   z-index: 1;
   width: 100%;
-  max-height: 92dvh;
+  max-height: 94dvh;
   background: var(--bg2, #0c1528);
   border-radius: 24px 24px 0 0;
   border-top: 1.5px solid var(--border, #1a2d47);
@@ -53,21 +39,20 @@
   animation: grades-slide-up 0.28s cubic-bezier(0.34, 1.1, 0.64, 1);
 }
 
-/* ─────────────────────────────────────────
-   رأس الصفحة
-───────────────────────────────────────── */
+/* ─── Header ─── */
 .grades-sheet-header {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 16px 16px 12px;
+  padding: 14px 16px 12px;
   border-bottom: 1px solid var(--border, #1a2d47);
   flex-shrink: 0;
+  background: var(--bg2, #0c1528);
 }
 
 .grades-back-btn {
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
   border-radius: 12px;
   color: var(--muted, #5a7499);
   font-family: inherit;
@@ -75,17 +60,13 @@
   font-weight: 700;
   padding: 8px 14px;
   cursor: pointer;
-  transition: all 0.18s;
+  transition: all .18s;
   display: inline-flex;
   align-items: center;
   gap: 6px;
   flex-shrink: 0;
 }
-
-.grades-back-btn:hover {
-  background: rgba(255, 255, 255, 0.12);
-  color: var(--text, #e8edf5);
-}
+.grades-back-btn:hover { background: rgba(255,255,255,0.12); color: var(--text, #e8edf5); }
 
 .grades-sheet-title {
   font-size: 16px;
@@ -97,131 +78,270 @@
   flex: 1;
 }
 
-/* ─────────────────────────────────────────
-   جسم الصفحة
-───────────────────────────────────────── */
+/* ─── Body ─── */
 .grades-sheet-body {
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 16px;
+  padding: 16px 16px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
 }
+.grades-sheet-body::-webkit-scrollbar { width: 3px; }
+.grades-sheet-body::-webkit-scrollbar-track { background: transparent; }
+.grades-sheet-body::-webkit-scrollbar-thumb { background: var(--border, #1a2d47); border-radius: 3px; }
 
-.grades-sheet-body::-webkit-scrollbar {
-  width: 3px;
-}
-.grades-sheet-body::-webkit-scrollbar-track {
-  background: transparent;
-}
-.grades-sheet-body::-webkit-scrollbar-thumb {
-  background: var(--border, #1a2d47);
-  border-radius: 3px;
-}
-
-/* ─────────────────────────────────────────
-   Placeholder — المرحلة 0
-───────────────────────────────────────── */
-.grades-placeholder {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  padding: 40px 20px;
-  text-align: center;
-}
-
-.grades-placeholder-icon {
-  width: 72px;
-  height: 72px;
-  border-radius: 22px;
-  background: linear-gradient(135deg, rgba(201, 169, 110, 0.15), rgba(201, 169, 110, 0.08));
-  border: 1.5px solid rgba(201, 169, 110, 0.25);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 30px;
-  color: var(--gold, #c9a96e);
-}
-
-.grades-placeholder-title {
-  font-size: 18px;
-  font-weight: 900;
-  color: var(--text, #e8edf5);
-}
-
-.grades-placeholder-sub {
+/* ─── Section Label ─── */
+.grades-section-label {
   font-size: 13px;
-  color: var(--muted, #5a7499);
-  line-height: 1.7;
+  font-weight: 800;
+  color: var(--gold, #c9a96e);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border, #1a2d47);
 }
 
-.grades-placeholder-info {
+/* ─── Field ─── */
+.grades-field {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  margin-top: 8px;
-  width: 100%;
-  max-width: 260px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  border-radius: 14px;
-  padding: 14px;
 }
 
-.grades-info-row {
+.grades-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted, #5a7499);
+  padding-right: 2px;
+}
+
+/* ─── Input ─── */
+.grades-input {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1.5px solid var(--border, #1a2d47);
+  background: var(--bg, #060d1a);
+  color: var(--text, #e8edf5);
+  font-family: inherit;
+  font-size: 14px;
+  outline: none;
+  transition: border-color .2s, box-shadow .2s;
+  direction: rtl;
+}
+.grades-input:focus {
+  border-color: var(--gold, #c9a96e);
+  box-shadow: 0 0 0 3px rgba(201,169,110,.14);
+}
+.grades-input::placeholder { color: var(--muted, #5a7499); }
+
+/* ─── Select ─── */
+.grades-select {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1.5px solid var(--border, #1a2d47);
+  background: var(--bg, #060d1a);
+  color: var(--text, #e8edf5);
+  font-family: inherit;
+  font-size: 14px;
+  outline: none;
+  cursor: pointer;
+  transition: border-color .2s;
+  direction: rtl;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.grades-select:focus { border-color: var(--gold, #c9a96e); }
+
+/* ─── Chips ─── */
+.grades-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.grades-chip {
+  padding: 8px 14px;
+  border-radius: 20px;
+  border: 1.5px solid var(--border, #1a2d47);
+  background: var(--card, #101e33);
+  color: var(--muted, #5a7499);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .18s;
+  white-space: nowrap;
+}
+.grades-chip:hover {
+  border-color: rgba(201,169,110,.3);
+  color: var(--text, #e8edf5);
+}
+.grades-chip.active {
+  background: var(--gold, #c9a96e);
+  color: #060d1a;
+  border-color: transparent;
+  font-weight: 800;
+  box-shadow: 0 4px 12px rgba(201,169,110,.3);
+}
+
+/* ─── Counter ─── */
+.grades-count-row {
   display: flex;
   align-items: center;
-  gap: 10px;
-  font-size: 12px;
-  color: var(--muted, #5a7499);
+  gap: 16px;
 }
 
-.grades-info-row i {
-  width: 16px;
-  text-align: center;
-  color: var(--gold, #c9a96e);
-  font-size: 13px;
-}
-
-/* ─────────────────────────────────────────
-   الكارت داخل المنتدى
-───────────────────────────────────────── */
-.grades-forum-card {
-  /* يرث من .forum-section-card الموجودة */
+.grades-count-btn {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  border: 1.5px solid var(--border, #1a2d47);
+  background: var(--card, #101e33);
+  color: var(--text, #e8edf5);
+  font-size: 16px;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all .15s;
+  flex-shrink: 0;
+}
+.grades-count-btn:hover {
+  border-color: rgba(201,169,110,.4);
+  background: rgba(201,169,110,.1);
+  color: var(--gold, #c9a96e);
+}
+.grades-count-btn:active { transform: scale(.92); }
+
+.grades-count-val {
+  font-size: 26px;
+  font-weight: 900;
+  color: var(--gold, #c9a96e);
+  min-width: 40px;
+  text-align: center;
 }
 
-/* ─────────────────────────────────────────
-   الحركات (Animations)
-───────────────────────────────────────── */
+/* ─── Primary Button ─── */
+.grades-btn-primary {
+  width: 100%;
+  padding: 14px;
+  border: none;
+  border-radius: 16px;
+  background: var(--gold, #c9a96e);
+  color: #060d1a;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: opacity .15s, transform .15s;
+  margin-top: 4px;
+}
+.grades-btn-primary:hover  { opacity: .88; }
+.grades-btn-primary:active { transform: scale(.97); }
+
+.grades-btn-save {
+  background: linear-gradient(135deg, var(--gold, #c9a96e), #dfc090);
+}
+
+/* ─── Summary Bar ─── */
+.grades-summary-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  background: rgba(201,169,110,.07);
+  border: 1px solid rgba(201,169,110,.18);
+  border-radius: 14px;
+  padding: 12px 14px;
+}
+.grades-summary-bar span {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted, #5a7499);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.grades-summary-bar span i {
+  color: var(--gold, #c9a96e);
+  font-size: 11px;
+}
+
+/* ─── Subject Card ─── */
+.grades-subject-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: rgba(255,255,255,.03);
+  border: 1px solid var(--border, #1a2d47);
+  border-radius: 16px;
+  padding: 12px;
+  transition: border-color .18s;
+}
+.grades-subject-card:hover { border-color: rgba(201,169,110,.2); }
+
+.grades-subject-num {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: rgba(201,169,110,.12);
+  border: 1px solid rgba(201,169,110,.22);
+  color: var(--gold, #c9a96e);
+  font-size: 12px;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 3px;
+}
+
+.grades-subject-fields {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* ─── كارت المنتدى ─── */
+.grades-forum-card { cursor: pointer; }
+
+/* ─── Shake animation ─── */
+@keyframes grades-shake {
+  0%, 100% { transform: translateX(0); }
+  20%       { transform: translateX(-6px); }
+  40%       { transform: translateX(6px); }
+  60%       { transform: translateX(-4px); }
+  80%       { transform: translateX(4px); }
+}
+.grades-shake { animation: grades-shake .45s ease; }
+
+/* ─── Animations ─── */
 @keyframes grades-fade-in {
   from { opacity: 0; }
   to   { opacity: 1; }
 }
-
 @keyframes grades-slide-up {
   from { transform: translateY(100%); }
   to   { transform: translateY(0); }
 }
 
-/* ─────────────────────────────────────────
-   دعم الثيم الفاتح
-───────────────────────────────────────── */
-html.theme-light .grades-sheet {
-  background: #f4f7fb;
-  border-color: rgba(0, 0, 0, 0.1);
-}
-
-html.theme-light .grades-placeholder-info {
-  background: rgba(0, 0, 0, 0.04);
-  border-color: rgba(0, 0, 0, 0.08);
-}
-
-html.theme-light .grades-back-btn {
-  background: rgba(0, 0, 0, 0.05);
-  border-color: rgba(0, 0, 0, 0.1);
-  color: #5a7499;
-}
+/* ─── Light Theme ─── */
+html.theme-light .grades-sheet      { background: #f4f7fb; border-color: rgba(0,0,0,.1); }
+html.theme-light .grades-sheet-header { background: #f4f7fb; }
+html.theme-light .grades-input,
+html.theme-light .grades-select     { background: #fff; border-color: rgba(0,0,0,.12); color: #0a1628; }
+html.theme-light .grades-chip       { background: #e8edf5; border-color: rgba(0,0,0,.1); color: #3a5070; }
+html.theme-light .grades-count-btn  { background: #e8edf5; border-color: rgba(0,0,0,.1); color: #0a1628; }
+html.theme-light .grades-subject-card { background: rgba(0,0,0,.03); border-color: rgba(0,0,0,.08); }
+html.theme-light .grades-summary-bar  { background: rgba(201,169,110,.06); }
