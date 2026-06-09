@@ -345,3 +345,34 @@ html.theme-light .grades-chip       { background: #e8edf5; border-color: rgba(0,
 html.theme-light .grades-count-btn  { background: #e8edf5; border-color: rgba(0,0,0,.1); color: #0a1628; }
 html.theme-light .grades-subject-card { background: rgba(0,0,0,.03); border-color: rgba(0,0,0,.08); }
 html.theme-light .grades-summary-bar  { background: rgba(201,169,110,.06); }
+
+/* ─────────────────────────────────────────
+   المرحلة 2: مؤشرات التحميل
+───────────────────────────────────────── */
+.grades-loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 60px 20px;
+}
+
+.grades-spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid rgba(201,169,110,.2);
+  border-top-color: var(--gold, #c9a96e);
+  border-radius: 50%;
+  animation: grades-spin .7s linear infinite;
+}
+
+.grades-loading-text {
+  font-size: 13px;
+  color: var(--muted, #5a7499);
+  font-weight: 600;
+}
+
+@keyframes grades-spin {
+  to { transform: rotate(360deg); }
+}
