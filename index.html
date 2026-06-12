@@ -1409,6 +1409,33 @@
         </div>
       </div>
 
+      <!-- ══ قسم: وضع الصيانة ══ -->
+      <div class="owner-collapse-item" style="margin-top:10px;">
+        <div class="owner-collapse-header" onclick="ownerToggleSection(this)">
+          <div class="owner-collapse-icon-wrap" style="background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.25);color:#fca5a5;"><i class="fa-solid fa-triangle-exclamation"></i></div>
+          <div class="owner-collapse-body-text">
+            <div class="owner-collapse-title">وضع الصيانة</div>
+            <div class="owner-collapse-sub">إغلاق الموقع مؤقتاً عن جميع المستخدمين</div>
+          </div>
+          <i class="fa-solid fa-chevron-down owner-collapse-arrow"></i>
+        </div>
+        <div class="owner-collapse-panel">
+          <div class="owner-collapse-inner">
+            <div class="panel-sec">
+              <div class="panel-sec-title" style="color:#fca5a5;"><i class="fa-solid fa-triangle-exclamation"></i> وضع الصيانة</div>
+              <div class="label">الحالة الحالية: <span id="maintStatusText" style="font-weight:800;">—</span></div>
+              <div style="display:flex;gap:8px;margin-top:8px;">
+                <button class="btn" id="maintOnBtn" style="flex:1;background:#dc2626;" onclick="toggleMaintenance(true)"><i class="fa-solid fa-lock"></i> تفعيل وضع الصيانة</button>
+                <button class="btn btn-dark" id="maintOffBtn" style="flex:1;" onclick="toggleMaintenance(false)"><i class="fa-solid fa-lock-open"></i> إيقاف وضع الصيانة</button>
+              </div>
+              <div style="font-size:12px;color:var(--muted);margin-top:10px;line-height:1.6;">
+                عند التفعيل: يتم منع جميع المستخدمين من استخدام الموقع وعرض صفحة الصيانة فقط، بينما يحتفظ المالك بالوصول الكامل.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- ══ قسم 15: التبليغات ══ -->
       <div class="owner-collapse-item" style="margin-top:10px;">
         <div class="owner-collapse-header" onclick="ownerToggleSection(this)">
@@ -1666,6 +1693,7 @@ const app     = initializeApp(firebaseConfig);
 const auth    = getAuth(app);
 const db      = getFirestore(app);
 const storage = getStorage(app);
+window.db = db;
 
 /* FCM START */
 const FCM_VAPID = "LxeNAGikuTGV_F8cdINPwYTabqXKNyEFXSQtd57RmoU";
@@ -3513,6 +3541,7 @@ onAuthStateChanged(auth, async (user) => {
       if (_rb) _rb.remove();
       document.body.classList.remove("avm-active");
     }
+    window._maintenanceApply?.();
     showPage("page-login"); return;
   }
 
@@ -3555,6 +3584,7 @@ onAuthStateChanged(auth, async (user) => {
   // ── تعريض المتغيرات للوحدات الخارجية (grades, ...) ──
   window.currentUser = currentUser;
   if (!window.db) window.db = db;
+  window._maintenanceApply?.();
 
   // ── ضمان وجود XP/Level في Firestore ──────────
   _ensureUserXPLevel(user.uid);
@@ -10907,6 +10937,14 @@ try { _listenPinnedMsg(); } catch(e) {}
 ══════════════════════════════════════════ -->
 <div id="grades-app-root" aria-label="درجاتي" role="dialog"></div>
 <script src="grades/grades.js" defer></script>
+
+<!-- ══════════════════════════════════════════
+     MAINTENANCE MODE — Overlay
+══════════════════════════════════════════ -->
+<div id="maintenanceOverlay" style="display:none;position:fixed;inset:0;z-index:999999;background:#fff;">
+  <iframe src="maintenance.html" title="الموقع تحت الصيانة" style="width:100%;height:100%;border:0;"></iframe>
+</div>
+<script type="module" src="js/maintenance.js"></script>
 
 </body>
 </html>
