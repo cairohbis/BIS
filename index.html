@@ -2425,6 +2425,7 @@ let currentRole   = null;
 let currentName   = "";
 Object.defineProperty(window, 'currentName', { get: () => currentName, configurable: true });
 let currentPhoto  = "";
+Object.defineProperty(window, 'currentPhoto', { get: () => currentPhoto, configurable: true });
 let msgUnsub      = null;
 let _reactionsUnsub = null;
 let _isChatBanned = false;
@@ -8862,7 +8863,7 @@ window.ctxReply = ctxReply;
 function ctxDelete() {
   hideMsgCtxMenu();
   if (!_ctxDocId) return;
-  if (typeof window.adminDeleteMsg === "function") window.adminDeleteMsg(_ctxDocId);
+  if (typeof adminDeleteMsg === "function") adminDeleteMsg(_ctxDocId);
 }
 window.ctxDelete = ctxDelete;
 
