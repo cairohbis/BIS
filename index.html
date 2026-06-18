@@ -4680,6 +4680,16 @@ async function startChatListener(chatId) {
         if (ch.type !== "modified") return;
         const d   = ch.doc.data();
         const row = document.getElementById("msg-" + ch.doc.id);
+        // ✅ تحديث فوري عند حذف رسالة (realtime، بدون الحاجة لتحديث الصفحة)
+        if (row && d.deleted) {
+          const bubbleEl = row.querySelector('.bubble-text, .bubble-image');
+          if (bubbleEl && bubbleEl.textContent !== '🗑 تم حذف هذه الرسالة') {
+            bubbleEl.className = 'bubble-text';
+            bubbleEl.style.cssText = 'color:var(--muted);font-style:italic;font-size:12px;';
+            bubbleEl.textContent = '🗑 تم حذف هذه الرسالة';
+          }
+          return;
+        }
         if (row && typeof _updateReactionChips === "function") {
           _updateReactionChips(row, ch.doc.id, d.reactions || {});
         }
