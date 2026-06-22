@@ -16,6 +16,9 @@
      LOGIN PAGE — Animated Lamp Edition
 ══════════════════════════════════════════ -->
 <div id="page-login" class="page active">
+
+  <!-- ══ واجهة المصباح (الافتراضية) ══ -->
+  <div id="loginUI-lamp">
   <div class="lp-scene" id="lpScene">
 
     <!-- ══ المصباح ══ -->
@@ -101,6 +104,65 @@
     </div>
 
   </div>
+  </div><!-- /loginUI-lamp -->
+
+  <!-- ══ واجهة الباندا ══ -->
+  <div id="loginUI-panda" style="display:none;">
+    <div class="panda-container">
+
+      <!-- نموذج تسجيل الدخول -->
+      <form id="pandaLoginForm" class="login-form">
+        <label>البريد الإلكتروني:</label>
+        <input type="email" id="pandaEmail" placeholder="أدخل بريدك الإلكتروني..."
+          oninput="document.getElementById('loginEmail').value=this.value">
+        <label>كلمة المرور:</label>
+        <input type="password" id="pandaPass" placeholder="أدخل كلمة المرور..."
+          oninput="document.getElementById('loginPass').value=this.value">
+        <button type="button" class="panda-submit-btn"
+          onclick="_pandaSubmit('login')">تسجيل الدخول</button>
+        <div class="panda-error" id="pandaError"></div>
+        <div class="panda-toggle-link">
+          ليس لديك حساب؟ <span onclick="_pandaShowSignup()">إنشاء حساب جديد</span>
+        </div>
+      </form>
+
+      <!-- نموذج إنشاء الحساب -->
+      <form id="pandaSignupForm" class="signup-form" style="display:none;">
+        <label>الاسم الكامل:</label>
+        <input type="text" id="pandaName" placeholder="أدخل اسمك الكامل..."
+          oninput="document.getElementById('loginName').value=this.value">
+        <label>البريد الإلكتروني:</label>
+        <input type="email" id="pandaEmail2" placeholder="أدخل بريدك الإلكتروني..."
+          oninput="document.getElementById('loginEmail').value=this.value">
+        <label>كلمة المرور:</label>
+        <input type="password" id="pandaPass2" placeholder="٦ أحرف على الأقل..."
+          oninput="document.getElementById('loginPass').value=this.value">
+        <button type="button" class="panda-submit-btn"
+          onclick="_pandaSubmit('register')">إنشاء الحساب</button>
+        <div class="panda-error" id="pandaError2"></div>
+        <div class="panda-toggle-link">
+          لديك حساب بالفعل؟ <span onclick="_pandaShowLogin()">تسجيل الدخول</span>
+        </div>
+      </form>
+
+      <div class="ear-l"></div>
+      <div class="ear-r"></div>
+      <div class="panda-face">
+        <div class="blush-l"></div>
+        <div class="blush-r"></div>
+        <div class="eye-l"><div class="eyeball-l"></div></div>
+        <div class="eye-r"><div class="eyeball-r"></div></div>
+        <div class="nose"></div>
+        <div class="mouth"></div>
+      </div>
+      <div class="hand-l"></div>
+      <div class="hand-r"></div>
+      <div class="paw-l"></div>
+      <div class="paw-r"></div>
+
+    </div>
+  </div><!-- /loginUI-panda -->
+
 </div>
 
 <!-- ══════════════════════════════════════════
@@ -1436,6 +1498,36 @@
         </div>
       </div>
 
+      <!-- ══ قسم: واجهة تسجيل الدخول ══ -->
+      <div class="owner-collapse-item" style="margin-top:10px;">
+        <div class="owner-collapse-header" onclick="ownerToggleSection(this)">
+          <div class="owner-collapse-icon-wrap" style="background:rgba(251,191,36,.12);border-color:rgba(251,191,36,.3);color:#fbbf24;"><i class="fa-solid fa-palette"></i></div>
+          <div class="owner-collapse-body-text">
+            <div class="owner-collapse-title">واجهة تسجيل الدخول</div>
+            <div class="owner-collapse-sub" id="loginUISub">الحالية: المصباح 💡</div>
+          </div>
+          <i class="fa-solid fa-chevron-down owner-collapse-arrow"></i>
+        </div>
+        <div class="owner-collapse-panel">
+          <div class="owner-collapse-inner">
+            <div class="panel-sec">
+              <div class="panel-sec-title" style="color:#fbbf24;"><i class="fa-solid fa-palette"></i> اختر واجهة تسجيل الدخول</div>
+              <div style="display:flex;gap:8px;margin-top:10px;">
+                <button class="btn" id="loginUILampBtn" style="flex:1;" onclick="toggleLoginUI('lamp')">
+                  💡 واجهة المصباح
+                </button>
+                <button class="btn btn-dark" id="loginUIPandaBtn" style="flex:1;" onclick="toggleLoginUI('panda')">
+                  🐼 واجهة الباندا
+                </button>
+              </div>
+              <div style="font-size:12px;color:var(--muted);margin-top:8px;line-height:1.6;">
+                التغيير يُطبَّق فوراً على جميع المستخدمين دون الحاجة لتسجيل خروج.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- ══ قسم 15: التبليغات ══ -->
       <div class="owner-collapse-item" style="margin-top:10px;">
         <div class="owner-collapse-header" onclick="ownerToggleSection(this)">
@@ -1694,6 +1786,27 @@ const auth    = getAuth(app);
 const db      = getFirestore(app);
 const storage = getStorage(app);
 window.db = db;
+
+/* ── Login UI Switcher — يبدأ قبل Auth ── */
+(function _initLoginUISwitcher() {
+  const lamp  = document.getElementById("loginUI-lamp");
+  const panda = document.getElementById("loginUI-panda");
+  const page  = document.getElementById("page-login");
+  if (!lamp || !panda) return;
+  onSnapshot(doc(db, "appSettings", "loginUI"), snap => {
+    const active = snap.exists() ? (snap.data().active || "lamp") : "lamp";
+    lamp.style.display  = active === "panda" ? "none" : "";
+    panda.style.display = active === "panda" ? ""     : "none";
+    if (active === "panda") {
+      page.classList.add("panda-active");
+      _pandaInitEffects?.();
+    } else {
+      page.classList.remove("panda-active");
+    }
+    const sub = document.getElementById("loginUISub");
+    if (sub) sub.textContent = active === "panda" ? "الحالية: الباندا 🐼" : "الحالية: المصباح 💡";
+  }, () => {});
+})();
 
 /* FCM START */
 const FCM_VAPID = "LxeNAGikuTGV_F8cdINPwYTabqXKNyEFXSQtd57RmoU";
@@ -3048,6 +3161,94 @@ document.getElementById("modalCancel").addEventListener("click", () => {
 /* ══════════════════════════════════════════
    PAGE / TAB NAVIGATION
 ══════════════════════════════════════════ */
+
+/* ══════════════════════════════════════════
+   PANDA LOGIN SYSTEM — منطق واجهة الباندا
+══════════════════════════════════════════ */
+let _pandaEffectsReady = false;
+
+function _pandaInitEffects() {
+  if (_pandaEffectsReady) return;
+  _pandaEffectsReady = true;
+  const eyeL  = document.querySelector("#loginUI-panda .eyeball-l");
+  const eyeR  = document.querySelector("#loginUI-panda .eyeball-r");
+  const handL = document.querySelector("#loginUI-panda .hand-l");
+  const handR = document.querySelector("#loginUI-panda .hand-r");
+  if (!eyeL) return;
+
+  const normalEye  = () => { eyeL.style.cssText="left:.6em;top:.6em;"; eyeR.style.cssText="right:.6em;top:.6em;"; };
+  const normalHand = () => { handL.style.cssText="height:2.81em;top:8.4em;left:7.5em;transform:rotate(0deg);"; handR.style.cssText="height:2.81em;top:8.4em;right:7.5em;transform:rotate(0deg);"; };
+  const eyesDown   = () => { eyeL.style.cssText="left:.75em;top:1.12em;"; eyeR.style.cssText="right:.75em;top:1.12em;"; };
+  const handsUp    = () => { handL.style.cssText="height:6.56em;top:3.87em;left:11.75em;transform:rotate(-155deg);"; handR.style.cssText="height:6.56em;top:3.87em;right:11.75em;transform:rotate(155deg);"; };
+
+  const addEye  = id => { const el=document.getElementById(id); if(el) el.addEventListener("focus",()=>{eyesDown();normalHand();}); };
+  const addHand = id => { const el=document.getElementById(id); if(el) el.addEventListener("focus",()=>{handsUp();normalEye();}); };
+  addEye("pandaEmail"); addEye("pandaEmail2"); addEye("pandaName");
+  addHand("pandaPass"); addHand("pandaPass2");
+
+  document.addEventListener("click", e => {
+    const ids = ["pandaEmail","pandaPass","pandaEmail2","pandaPass2","pandaName"];
+    if (!ids.map(id=>document.getElementById(id)).includes(e.target)) { normalEye(); normalHand(); }
+  });
+
+  // مزامنة رسائل الخطأ من loginError لعرضها في الباندا
+  const errSrc = document.getElementById("loginError");
+  const errL   = document.getElementById("pandaError");
+  const errS   = document.getElementById("pandaError2");
+  if (errSrc) new MutationObserver(() => {
+    const txt = errSrc.textContent || "";
+    if (errL) errL.textContent = txt;
+    if (errS) errS.textContent = txt;
+  }).observe(errSrc, { childList:true, characterData:true, subtree:true });
+}
+
+function _pandaShowSignup() {
+  const lf = document.getElementById("pandaLoginForm");
+  const sf = document.getElementById("pandaSignupForm");
+  if(lf) lf.style.display = "none";
+  if(sf) sf.style.display = "flex";
+  if(window._setAuthMode) window._setAuthMode("register");
+  else if(window.setAuthMode) window.setAuthMode("register");
+}
+function _pandaShowLogin() {
+  const lf = document.getElementById("pandaLoginForm");
+  const sf = document.getElementById("pandaSignupForm");
+  if(sf) sf.style.display = "none";
+  if(lf) lf.style.display = "flex";
+  if(window._setAuthMode) window._setAuthMode("login");
+  else if(window.setAuthMode) window.setAuthMode("login");
+}
+function _pandaSubmit(mode) {
+  // مزامنة القيم للحقول الأصلية قبل الإرسال
+  if (mode === "register") {
+    const n=document.getElementById("pandaName"); if(n) document.getElementById("loginName").value=n.value;
+    const e=document.getElementById("pandaEmail2"); if(e) document.getElementById("loginEmail").value=e.value;
+    const p=document.getElementById("pandaPass2");  if(p) document.getElementById("loginPass").value=p.value;
+    if(window._setAuthMode) window._setAuthMode("register");
+    else if(window.setAuthMode) window.setAuthMode("register");
+  } else {
+    const e=document.getElementById("pandaEmail"); if(e) document.getElementById("loginEmail").value=e.value;
+    const p=document.getElementById("pandaPass");  if(p) document.getElementById("loginPass").value=p.value;
+  }
+  // تشغيل نفس زر Auth الأصلي
+  document.getElementById("mainAuthBtn")?.click();
+}
+
+window._pandaInitEffects = _pandaInitEffects;
+window._pandaShowSignup  = _pandaShowSignup;
+window._pandaShowLogin   = _pandaShowLogin;
+window._pandaSubmit      = _pandaSubmit;
+
+// تبديل واجهة تسجيل الدخول — للمالك فقط
+window.toggleLoginUI = async function(uiName) {
+  if (!isOwner()) return;
+  try {
+    await setDoc(doc(db, "appSettings", "loginUI"), { active: uiName });
+    const label = uiName === "panda" ? "الباندا 🐼" : "المصباح 💡";
+    toast(`تم التبديل إلى واجهة ${label}`);
+  } catch(e) { toast("فشل تغيير الواجهة", "error"); }
+};
+
 window.showPage = (id) => {
   document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
   document.getElementById(id).classList.add("active");
