@@ -536,6 +536,7 @@
   <div class="bottom-nav">
     <div class="nav-item active" data-nav="tab-home"><i class="fa-solid fa-house"></i><span>الرئيسية</span></div>
     <div class="nav-item" onclick="openChatPage()"><i class="fa-solid fa-comments"></i><span>الشات</span></div>
+    <div class="nav-item" onclick="openDmsPanel()"><i class="fa-solid fa-message"></i><span>الدردشات</span></div>
     <div class="nav-item" data-nav="tab-forum"><i class="fa-solid fa-layer-group"></i><span>المنتدى</span></div>
     <div class="nav-item" data-nav="tab-profile"><i class="fa-solid fa-circle-user"></i><span>بروفايلي</span></div>
   </div>
@@ -545,54 +546,6 @@
      FULL-SCREEN CHAT PAGE
 ══════════════════════════════════════════ -->
 <div id="page-chat" class="page">
-
-  <!-- Sidebar: DM list / Chat list -->
-  <div class="chat-sidebar" id="chatSidebar">
-    <div class="sidebar-header" id="sidebarHeader">
-      <h3><i class="fa-solid fa-comments"></i> المحادثات</h3>
-      <button class="sidebar-search-icon-btn" id="sidebarSearchIconBtn" onclick="toggleSidebarSearch()" title="بحث"><i class="fa-solid fa-magnifying-glass"></i></button>
-      <div class="sidebar-header-search-wrap">
-        <input class="sidebar-header-search-inp" id="sidebarHeaderSearchInp" placeholder="بحث..." autocomplete="off">
-      </div>
-      <button class="sidebar-close-btn" id="sidebarCloseBtn" onclick="closeSidebar()"><i class="fa-solid fa-xmark"></i></button>
-    </div>
-    <!-- Sidebar Tabs -->
-    <div class="sidebar-tabs">
-      <button class="sidebar-tab active" id="stab-chats" onclick="switchSidebarTab('chats')">
-        <span class="st-icon"><i class="fa-solid fa-comments"></i></span>الشات
-      </button>
-
-      <button class="sidebar-tab" id="stab-rooms" onclick="switchSidebarTab('rooms')">
-        <span class="st-icon"><i class="fa-solid fa-layer-group"></i></span>الغرف
-      </button>
-
-      <button class="sidebar-tab" id="stab-members" onclick="switchSidebarTab('members')">
-        <span class="st-icon"><i class="fa-solid fa-users"></i></span>الأعضاء
-      </button>
-    </div>
-    <!-- Panel 1: Active Chats -->
-    <div class="sidebar-panel active" id="spanel-chats">
-      <div class="dm-list" id="dmList">
-        <!-- Populated by JS -->
-      </div>
-    </div>
-
-    <!-- Panel 2: Rooms List -->
-    <div class="sidebar-panel" id="spanel-rooms">
-      <div class="stab-rooms-panel" id="roomsList">
-        <!-- Populated by JS -->
-      </div>
-    </div>
-
-    <!-- Panel 3: Members List (Direct Chat) -->
-    <div class="sidebar-panel" id="spanel-members">
-      <div class="dm-list" id="membersList" style="flex:1;overflow-y:auto;">
-        <!-- skeleton injected by JS on first open -->
-      </div>
-    </div>
-  </div>
-
-  <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
 
   <!-- Floating Request Popup (global — shown on any page) -->
 
@@ -3141,6 +3094,12 @@ function closeSidebar() {
 window.openSidebar  = openSidebar;
 window.closeSidebar = closeSidebar;
 window.switchSidebarTab = switchSidebarTab;
+
+window.openDmsPanel = function() {
+  buildDmList();
+  switchSidebarTab('chats');
+  openSidebar();
+};
 
 /* ══════════════════════════════════════════
    LOGIN PAGE TOGGLE
@@ -10040,6 +9999,41 @@ try { _listenPinnedMsg(); } catch(e) {}
   <iframe src="maintenance.html" title="الموقع تحت الصيانة" style="width:100%;height:100%;border:0;"></iframe>
 </div>
 <script type="module" src="js/maintenance.js"></script>
+
+<!-- ══════════════════════════════════════════
+     GLOBAL SIDEBAR — الدردشات (يعمل من أي صفحة)
+══════════════════════════════════════════ -->
+<div class="chat-sidebar" id="chatSidebar">
+  <div class="sidebar-header" id="sidebarHeader">
+    <h3><i class="fa-solid fa-comments"></i> المحادثات</h3>
+    <button class="sidebar-search-icon-btn" id="sidebarSearchIconBtn" onclick="toggleSidebarSearch()" title="بحث"><i class="fa-solid fa-magnifying-glass"></i></button>
+    <div class="sidebar-header-search-wrap">
+      <input class="sidebar-header-search-inp" id="sidebarHeaderSearchInp" placeholder="بحث..." autocomplete="off">
+    </div>
+    <button class="sidebar-close-btn" id="sidebarCloseBtn" onclick="closeSidebar()"><i class="fa-solid fa-xmark"></i></button>
+  </div>
+  <div class="sidebar-tabs">
+    <button class="sidebar-tab active" id="stab-chats" onclick="switchSidebarTab('chats')">
+      <span class="st-icon"><i class="fa-solid fa-comments"></i></span>الشات
+    </button>
+    <button class="sidebar-tab" id="stab-rooms" onclick="switchSidebarTab('rooms')">
+      <span class="st-icon"><i class="fa-solid fa-layer-group"></i></span>الغرف
+    </button>
+    <button class="sidebar-tab" id="stab-members" onclick="switchSidebarTab('members')">
+      <span class="st-icon"><i class="fa-solid fa-users"></i></span>الأعضاء
+    </button>
+  </div>
+  <div class="sidebar-panel active" id="spanel-chats">
+    <div class="dm-list" id="dmList"></div>
+  </div>
+  <div class="sidebar-panel" id="spanel-rooms">
+    <div class="stab-rooms-panel" id="roomsList"></div>
+  </div>
+  <div class="sidebar-panel" id="spanel-members">
+    <div class="dm-list" id="membersList" style="flex:1;overflow-y:auto;"></div>
+  </div>
+</div>
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
 
 </body>
 </html>
