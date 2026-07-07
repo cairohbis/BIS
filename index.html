@@ -686,6 +686,93 @@
   </div>
 </div>
 
+
+<!-- ══════════════════════════════════════════
+     DMS PAGE — صفحة الدردشات الكاملة
+══════════════════════════════════════════ -->
+<div id="page-dms" class="page">
+
+  <!-- Header -->
+  <div class="dms-header">
+    <button class="dms-back-btn" onclick="showPage('page-home')"><i class="fa-solid fa-arrow-right"></i></button>
+    <span class="dms-header-title">الدردشات</span>
+    <button class="dms-search-toggle" id="dmsSearchToggle"><i class="fa-solid fa-magnifying-glass"></i></button>
+  </div>
+
+  <!-- Search Bar -->
+  <div class="dms-search-bar" id="dmsSearchBar" style="display:none;">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <input type="text" id="dmsSearchInp" placeholder="ابحث في المحادثات..." autocomplete="off">
+    <button onclick="document.getElementById('dmsSearchInp').value='';_dmsSearch('')"><i class="fa-solid fa-xmark"></i></button>
+  </div>
+
+  <!-- Filter Chips — تظهر فقط في تبويب الدردشات -->
+  <div class="dms-filters" id="dmsFilters">
+    <button class="dms-chip active" data-filter="all" onclick="_dmsFilter(this,'all')">الكل</button>
+    <button class="dms-chip" data-filter="unread" onclick="_dmsFilter(this,'unread')">غير مقروءة</button>
+    <button class="dms-chip" data-filter="fav" onclick="_dmsFilter(this,'fav')">مفضلة</button>
+  </div>
+
+  <!-- Content Panels -->
+  <div class="dms-content">
+
+    <!-- الدردشات -->
+    <div class="dms-panel active" id="dmspanel-chats">
+      <div class="dms-list" id="dmsConvList">
+        <div class="dms-loading"><i class="fa-solid fa-circle-notch fa-spin"></i></div>
+      </div>
+    </div>
+
+    <!-- المجتمعات (الغرف) -->
+    <div class="dms-panel" id="dmspanel-rooms">
+      <div class="dms-section-label">المجتمعات والغرف</div>
+      <div class="dms-list" id="dmsRoomsList">
+        <div class="dms-loading"><i class="fa-solid fa-circle-notch fa-spin"></i></div>
+      </div>
+    </div>
+
+    <!-- المكالمات -->
+    <div class="dms-panel" id="dmspanel-calls">
+      <div class="dms-under-dev">
+        <i class="fa-solid fa-phone"></i>
+        <div class="dms-ud-title">المكالمات</div>
+        <div class="dms-ud-sub">هذه الميزة قيد التطوير</div>
+      </div>
+    </div>
+
+    <!-- الحالات -->
+    <div class="dms-panel" id="dmspanel-status">
+      <div class="dms-under-dev">
+        <i class="fa-solid fa-circle-half-stroke"></i>
+        <div class="dms-ud-title">الحالات</div>
+        <div class="dms-ud-sub">هذه الميزة قيد التطوير</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Inner Bottom Tabs -->
+  <div class="dms-tabs">
+    <button class="dms-tab active" data-panel="chats" onclick="_dmsSwitchTab(this,'chats')">
+      <i class="fa-solid fa-message"></i>
+      <span>الدردشات</span>
+    </button>
+    <button class="dms-tab" data-panel="rooms" onclick="_dmsSwitchTab(this,'rooms')">
+      <i class="fa-solid fa-users"></i>
+      <span>المجتمعات</span>
+    </button>
+    <button class="dms-tab" data-panel="calls" onclick="_dmsSwitchTab(this,'calls')">
+      <i class="fa-solid fa-phone"></i>
+      <span>المكالمات</span>
+    </button>
+    <button class="dms-tab" data-panel="status" onclick="_dmsSwitchTab(this,'status')">
+      <i class="fa-solid fa-circle-half-stroke"></i>
+      <span>الحالات</span>
+    </button>
+  </div>
+
+</div>
+
 <!-- ══════════════════════════════════════════
      ADMIN PANEL
 ══════════════════════════════════════════ -->
@@ -3099,9 +3186,8 @@ window.closeSidebar = closeSidebar;
 window.switchSidebarTab = switchSidebarTab;
 
 window.openDmsPanel = function() {
-  buildDmList();
-  switchSidebarTab('chats');
-  openSidebar();
+  showPage("page-dms");
+  window._dmsPageInit?.();
 };
 
 /* ══════════════════════════════════════════
@@ -4388,6 +4474,11 @@ function selectChat(chatId, chatName, chatPhoto) {
 
   // إغلاق الـ Sidebar على الموبايل
   closeSidebar();
+
+  // ── الانتقال لصفحة الشات إذا لم نكن فيها ──
+  if (!document.getElementById("page-chat")?.classList.contains("active")) {
+    showPage("page-chat");
+  }
 
   // ── استعادة مسودة المحادثة الجديدة ──
   _draftRestore(chatId);
@@ -9567,6 +9658,7 @@ try { _listenPinnedMsg(); } catch(e) {}
 <script type="module" src="js/library.js"></script>
 <script type="module" src="js/poll.js"></script>
 <script type="module" src="js/mention.js"></script>
+<script type="module" src="js/dms-page.js"></script>
 <script src="js/spark.js"></script>
 <!-- ══════════════════════════════════════════
      SETTINGS MODAL — Full Screen Sheet
