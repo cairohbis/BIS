@@ -537,7 +537,10 @@
   <div class="bottom-nav">
     <div class="nav-item active" data-nav="tab-home"><i class="fa-solid fa-house"></i><span>الرئيسية</span></div>
     <div class="nav-item" onclick="openChatPage()"><i class="fa-solid fa-comments"></i><span>الشات</span></div>
-    <div class="nav-item" onclick="openDmsPanel()"><i class="fa-regular fa-comment-dots"></i><span>الدردشات</span></div>
+    <div class="nav-item" onclick="openDmsPanel()">
+      <div class="nav-dms-wrap"><i class="fa-regular fa-comment-dots"></i><span class="nav-dms-badge" id="navDmsBadge" style="display:none;"></span></div>
+      <span>الدردشات</span>
+    </div>
     <div class="nav-item" data-nav="tab-forum"><i class="fa-solid fa-layer-group"></i><span>المنتدى</span></div>
     <div class="nav-item" data-nav="tab-profile"><i class="fa-solid fa-circle-user"></i><span>بروفايلي</span></div>
   </div>
@@ -3803,6 +3806,7 @@ onAuthStateChanged(auth, async (user) => {
   // FCM init
   _initFCM(user.uid).catch(() => {});
   _startNotifListener(user.uid);
+  window._dmsStartListeners?.();
 
   loadNews();
   window.loadLectures();
