@@ -144,6 +144,36 @@
   border-radius: 50%;
 }
 
+/* ── Avatar Wrap + Online Dot (Messenger style) ── */
+.dms-avatar-wrap {
+  position: relative;
+  width: 52px; height: 52px;
+  flex-shrink: 0;
+}
+.dms-avatar-wrap .dms-conv-avatar,
+.dms-avatar-wrap .dms-conv-avatar-public,
+.dms-avatar-wrap .dms-conv-avatar-letter,
+.dms-avatar-wrap .dms-conv-avatar-room {
+  width: 100%; height: 100%;
+}
+.dms-online-dot {
+  position: absolute;
+  bottom: 1px; right: 1px;
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  background: #2ed573;
+  border: 2px solid #fff;
+  box-shadow: 0 0 6px 1px rgba(46,213,115,.65);
+  opacity: 0;
+  transform: scale(.5);
+  transition: opacity .25s ease, transform .25s ease;
+  pointer-events: none;
+}
+.dms-online-dot.show {
+  opacity: 1;
+  transform: scale(1);
+}
+
 /* ── Conv Body ── */
 .dms-conv-body { flex: 1; min-width: 0; }
 .dms-conv-row1 {
