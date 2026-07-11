@@ -1,8 +1,69 @@
 import { collection, query, where, orderBy, onSnapshot, doc, getDoc, limit } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-/* ── حالة عدّاد غير المقروء لكل محادثة (مستمعات فورية مستقلة) ── */
+/* ── حالة عدّاد غير المقروء لكل محادثة (مستمعات فورية مستقلة — دائمة طوال الجلسة) ── */
 let _dmsUnreadMap    = {};  // roomId → عدد غير المقروء (Live)
 let _dmsUnreadUnsubs = {};  // roomId → دالة إلغاء الاشتراك
+
+/* ── حالة مؤشر الاتصال (Online Dot) ──
+   مستمعات محدودة فقط: المحادثات الظاهرة فعلياً في الشاشة + المحادثة المفتوحة حالياً
+   (وليس كل المحادثات — تفاديًا لمئات المستمعات مع القوائم الكبيرة) ── */
+let _dmsPresenceUnsubs    = {}; // otherId → دالة إلغاء الاشتراك (النشطة حالياً فقط)
+let _dmsPresenceObserver  = null;
+
+/* ── تحديث DOM مباشرة لمؤشر الاتصال (بدون إعادة رسم كامل القائمة) ── */
+function _dmsSetOnlineDot(otherId, isOnline) {
+  const item = _dmsItems.find(i => i.id === otherId);
+  if (item) item.isOnline = isOnline;
+  const el = document.getElementById(`dms-item-${otherId}`);
+  const dot = el?.querySelector(".dms-online-dot");
+  if (dot) dot.classList.toggle("show", isOnline);
+}
+
+/* ── مستمع فوري لحالة اتصال مستخدم واحد (idempotent) —
+   يعيد استخدام نفس بيانات users/{uid} ونفس دالة الحساب window._isOnlineVisible
+   الموجودة أصلاً في نظام حالة الاتصال، دون أي منطق جديد ── */
+function _dmsAttachPresenceListener(otherId) {
+  if (!otherId || _dmsPresenceUnsubs[otherId]) return; // مرتبط بالفعل
+  _dmsPresenceUnsubs[otherId] = onSnapshot(doc(window.db, "users", otherId), snap => {
+    if (!snap.exists()) { _dmsSetOnlineDot(otherId, false); return; }
+    const isOnline = window._isOnlineVisible ? window._isOnlineVisible(snap.data()) : false;
+    _dmsSetOnlineDot(otherId, isOnline);
+  }, () => {});
+}
+
+/* ── إلغاء مستمع حالة اتصال شخص معيّن (يُستخدم عند خروج العنصر من الشاشة) ── */
+function _dmsDetachPresenceListener(otherId) {
+  if (_dmsPresenceUnsubs[otherId]) {
+    _dmsPresenceUnsubs[otherId]();
+    delete _dmsPresenceUnsubs[otherId];
+  }
+}
+
+/* ── مراقب الظهور (IntersectionObserver) —
+   يُشغّل مستمع الحضور فقط للعناصر الظاهرة فعلياً في الشاشة،
+   ويُلغيه عند خروجها من العرض — إلا إن كانت المحادثة المفتوحة حالياً ── */
+function _dmsSetupPresenceObserver() {
+  const container = document.getElementById("dmsConvList");
+  if (!container) return;
+  if (_dmsPresenceObserver) _dmsPresenceObserver.disconnect();
+
+  _dmsPresenceObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      const otherId = entry.target.dataset.otherId;
+      if (!otherId) return;
+      if (entry.isIntersecting) {
+        _dmsAttachPresenceListener(otherId);
+      } else if (window._currentChatId !== otherId) {
+        // لا تُلغِ مستمع المحادثة المفتوحة حالياً حتى لو خرجت من العرض
+        _dmsDetachPresenceListener(otherId);
+      }
+    });
+  }, { root: container, rootMargin: "150px 0px", threshold: 0 });
+
+  container.querySelectorAll(".dms-conv-item[data-other-id]").forEach(el => {
+    _dmsPresenceObserver.observe(el);
+  });
+}
 
 /* ══════════════════════════════════════════
    DMS PAGE — صفحة الدردشات
@@ -42,9 +103,15 @@ function _buildItem(item) {
   const badge = item.unread > 0 ? `<span class="dms-unread-badge">${item.unread>99?"99+":item.unread}</span>` : "";
   const safeName = (item.name||"").replace(/'/g,"\\'").replace(/"/g,"&quot;");
   const safePhoto = (item.photo||"").replace(/'/g,"\\'");
+  // مؤشر الاتصال يظهر فقط في المحادثات الخاصة (ليس الشات العام ولا الغرف)
+  const showDot = item.cls === "";
+  const dotHTML = showDot ? `<span class="dms-online-dot${item.isOnline ? " show" : ""}"></span>` : "";
   return `
-    <div class="dms-conv-item" onclick="_dmsOpenChat('${item.id}','${safeName}','${safePhoto}')">
-      ${_av(item.photo, item.name, item.cls)}
+    <div class="dms-conv-item" id="dms-item-${item.id}" ${showDot ? `data-other-id="${item.id}"` : ""} onclick="_dmsOpenChat('${item.id}','${safeName}','${safePhoto}')">
+      <div class="dms-avatar-wrap">
+        ${_av(item.photo, item.name, item.cls)}
+        ${dotHTML}
+      </div>
       <div class="dms-conv-body">
         <div class="dms-conv-row1">
           <span class="dms-conv-name">${item.name||"مستخدم"}</span>
@@ -85,9 +152,12 @@ function _render(search) {
   }
   if (!items.length) {
     el.innerHTML = `<div class="dms-empty"><i class="fa-regular fa-comment-dots"></i><p>لا توجد محادثات</p></div>`;
+    if (_dmsPresenceObserver) { _dmsPresenceObserver.disconnect(); }
     return;
   }
   el.innerHTML = items.map(_buildItem).join("");
+  // بعد كل رسم: أعد ربط مراقب الظهور بالعناصر الجديدة (تفعيل/إلغاء مستمعات الحضور حسب الظهور الفعلي)
+  _dmsSetupPresenceObserver();
 }
 
 /* ── فتح محادثة ── */
@@ -103,6 +173,8 @@ window._dmsMarkRead = function(otherId) {
     _render(document.getElementById("dmsSearchInp")?.value||"");
     _updateNavBadge();
   }
+  // إبقاء مستمع حالة الاتصال فعالاً دائماً طالما المحادثة مفتوحة (حتى لو خرج العنصر من الشاشة)
+  _dmsAttachPresenceListener(otherId);
 };
 
 /* ── فلتر ── */
@@ -198,36 +270,51 @@ window._dmsStartListeners = function() {
     }, () => {});
   }
 
+  // ── تحديث DOM مباشرة لمؤشر الاتصال (بدون إعادة رسم كامل القائمة) ──
+  // (الدوال منقولة لمستوى الملف: _dmsSetOnlineDot, _dmsAttachPresenceListener, _dmsDetachPresenceListener, _dmsSetupPresenceObserver)
+
   // المحادثات الخاصة
   const privQ = query(collection(window.db,"privateChats"), where("participants","array-contains",uid));
   onSnapshot(privQ, async snap => {
     const items = [];
-    const activeRoomIds = new Set();
+    const activeRoomIds  = new Set();
+    const activeOtherIds = new Set();
     for (const ds of snap.docs) {
       const d       = ds.data();
       const roomId  = ds.id;
       const otherId = (d.participants||[]).find(p => p !== uid);
       if (!otherId) continue;
       activeRoomIds.add(roomId);
+      activeOtherIds.add(otherId);
       const u = await _getUser(otherId);
 
+      const existing = _dmsItems.find(i => i.id === otherId);
       items.push({
         id: otherId, name: u.name, photo: u.photo, cls: "",
         lastMsg:  d.lastMessage   || "",
         lastTime: d.lastMessageAt || null,
-        unread: _dmsUnreadMap[roomId] || 0
+        unread:   _dmsUnreadMap[roomId] || 0,
+        isOnline: existing?.isOnline || false
       });
 
-      // مستمع فوري مستقل — يحدّث العداد لحظة وصول/تغيّر أي رسالة
+      // عدّاد غير المقروء: مستمع فوري دائم لكل المحادثات (بلا استثناء)
       _dmsAttachUnreadListener(roomId, otherId);
+      // حالة الاتصال: تُفعَّل فقط عبر IntersectionObserver بعد الرسم (أو إذا كانت المحادثة مفتوحة حالياً)
     }
 
-    // تنظيف مستمعي الغرف التي لم تعد موجودة (محادثة محذوفة مثلاً)
+    // تنظيف مستمعي غير المقروء للغرف التي لم تعد موجودة (محادثة محذوفة مثلاً)
     Object.keys(_dmsUnreadUnsubs).forEach(rid => {
       if (!activeRoomIds.has(rid)) {
         _dmsUnreadUnsubs[rid]();
         delete _dmsUnreadUnsubs[rid];
         delete _dmsUnreadMap[rid];
+      }
+    });
+    // تنظيف مستمعي الحضور للمستخدمين الذين لم تعد لديهم محادثة معنا إطلاقاً
+    Object.keys(_dmsPresenceUnsubs).forEach(oid => {
+      if (!activeOtherIds.has(oid)) {
+        _dmsPresenceUnsubs[oid]();
+        delete _dmsPresenceUnsubs[oid];
       }
     });
 
