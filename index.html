@@ -3012,6 +3012,7 @@ function _isOnlineVisible(u) {
   if (isAdmin()) return !!_alive;
   return !!(_alive && u.showOnline !== false);
 }
+window._isOnlineVisible = _isOnlineVisible;
 
 function canModifyUser(actorRole, targetRole) {
   if (targetRole === ROLES.OWNER) return false;
