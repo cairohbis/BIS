@@ -1,5 +1,8 @@
-
 import { collection, query, where, orderBy, onSnapshot, doc, getDoc, limit } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+/* ── حالة عدّاد غير المقروء لكل محادثة (مستمعات فورية مستقلة) ── */
+let _dmsUnreadMap    = {};  // roomId → عدد غير المقروء (Live)
+let _dmsUnreadUnsubs = {};  // roomId → دالة إلغاء الاشتراك
 
 /* ══════════════════════════════════════════
    DMS PAGE — صفحة الدردشات
@@ -55,13 +58,15 @@ function _buildItem(item) {
     </div>`;
 }
 
-/* ── تحديث badge الـ nav ── */
+/* ── تحديث badge الـ nav ──
+   العدد هنا = عدد المحادثات (الأشخاص) التي بها رسائل غير مقروءة
+   وليس مجموع الرسائل غير المقروءة ── */
 function _updateNavBadge() {
-  const total = _dmsItems.reduce((s,i) => s + (i.unread||0), 0);
+  const convCount = _dmsItems.filter(i => (i.unread||0) > 0).length;
   const el = document.getElementById("navDmsBadge");
   if (!el) return;
-  if (total > 0) {
-    el.textContent    = total > 99 ? "99+" : total;
+  if (convCount > 0) {
+    el.textContent    = convCount > 99 ? "99+" : convCount;
     el.style.display  = "";
   } else {
     el.style.display  = "none";
@@ -88,6 +93,16 @@ function _render(search) {
 /* ── فتح محادثة ── */
 window._dmsOpenChat = function(id, name, photo) {
   window.selectChat(id, name, photo);
+};
+
+/* ── تصفير فوري لعداد شخص معيّن عند فتح محادثته (يُستدعى من selectChat) ── */
+window._dmsMarkRead = function(otherId) {
+  const item = _dmsItems.find(i => i.id === otherId);
+  if (item && item.unread) {
+    item.unread = 0;
+    _render(document.getElementById("dmsSearchInp")?.value||"");
+    _updateNavBadge();
+  }
 };
 
 /* ── فلتر ── */
@@ -163,36 +178,59 @@ window._dmsStartListeners = function() {
     _render(""); _updateNavBadge();
   }, () => {});
 
+  // ── مستمع فوري لعدد غير المقروء الخاص بمحادثة واحدة (idempotent) ──
+  function _dmsAttachUnreadListener(roomId, otherId) {
+    if (_dmsUnreadUnsubs[roomId]) return; // مرتبط بالفعل
+    const uQ = query(
+      collection(window.db, `privateChats/${roomId}/messages`),
+      where("seen","==",false)
+    );
+    _dmsUnreadUnsubs[roomId] = onSnapshot(uQ, uSnap => {
+      // إذا كانت المحادثة مفتوحة حالياً مع نفس الشخص: لا تُحسب كغير مقروءة
+      const cnt = (window._currentChatId === otherId)
+        ? 0
+        : uSnap.docs.filter(m => m.data().uid !== uid).length;
+      _dmsUnreadMap[roomId] = cnt;
+      const item = _dmsItems.find(i => i.id === otherId);
+      if (item) item.unread = cnt;
+      _render(document.getElementById("dmsSearchInp")?.value||"");
+      _updateNavBadge();
+    }, () => {});
+  }
+
   // المحادثات الخاصة
   const privQ = query(collection(window.db,"privateChats"), where("participants","array-contains",uid));
   onSnapshot(privQ, async snap => {
     const items = [];
+    const activeRoomIds = new Set();
     for (const ds of snap.docs) {
       const d       = ds.data();
       const roomId  = ds.id;
       const otherId = (d.participants||[]).find(p => p !== uid);
       if (!otherId) continue;
+      activeRoomIds.add(roomId);
       const u = await _getUser(otherId);
-
-      // حساب الرسائل غير المقروءة (seen==false من الطرف الآخر)
-      let unread = 0;
-      try {
-        const { getDocs } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
-        const uQ = query(
-          collection(window.db, `privateChats/${roomId}/messages`),
-          where("seen","==",false)
-        );
-        const uSnap = await getDocs(uQ);
-        unread = uSnap.docs.filter(m => m.data().uid !== uid).length;
-      } catch(e) {}
 
       items.push({
         id: otherId, name: u.name, photo: u.photo, cls: "",
         lastMsg:  d.lastMessage   || "",
         lastTime: d.lastMessageAt || null,
-        unread
+        unread: _dmsUnreadMap[roomId] || 0
       });
+
+      // مستمع فوري مستقل — يحدّث العداد لحظة وصول/تغيّر أي رسالة
+      _dmsAttachUnreadListener(roomId, otherId);
     }
+
+    // تنظيف مستمعي الغرف التي لم تعد موجودة (محادثة محذوفة مثلاً)
+    Object.keys(_dmsUnreadUnsubs).forEach(rid => {
+      if (!activeRoomIds.has(rid)) {
+        _dmsUnreadUnsubs[rid]();
+        delete _dmsUnreadUnsubs[rid];
+        delete _dmsUnreadMap[rid];
+      }
+    });
+
     items.sort((a,b) => (b.lastTime?.toMillis?.()??0) - (a.lastTime?.toMillis?.()??0));
     const pub = _dmsItems.find(i => i.id==="public") || pubItem;
     _dmsItems = [pub, ...items];
