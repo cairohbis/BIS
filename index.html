@@ -539,7 +539,7 @@
     <div class="nav-item" onclick="openChatPage()"><i class="fa-solid fa-comments"></i><span>الشات</span></div>
     <div class="nav-item" onclick="openDmsPanel()">
       <div class="nav-dms-wrap"><i class="fa-regular fa-comment-dots"></i><span class="nav-dms-badge" id="navDmsBadge" style="display:none;"></span></div>
-      <span>الدردشات</span>
+      <span>المحادثات</span>
     </div>
     <div class="nav-item" data-nav="tab-forum"><i class="fa-solid fa-layer-group"></i><span>المنتدى</span></div>
     <div class="nav-item" data-nav="tab-profile"><i class="fa-solid fa-circle-user"></i><span>بروفايلي</span></div>
@@ -692,14 +692,14 @@
 
 
 <!-- ══════════════════════════════════════════
-     DMS PAGE — صفحة الدردشات الكاملة
+     DMS PAGE — صفحة المحادثات الكاملة
 ══════════════════════════════════════════ -->
 <div id="page-dms" class="page">
 
   <!-- Header -->
   <div class="dms-header">
     <button class="dms-back-btn" onclick="showPage('page-home')"><i class="fa-solid fa-arrow-right"></i></button>
-    <span class="dms-header-title">الدردشات</span>
+    <span class="dms-header-title">المحادثات</span>
     <button class="dms-search-toggle" id="dmsSearchToggle"><i class="fa-solid fa-magnifying-glass"></i></button>
   </div>
 
@@ -710,7 +710,7 @@
     <button onclick="document.getElementById('dmsSearchInp').value='';_dmsSearch('')"><i class="fa-solid fa-xmark"></i></button>
   </div>
 
-  <!-- Filter Chips — تظهر فقط في تبويب الدردشات -->
+  <!-- Filter Chips — تظهر فقط في تبويب المحادثات -->
   <div class="dms-filters" id="dmsFilters">
     <button class="dms-chip active" data-filter="all" onclick="_dmsFilter(this,'all')">الكل</button>
     <button class="dms-chip" data-filter="unread" onclick="_dmsFilter(this,'unread')">غير مقروءة</button>
@@ -720,7 +720,7 @@
   <!-- Content Panels -->
   <div class="dms-content">
 
-    <!-- الدردشات -->
+    <!-- المحادثات -->
     <div class="dms-panel active" id="dmspanel-chats">
       <div class="dms-list" id="dmsConvList">
         <div class="dms-loading"><i class="fa-solid fa-circle-notch fa-spin"></i></div>
@@ -759,7 +759,7 @@
   <div class="dms-tabs">
     <button class="dms-tab active" data-panel="chats" onclick="_dmsSwitchTab(this,'chats')">
       <i class="fa-solid fa-message"></i>
-      <span>الدردشات</span>
+      <span>المحادثات</span>
     </button>
     <button class="dms-tab" data-panel="rooms" onclick="_dmsSwitchTab(this,'rooms')">
       <i class="fa-solid fa-users"></i>
@@ -4474,6 +4474,8 @@ function selectChat(chatId, chatName, chatPhoto) {
       _dmMeta[roomId].unread = 0;
       _updateDmItemUI(chatId);
     }
+    // تصفير فوري لعداد صفحة "المحادثات" وزر التنقل السفلي
+    window._dmsMarkRead?.(chatId);
     // إعادة تعيين onscroll سيتم داخل startChatListener
   }
 
