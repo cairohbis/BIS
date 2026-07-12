@@ -536,7 +536,7 @@
   <!-- BOTTOM NAV -->
   <div class="bottom-nav">
     <div class="nav-item active" data-nav="tab-home"><i class="fa-solid fa-house"></i><span>الرئيسية</span></div>
-    <div class="nav-item" onclick="openChatPage()"><i class="fa-solid fa-comments"></i><span>الشات</span></div>
+    <div class="nav-item" onclick="openChatPage()" style="display:none;"><i class="fa-solid fa-comments"></i><span>الشات</span></div>
     <div class="nav-item" onclick="openDmsPanel()">
       <div class="nav-dms-wrap"><i class="fa-regular fa-comment-dots"></i><span class="nav-dms-badge" id="navDmsBadge" style="display:none;"></span></div>
       <span>المحادثات</span>
@@ -558,8 +558,8 @@
   <div class="chat-main">
     <!-- Header -->
     <div class="chat-topbar">
-      <button class="chat-back-btn" onclick="closeChatPage()" title="رجوع">←</button>
-      <button class="menu-toggle-btn" id="menuToggleBtn" onclick="openSidebar()"><i class="fa-solid fa-bars"></i></button>
+      <button class="chat-back-btn" onclick="closeChatPage()" title="رجوع" style="display:none;">←</button>
+      <button class="menu-toggle-btn" id="menuToggleBtn" onclick="openSidebar()" style="display:none;"><i class="fa-solid fa-bars"></i></button>
       <div class="chat-topbar-info">
         <div class="chat-topbar-avatar" id="chatTopAvatar"><i class="fa-solid fa-graduation-cap"></i></div>
         <div>
