@@ -698,7 +698,7 @@
 
   <!-- Header -->
   <div class="dms-header">
-    <button class="dms-back-btn" onclick="showPage('page-home')"><i class="fa-solid fa-arrow-right"></i></button>
+    <button class="dms-back-btn" onclick="if(!window._navGoBackIfMatches?.('page:page-dms')) showPage('page-home')"><i class="fa-solid fa-arrow-right"></i></button>
     <span class="dms-header-title">المحادثات</span>
     <button class="dms-search-toggle" id="dmsSearchToggle"><i class="fa-solid fa-magnifying-glass"></i></button>
   </div>
@@ -1636,6 +1636,7 @@
 <!-- ══════════════════════════════════════════
      LAMP TOGGLE SCRIPT (non-module — runs immediately)
 ══════════════════════════════════════════ -->
+<script src="js/back-nav.js"></script>
 <script src="js/lamp-login.js"></script>
 
 <!-- ══════════════════════════════════════════
@@ -3095,13 +3096,20 @@ document.getElementById("modalCancel").addEventListener("click", () => {
 ══════════════════════════════════════════ */
 
 window.showPage = (id) => {
+  const _prevPageEl = document.querySelector(".page.active");
+  const _prevPageId = _prevPageEl ? _prevPageEl.id : null;
   document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
   document.getElementById(id).classList.add("active");
   if (id === "page-owner") { loadOwnerStats(); }
   if (id === "page-admin") { loadAdminUsers(); }
+  if (_prevPageId && _prevPageId !== id) {
+    window._navPush?.(`page:${id}`, () => window.showPage(_prevPageId));
+  }
 };
 
 function goTab(tabId) {
+  const _prevTabEl = document.querySelector(".tab-content.active");
+  const _prevTabId = _prevTabEl ? _prevTabEl.id : null;
   document.querySelectorAll(".tab-content").forEach(t => t.classList.remove("active"));
   document.getElementById(tabId)?.classList.add("active");
   document.querySelectorAll(".tab").forEach(t =>
@@ -3114,11 +3122,16 @@ function goTab(tabId) {
     ["tab-news-content","tab-lectures-content","tab-exams-content","tab-sections-content"]
       .forEach(id => { const el = document.getElementById(id); if (el) el.style.display = "none"; });
   }
+  if (_prevTabId && _prevTabId !== tabId) {
+    window._navPush?.(`tab:${tabId}`, () => goTab(_prevTabId));
+  }
 }
 window.goTab = goTab;
 
 // Forum section open/close
 window.openForumSection = function(sectionKey, contentId) {
+  const _el = document.getElementById(contentId);
+  const _alreadyOpen = _el && _el.style.display !== "none";
   document.getElementById("forum-landing").style.display = "none";
   ["tab-news-content","tab-lectures-content","tab-exams-content","tab-sections-content"]
     .forEach(id => { const el = document.getElementById(id); if (el) el.style.display = "none"; });
@@ -3132,8 +3145,12 @@ window.openForumSection = function(sectionKey, contentId) {
     "tab-sections-content": () => loadSections(),
   };
   try { loaders[contentId]?.(); } catch(e) {}
+  if (!_alreadyOpen) {
+    window._navPush?.(`forum:${contentId}`, () => window.closeForumSection(contentId));
+  }
 };
 window.closeForumSection = function(contentId) {
+  if (window._navGoBackIfMatches?.(`forum:${contentId}`)) return;
   const el = document.getElementById(contentId);
   if (el) el.style.display = "none";
   document.getElementById("forum-landing").style.display = "";
@@ -3149,8 +3166,12 @@ document.querySelectorAll(".nav-item[data-nav]").forEach(n =>
   n.addEventListener("click", () => goTab(n.dataset.nav)));
 
 document.getElementById("topbarLeft").addEventListener("click", () => goTab("tab-profile"));
-document.getElementById("ownerBackBtn").addEventListener("click", () => showPage("page-home"));
-document.getElementById("adminBackBtn").addEventListener("click", () => showPage("page-home"));
+document.getElementById("ownerBackBtn").addEventListener("click", () => {
+  if (!window._navGoBackIfMatches?.("page:page-owner")) showPage("page-home");
+});
+document.getElementById("adminBackBtn").addEventListener("click", () => {
+  if (!window._navGoBackIfMatches?.("page:page-admin")) showPage("page-home");
+});
 
 /* ══════════════════════════════════════════
    CHAT PAGE OPEN / CLOSE
@@ -3177,13 +3198,19 @@ window.openChatPage = function() {
     }).catch(() => {});
   }
 };
-window.closeChatPage = function() { showPage("page-home"); };
+window.closeChatPage = function() {
+  if (window._navGoBackIfMatches?.("page:page-chat")) return;
+  showPage("page-home");
+};
 
 function openSidebar() {
+  const _wasOpen = document.getElementById("chatSidebar").classList.contains("open");
   document.getElementById("chatSidebar").classList.add("open");
   document.getElementById("sidebarOverlay").classList.add("show");
+  if (!_wasOpen) window._navPush?.("sidebar", () => closeSidebar());
 }
 function closeSidebar() {
+  if (window._navGoBackIfMatches?.("sidebar")) return;
   document.getElementById("chatSidebar").classList.remove("open");
   document.getElementById("sidebarOverlay").classList.remove("show");
 }
