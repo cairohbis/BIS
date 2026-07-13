@@ -3154,12 +3154,42 @@ window.showPage = (id) => {
   const _prevPageId = _prevPageEl ? _prevPageEl.id : null;
   document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
   document.getElementById(id).classList.add("active");
+  // 🔍 TRACE: هذه هي اللحظة الفعلية التي يُزال فيها display:none عن الصفحة
+  if (window.performance) {
+    performance.mark(`page-active-class-added:${id}`);
+    try { performance.measure(`⏱️ من بداية الصفحة حتى إزالة display:none عن ${id}`, "html-head-start", `page-active-class-added:${id}`); } catch(e) {}
+    console.log(`%c[TRACE] كلاس active أُضيف فعليًا لـ ${id} عند:`, "color:#f472b6", performance.now().toFixed(0) + "ms");
+  }
   if (id === "page-owner") { loadOwnerStats(); }
   if (id === "page-admin") { loadAdminUsers(); }
   if (_prevPageId && _prevPageId !== id) {
     window._navPush?.(`page:${id}`, () => window.showPage(_prevPageId));
   }
 };
+
+// 🔍 TRACE: كشف أول رسم فعلي بعد أي تغيير DOM (تقنية double-rAF القياسية)
+// rAF الأول يُنفَّذ قبل أي إعادة رسم (repaint)، والثاني يُنفَّذ بعد اكتمالها فعليًا
+window.__traceFirstVisibleFrame = function(label) {
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      performance.mark(`first-frame-after:${label}`);
+      try { performance.measure(`⏱️ من بداية الصفحة حتى أول رسم فعلي بعد ${label}`, "html-head-start", `first-frame-after:${label}`); } catch(e) {}
+      console.log(`%c[TRACE] 🖼️ أول رسم فعلي (paint) بعد ${label} عند:`, "color:#facc15;font-weight:bold", performance.now().toFixed(0) + "ms");
+    });
+  });
+};
+
+// 🔍 TRACE: رصد أي Long Task يحجب الـ Main Thread (يمنع الرسم) — بلا أي تعديل منطقي
+if (window.PerformanceObserver) {
+  try {
+    new PerformanceObserver((list) => {
+      list.getEntries().forEach(entry => {
+        console.log(`%c[TRACE] 🐢 Long Task حجب المعالج لمدة ${entry.duration.toFixed(0)}ms`, "color:#ef4444;font-weight:bold", "| بدأ عند:", entry.startTime.toFixed(0) + "ms", "| انتهى عند:", (entry.startTime+entry.duration).toFixed(0) + "ms");
+      });
+    }).observe({ entryTypes: ["longtask"] });
+  } catch(e) {}
+}
+
 
 function goTab(tabId) {
   const _prevTabEl = document.querySelector(".tab-content.active");
@@ -3693,6 +3723,8 @@ onAuthStateChanged(auth, async (user) => {
   console.log("%c[TRACE] ⭐ showPage('page-home') استُدعيت عند:", "color:#4ade80;font-weight:bold", performance.now().toFixed(0) + "ms");
   showPage("page-home");
   goTab("tab-home");
+  // 🔍 TRACE: قياس أول رسم فعلي بعد إظهار الرئيسية والتاب
+  window.__traceFirstVisibleFrame?.("showPage+goTab(home)");
 
   // 🔍 TRACE
   performance.mark("before-getDoc");
@@ -3915,10 +3947,15 @@ onAuthStateChanged(auth, async (user) => {
   window._dmsStartListeners?.();
   window._dmExtrasStartListeners?.();
 
+  // 🔍 TRACE
+  performance.mark("before-load-content-calls");
   loadNews();
   window.loadLectures();
   loadExams();
   loadSections();
+  performance.mark("after-load-content-calls");
+  performance.measure("⏱️ مدة تنفيذ استدعاءات loadNews/loadLectures/loadExams/loadSections (متزامن فقط)", "before-load-content-calls", "after-load-content-calls");
+  console.log("%c[TRACE] استدعاءات التحميل (الجزء المتزامن فقط) انتهت عند:", "color:#c9a96e", performance.now().toFixed(0) + "ms");
 
 });
 
