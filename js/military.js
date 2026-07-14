@@ -17,6 +17,9 @@
   if (window.__militaryModuleLoaded) return;
   window.__militaryModuleLoaded = true;
 
+  // تهيئة الكائن أولًا — قبل أي إسناد لأي خاصية عليه في باقي الملف
+  window.MilitaryModule = window.MilitaryModule || {};
+
   /* ─────────────────────────────────────────
      Firebase — نفس نمط الاستيراد الديناميكي المستخدم في grades.js
   ───────────────────────────────────────── */
@@ -279,8 +282,6 @@
   /* ─────────────────────────────────────────
      نموذج الرفع (المالك فقط)
   ───────────────────────────────────────── */
-  window.MilitaryModule = window.MilitaryModule || {};
-
   window.MilitaryModule._openUploadForm = function () {
     if (!_isOwnerUser()) return;
     if (document.getElementById("milUploadCard")) return;
