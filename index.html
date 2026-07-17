@@ -758,11 +758,17 @@ window.addEventListener("load", () => {
     <button class="dms-profile-btn" onclick="showPage('page-home'); goTab('tab-profile')" title="البروفايل"><i class="fa-solid fa-circle-user"></i></button>
   </div>
 
+  <!-- الأرشيف — صف مستقل بالأعلى (بدل شريحة فلتر مدفونة) مع عداد حي -->
+  <div class="dms-archived-row" id="dmsArchivedRow" onclick="_dmsOpenArchived()" style="display:none;">
+    <span class="dms-archived-badge" id="dmsArchivedBadge">0</span>
+    <span class="dms-archived-label">محادثات مؤرشفة</span>
+    <span class="dms-archived-icon"><i class="fa-solid fa-box-archive"></i></span>
+  </div>
+
   <!-- Filter Chips — تظهر فقط في تبويب المحادثات -->
   <div class="dms-filters" id="dmsFilters">
     <button class="dms-chip active" data-filter="all" onclick="_dmsFilter(this,'all')">الكل</button>
     <button class="dms-chip" data-filter="unread" onclick="_dmsFilter(this,'unread')">غير مقروءة</button>
-    <button class="dms-chip" data-filter="archived" onclick="_dmsFilter(this,'archived')">الأرشيف</button>
   </div>
 
   <!-- Content Panels -->
@@ -805,19 +811,19 @@ window.addEventListener("load", () => {
 
   <!-- Inner Bottom Tabs -->
   <div class="dms-tabs">
-    <button class="dms-tab active" data-panel="chats" onclick="_dmsSwitchTab(this,'chats')">
+    <button class="dms-tab active" data-panel="chats" title="المحادثات" onclick="_dmsSwitchTab(this,'chats')">
       <i class="fa-solid fa-message"></i>
       <span>المحادثات</span>
     </button>
-    <button class="dms-tab" data-panel="members" onclick="openSidebar(); switchSidebarTab('members')">
+    <button class="dms-tab" data-panel="members" title="الأعضاء" onclick="openSidebar(); switchSidebarTab('members')">
       <i class="fa-solid fa-address-book"></i>
       <span>الأعضاء</span>
     </button>
-    <button class="dms-tab" data-panel="calls" onclick="_dmsSwitchTab(this,'calls')">
+    <button class="dms-tab" data-panel="calls" title="المكالمات" onclick="_dmsSwitchTab(this,'calls')">
       <i class="fa-solid fa-phone"></i>
       <span>المكالمات</span>
     </button>
-    <button class="dms-tab" data-panel="status" onclick="_dmsSwitchTab(this,'status')">
+    <button class="dms-tab" data-panel="status" title="الحالات" onclick="_dmsSwitchTab(this,'status')">
       <i class="fa-solid fa-circle-half-stroke"></i>
       <span>الحالات</span>
     </button>
