@@ -57,7 +57,6 @@ window.addEventListener("load", () => {
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <link rel="stylesheet" href="grades/grades.css">
 <link rel="stylesheet" href="css/military.css">
-<link rel="stylesheet" href="css/ai-assistant.css">
 <link rel="stylesheet" href="css/style.css">
 <link rel="stylesheet" href="css/dms-page.css">
 </head>
@@ -599,14 +598,6 @@ window.addEventListener("load", () => {
     </div>
     <div class="nav-item" data-nav="tab-forum"><i class="fa-solid fa-layer-group"></i><span>المنتدى</span></div>
     <div class="nav-item" data-nav="tab-profile"><i class="fa-solid fa-circle-user"></i><span>بروفايلي</span></div>
-    <div class="nav-item" onclick="showPage('page-ai')">
-      <svg class="nav-ai-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <rect x="4" y="4" width="16" height="16" rx="2"></rect>
-        <rect x="9" y="9" width="6" height="6"></rect>
-        <path d="M9 1v3M15 1v3M9 20v3M15 20v3M1 9h3M1 15h3M20 9h3M20 15h3"></path>
-      </svg>
-      <span>AI</span>
-    </div>
   </div>
 </div>
 
@@ -764,21 +755,14 @@ window.addEventListener("load", () => {
   <div class="dms-header">
     <button class="dms-back-btn" onclick="if(!window._navGoBackIfMatches?.('page:page-dms')) showPage('page-home')"><i class="fa-solid fa-arrow-right"></i></button>
     <span class="dms-header-title">المحادثات</span>
-    <button class="dms-search-toggle" id="dmsSearchToggle"><i class="fa-solid fa-magnifying-glass"></i></button>
-  </div>
-
-  <!-- Search Bar -->
-  <div class="dms-search-bar" id="dmsSearchBar" style="display:none;">
-    <i class="fa-solid fa-magnifying-glass"></i>
-    <input type="text" id="dmsSearchInp" placeholder="ابحث في المحادثات..." autocomplete="off">
-    <button onclick="document.getElementById('dmsSearchInp').value='';_dmsSearch('')"><i class="fa-solid fa-xmark"></i></button>
+    <button class="dms-profile-btn" onclick="showPage('page-home'); goTab('tab-profile')" title="البروفايل"><i class="fa-solid fa-circle-user"></i></button>
   </div>
 
   <!-- Filter Chips — تظهر فقط في تبويب المحادثات -->
   <div class="dms-filters" id="dmsFilters">
     <button class="dms-chip active" data-filter="all" onclick="_dmsFilter(this,'all')">الكل</button>
     <button class="dms-chip" data-filter="unread" onclick="_dmsFilter(this,'unread')">غير مقروءة</button>
-    <button class="dms-chip" data-filter="fav" onclick="_dmsFilter(this,'fav')">مفضلة</button>
+    <button class="dms-chip" data-filter="archived" onclick="_dmsFilter(this,'archived')">الأرشيف</button>
   </div>
 
   <!-- Content Panels -->
@@ -825,9 +809,9 @@ window.addEventListener("load", () => {
       <i class="fa-solid fa-message"></i>
       <span>المحادثات</span>
     </button>
-    <button class="dms-tab" data-panel="rooms" onclick="_dmsSwitchTab(this,'rooms')">
-      <i class="fa-solid fa-users"></i>
-      <span>المجتمعات</span>
+    <button class="dms-tab" data-panel="members" onclick="openSidebar(); switchSidebarTab('members')">
+      <i class="fa-solid fa-address-book"></i>
+      <span>الأعضاء</span>
     </button>
     <button class="dms-tab" data-panel="calls" onclick="_dmsSwitchTab(this,'calls')">
       <i class="fa-solid fa-phone"></i>
@@ -1722,9 +1706,6 @@ window.addEventListener("load", () => {
     الخروج من وضع المشاهدة
   </button>
 </div>
-
-<!-- صفحة المساعد الذكي — صفحة كاملة مستقلة، تُملأ بالكامل من js/ai-assistant.js -->
-<div id="page-ai" class="page"></div>
 
 <!-- ══════════════════════════════════════════
      INLINE-HANDLER STUBS — تُعرَّف قبل Firebase
@@ -10266,8 +10247,6 @@ try { _listenPinnedMsg(); } catch(e) {}
 
 <div id="military-app-root" aria-label="الخدمة العسكرية" role="dialog"></div>
 <script src="js/military.js" defer></script>
-
-<script src="js/ai-assistant.js" defer></script>
 
 <!-- ══════════════════════════════════════════
      MAINTENANCE MODE — Overlay
