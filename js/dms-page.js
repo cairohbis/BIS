@@ -177,7 +177,45 @@ function _render(search) {
   el.innerHTML = items.map(_buildItem).join("");
   // بعد كل رسم: أعد ربط مراقب الظهور بالعناصر الجديدة (تفعيل/إلغاء مستمعات الحضور حسب الظهور الفعلي)
   _dmsSetupPresenceObserver();
+  _updateArchivedRow();
 }
+
+/* ── صف "محادثات مؤرشفة" أعلى القائمة: عداد حي + تبديل بين حالة الدخول/الرجوع ── */
+function _updateArchivedRow() {
+  const row = document.getElementById("dmsArchivedRow");
+  if (!row) return;
+  const isArchived = (id) => {
+    try { return typeof window._dmExtrasIsArchived === "function" ? window._dmExtrasIsArchived(id) : false; }
+    catch (e) { return false; }
+  };
+  const count = _dmsItems.filter(i => isArchived(i.id)).length;
+  const badge = document.getElementById("dmsArchivedBadge");
+  const label = row.querySelector(".dms-archived-label");
+  const icon  = row.querySelector(".dms-archived-icon i");
+  if (_dmsCurFilter === "archived") {
+    row.style.display = "flex";
+    if (badge) badge.style.display = "none";
+    if (label) label.textContent = "الرجوع إلى المحادثات";
+    if (icon)  icon.className = "fa-solid fa-arrow-right";
+  } else {
+    row.style.display = count > 0 ? "flex" : "none";
+    if (badge) { badge.style.display = ""; badge.textContent = count > 99 ? "99+" : count; }
+    if (label) label.textContent = "محادثات مؤرشفة";
+    if (icon)  icon.className = "fa-solid fa-box-archive";
+  }
+}
+
+/* ── فتح/إغلاق عرض الأرشيف من الصف المخصص أعلى القائمة ── */
+window._dmsOpenArchived = function() {
+  if (_dmsCurFilter === "archived") {
+    _dmsCurFilter = "all";
+    document.querySelectorAll(".dms-chip").forEach((c,i) => c.classList.toggle("active", i===0));
+  } else {
+    _dmsCurFilter = "archived";
+    document.querySelectorAll(".dms-chip").forEach(c => c.classList.remove("active"));
+  }
+  _render("");
+};
 
 /* ── إعادة رسم فورية (تُستخدم من ملف الإضافات المستقل بعد تحديث حالة تثبيت/مفضلة/كتم) ── */
 window._dmsForceRerender = function() {
