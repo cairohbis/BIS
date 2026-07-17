@@ -57,6 +57,7 @@ window.addEventListener("load", () => {
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <link rel="stylesheet" href="grades/grades.css">
 <link rel="stylesheet" href="css/military.css">
+<link rel="stylesheet" href="css/ai-assistant.css">
 <link rel="stylesheet" href="css/style.css">
 <link rel="stylesheet" href="css/dms-page.css">
 </head>
@@ -598,6 +599,14 @@ window.addEventListener("load", () => {
     </div>
     <div class="nav-item" data-nav="tab-forum"><i class="fa-solid fa-layer-group"></i><span>المنتدى</span></div>
     <div class="nav-item" data-nav="tab-profile"><i class="fa-solid fa-circle-user"></i><span>بروفايلي</span></div>
+    <div class="nav-item" onclick="showPage('page-ai')">
+      <svg class="nav-ai-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="4" y="4" width="16" height="16" rx="2"></rect>
+        <rect x="9" y="9" width="6" height="6"></rect>
+        <path d="M9 1v3M15 1v3M9 20v3M15 20v3M1 9h3M1 15h3M20 9h3M20 15h3"></path>
+      </svg>
+      <span>AI</span>
+    </div>
   </div>
 </div>
 
@@ -1713,6 +1722,9 @@ window.addEventListener("load", () => {
     الخروج من وضع المشاهدة
   </button>
 </div>
+
+<!-- صفحة المساعد الذكي — صفحة كاملة مستقلة، تُملأ بالكامل من js/ai-assistant.js -->
+<div id="page-ai" class="page"></div>
 
 <!-- ══════════════════════════════════════════
      INLINE-HANDLER STUBS — تُعرَّف قبل Firebase
@@ -10254,6 +10266,8 @@ try { _listenPinnedMsg(); } catch(e) {}
 
 <div id="military-app-root" aria-label="الخدمة العسكرية" role="dialog"></div>
 <script src="js/military.js" defer></script>
+
+<script src="js/ai-assistant.js" defer></script>
 
 <!-- ══════════════════════════════════════════
      MAINTENANCE MODE — Overlay
