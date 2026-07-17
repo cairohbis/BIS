@@ -38,33 +38,15 @@
   color: #fff; flex: 1;
   text-align: center;
 }
-.dms-search-toggle {
+.dms-profile-btn {
   background: none; border: none;
   color: #c9a96e; font-size: 18px; cursor: pointer;
+  padding: 0; line-height: 1;
 }
 
-/* ── Search Bar ── */
-.dms-search-bar {
-  display: none;
-  align-items: center; gap: 10px;
-  margin: 8px 16px;
-  padding: 10px 14px;
-  background: rgba(255,255,255,.07);
-  border-radius: 12px;
-  flex-shrink: 0;
-}
-.dms-search-bar.open { display: flex; }
-.dms-search-bar i { color: rgba(255,255,255,.4); font-size: 14px; }
-.dms-search-bar input {
-  flex: 1; background: none; border: none;
-  outline: none; color: #fff;
-  font-size: 15px; font-family: inherit;
-}
-.dms-search-bar input::placeholder { color: rgba(255,255,255,.35); }
-.dms-search-bar button {
-  background: none; border: none;
-  color: rgba(255,255,255,.4); font-size: 15px; cursor: pointer;
-}
+/* ── الشريط الجانبي (الأعضاء/الغرف) يجب أن يظهر فوق صفحة المحادثات (z-index:200) عند فتحه من هنا ── */
+#chatSidebar { z-index: 300 !important; }
+#sidebarOverlay { z-index: 299 !important; }
 
 /* ── Filter Chips ── */
 .dms-filters {
@@ -156,22 +138,21 @@
 .dms-avatar-wrap .dms-conv-avatar-room {
   width: 100%; height: 100%;
 }
-.dms-online-dot {
-  position: absolute;
-  bottom: 1px; right: 1px;
-  width: 14px; height: 14px;
-  border-radius: 50%;
-  background: #2ed573;
-  border: 2px solid #fff;
-  box-shadow: 0 0 6px 1px rgba(46,213,115,.65);
-  opacity: 0;
-  transform: scale(.5);
-  transition: opacity .25s ease, transform .25s ease;
-  pointer-events: none;
+
+/* ── حلقة أونلاين/أوف لاين حول الافاتار (نفس نظام الاتصال الحالي — تعديل شكل فقط) ──
+   أخضر بنبض إضاءة خفيف جدًا = متصل الآن / رمادي بدون نبض = غير متصل */
+.dms-avatar-wrap.ring-online  .dms-conv-avatar,
+.dms-avatar-wrap.ring-online  .dms-conv-avatar-letter {
+  box-shadow: 0 0 0 2.5px #2ed573;
+  animation: dmsOnlinePulse 2.6s ease-in-out infinite;
 }
-.dms-online-dot.show {
-  opacity: 1;
-  transform: scale(1);
+.dms-avatar-wrap.ring-offline .dms-conv-avatar,
+.dms-avatar-wrap.ring-offline .dms-conv-avatar-letter {
+  box-shadow: 0 0 0 2.5px #5a6070;
+}
+@keyframes dmsOnlinePulse {
+  0%, 100% { box-shadow: 0 0 0 2.5px #2ed573, 0 0 3px 0px rgba(46,213,115,.35); }
+  50%      { box-shadow: 0 0 0 2.5px #2ed573, 0 0 5px 1px rgba(46,213,115,.6);  }
 }
 
 /* ── Conv Body ── */
@@ -231,17 +212,18 @@
 /* ── Inner Bottom Tabs (iOS Tab Bar) ── */
 .dms-tabs {
   display: flex;
+  gap: 6px;
   border-top: 1px solid rgba(255,255,255,.1);
   background: rgba(28,28,30,.97);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   flex-shrink: 0;
-  padding-bottom: env(safe-area-inset-bottom, 0px);
+  padding: 0 6px env(safe-area-inset-bottom, 0px);
 }
 .dms-tab {
   flex: 1; display: flex; flex-direction: column;
-  align-items: center; gap: 4px;
-  padding: 10px 4px 12px;
+  align-items: center; gap: 5px;
+  padding: 12px 4px 13px;
   background: none; border: none;
   color: rgba(255,255,255,.35); font-size: 10px;
   cursor: pointer; font-family: inherit;
