@@ -200,6 +200,7 @@ function _render(search) {
   el.innerHTML = items.map(_buildItem).join("");
   // بعد كل رسم: أعد ربط مراقب الظهور بالعناصر الجديدة (تفعيل/إلغاء مستمعات الحضور حسب الظهور الفعلي)
   _dmsSetupPresenceObserver();
+  window._dmsRefreshFoldEffects?.();
 }
 
 /* ── إعادة رسم فورية (تُستخدم من ملف الإضافات المستقل بعد تحديث حالة تثبيت/مفضلة/كتم) ── */
@@ -253,6 +254,7 @@ window._dmsSwitchTab = function(btn, panel) {
   if (panel === "members" && typeof window.renderMembersList === "function") {
     window.renderMembersList("", "dmsMembersList");
   }
+  window._dmsRefreshFoldEffects?.();
 };
 
 /* ── بحث ── */
@@ -387,10 +389,81 @@ window._dmsStartListeners = function() {
   }, () => {});
 };
 
+/* ══════════════════════════════════════════
+   تأثير الطي/التصغير ثلاثي الأبعاد عند السكرول — نفس آلية التصميم
+   المرجعي بالحرف (perspective + scale + rotateX + opacity حسب المسافة
+   من حافة الحاوية العلوية/السفلية). Scroll-driven بالكامل، بدون تأخير.
+   Reusable: بتتوصل على أي حاوية سكرول + أي selector للعناصر جواها.
+══════════════════════════════════════════ */
+const _dmsFoldAttached = new Set();
+
+function _dmsAttachFoldEffect(panelEl, itemSelector) {
+  if (!panelEl || _dmsFoldAttached.has(panelEl)) return () => {};
+  _dmsFoldAttached.add(panelEl);
+
+  const topZone = 60;
+  const bottomZone = 110;
+  let ticking = false;
+
+  function update() {
+    const panelRect = panelEl.getBoundingClientRect();
+    const items = panelEl.querySelectorAll(itemSelector);
+    items.forEach(item => {
+      const r = item.getBoundingClientRect();
+      const centerY = r.top + r.height / 2;
+      const distTop = centerY - panelRect.top;
+      const distBottom = panelRect.bottom - centerY;
+
+      let scale = 1, opacity = 1, translateY = 0, rotate = 0;
+
+      if (distTop < topZone) {
+        const t = Math.max(0, Math.min(1, distTop / topZone));
+        scale = 0.82 + 0.18 * t;
+        opacity = Math.max(0.05, t);
+        translateY = (1 - t) * -10;
+        rotate = (1 - t) * -10;
+      } else if (distBottom < bottomZone) {
+        const t = Math.max(0, Math.min(1, distBottom / bottomZone));
+        scale = 0.82 + 0.18 * t;
+        opacity = Math.max(0.05, t);
+        translateY = (1 - t) * 10;
+        rotate = (1 - t) * 10;
+      }
+
+      item.style.transform = `perspective(700px) scale(${scale}) translateY(${translateY}px) rotateX(${rotate}deg)`;
+      item.style.opacity = opacity;
+    });
+    ticking = false;
+  }
+
+  panelEl.addEventListener("scroll", () => {
+    if (!ticking) { requestAnimationFrame(update); ticking = true; }
+  }, { passive: true });
+
+  update();
+  setTimeout(update, 60);
+  return update;
+}
+
+let _dmsUpdateChatsFold = null;
+let _dmsUpdateMembersFold = null;
+window._dmsRefreshFoldEffects = function () {
+  const chatsPanel   = document.getElementById("dmspanel-chats");
+  const membersPanel = document.getElementById("dmspanel-members");
+  if (chatsPanel && !_dmsUpdateChatsFold) {
+    _dmsUpdateChatsFold = _dmsAttachFoldEffect(chatsPanel, ".dms-conv-item");
+  }
+  if (membersPanel && !_dmsUpdateMembersFold) {
+    _dmsUpdateMembersFold = _dmsAttachFoldEffect(membersPanel, ".dm-item");
+  }
+  _dmsUpdateChatsFold?.();
+  _dmsUpdateMembersFold?.();
+  setTimeout(() => { _dmsUpdateChatsFold?.(); _dmsUpdateMembersFold?.(); }, 80);
+};
+
 /* ══ فتح الصفحة ══ */
 window._dmsPageInit = function() {
   // reset UI
-  document.getElementById("dmsSearchBar")?.classList.remove("open");
   const si = document.getElementById("dmsSearchInp"); if (si) si.value = "";
   _dmsCurFilter = "all";
   _dmsCurTab    = "chats";
@@ -403,4 +476,5 @@ window._dmsPageInit = function() {
   window._dmsStartListeners?.();
   // عرض ما هو محمّل فعلاً (سريع لأن البيانات جاهزة)
   _render("");
+  window._dmsRefreshFoldEffects();
 };
