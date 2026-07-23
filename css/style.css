@@ -2042,7 +2042,7 @@ html.theme-light .lib-detail-count { color: #6b83a3; }
   --online:      #3ecf6e;
   --offline:     #5a5a5e;
   --seen-blue:   #4a90e2;
-  flex:1; overflow-y:auto; padding: 18px 16px;
+  flex:1; min-height:0; overflow-y:auto; padding: 18px 16px;
   display:flex; flex-direction:column;
   justify-content:flex-end; gap:10px;
 }
