@@ -5077,6 +5077,12 @@ async function _loadOlderMessages(chatId) {
         appendChatMsg(tmpContainer, d.id, d.data(), prevDate, nd => { prevDate = nd; });
       });
 
+      // الصور داخل الرسائل المُدرَجة ليس لها width/height محجوزة مسبقاً،
+      // فارتفاعها الحقيقي لا يُعرف إلا بعد اكتمال تحميلها (onload)، وهو ما يحدث
+      // بعد أن يكون prevScrollH/scrollHeight قد قِيسا بالفعل. لذلك نلتقط
+      // مراجع هذه الصور الآن (قبل الإدراج بالـ DOM) لنعوّض الفرق لاحقاً.
+      const _pendingImgs = [...fragment.querySelectorAll(".bubble-image img")].filter(img => !img.complete);
+
       // احذف فاصل التاريخ الأول الموجود في الـ container إذا كان نفس آخر تاريخ في الـ batch
       // لتجنب تكرار نفس الفاصل بين الـ batch القديم والجديد
       const firstExistingDivider = container.querySelector(".date-divider");
@@ -5100,6 +5106,26 @@ async function _loadOlderMessages(chatId) {
       container.style.scrollBehavior = "auto";
       container.scrollTop += container.scrollHeight - prevScrollH;
       container.style.scrollBehavior = _prevScrollBehavior;
+
+      // تعويض إضافي عند اكتمال تحميل أي صورة من الرسائل القديمة (ترتفع بعد
+      // التحميل لأن لا width/height محجوزة لها مسبقاً، فتزيح المحتوى وتُحدث
+      // قفزة محسوسة أثناء التمرير لأعلى). نقيس الفرق الفعلي في scrollHeight
+      // بعد كل صورة (بترتيب اكتمالها، أياً كان)، ونعوّضه فوراً وبدون animation.
+      let _lastKnownH = container.scrollHeight;
+      _pendingImgs.forEach(img => {
+        img.addEventListener("load", () => {
+          if (_activeChatId !== chatId) return; // الشات تغيّر، لا داعي للتعويض
+          const newH = container.scrollHeight;
+          const diff = newH - _lastKnownH;
+          _lastKnownH = newH;
+          if (diff !== 0) {
+            const behPrev = container.style.scrollBehavior;
+            container.style.scrollBehavior = "auto";
+            container.scrollTop += diff;
+            container.style.scrollBehavior = behPrev;
+          }
+        }, { once: true });
+      });
     }
   } catch(e) {
     console.error("loadOlder:", e);
