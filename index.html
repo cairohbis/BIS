@@ -5091,7 +5091,15 @@ async function _loadOlderMessages(chatId) {
       else container.prepend(fragment);
 
       // حافظ على موضع الـ scroll بعد الإدراج
+      // ملاحظة: .chat-body لديها scroll-behavior:smooth بالـ CSS (لتمرير الرسائل الجديدة بسلاسة)،
+      // فإذا تركناها كما هي هنا، فإن ضبط scrollTop سيتحرك بشكل animated بدل فوري،
+      // مما يجعل scrollTop يبقى أقل من 80 أثناء الحركة ⇒ يُعاد استدعاء _loadOlderMessages
+      // بشكل متكرر (أو يبدو أن السكرول "يقفز"/لا يعمل بشكل صحيح). لذلك نعطّل الـ smooth
+      // مؤقتاً هنا فقط، تماماً مثلما يحدث عند فتح الشات أول مرة.
+      const _prevScrollBehavior = container.style.scrollBehavior;
+      container.style.scrollBehavior = "auto";
       container.scrollTop += container.scrollHeight - prevScrollH;
+      container.style.scrollBehavior = _prevScrollBehavior;
     }
   } catch(e) {
     console.error("loadOlder:", e);
