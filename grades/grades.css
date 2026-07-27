@@ -85,6 +85,7 @@
 .grades-chip:hover:not(:disabled) { border-color:rgba(201,169,110,.3); color:var(--text,#e8edf5); }
 .grades-chip.active { background:var(--gold,#c9a96e); color:#060d1a; border-color:transparent; font-weight:800; box-shadow:0 4px 12px rgba(201,169,110,.3); }
 .grades-chip.disabled,.grades-chip:disabled { opacity:.45; cursor:not-allowed; }
+.grades-input:read-only { opacity:.6; cursor:not-allowed; background:rgba(255,255,255,.02); }
 .grades-count-row { display:flex; align-items:center; gap:16px; }
 .grades-count-btn { width:42px; height:42px; border-radius:12px; border:1.5px solid var(--border,#1a2d47); background:var(--card,#101e33); color:var(--text,#e8edf5); font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all .15s; flex-shrink:0; }
 .grades-count-btn:hover { border-color:rgba(201,169,110,.4); background:rgba(201,169,110,.1); color:var(--gold,#c9a96e); }
