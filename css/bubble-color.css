@@ -1,0 +1,37 @@
+/* ══════════════════════════════════════════════════════════════
+   css/bubble-color.css — ستايل عناصر اختيار لون فقاعة "أنا"
+   ملف معزول بالكامل — لا يعدّل أي قاعدة موجودة في style.css
+══════════════════════════════════════════════════════════════ */
+
+.bcolor-input {
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  background: none;
+  padding: 0;
+  flex-shrink: 0;
+}
+.bcolor-input::-webkit-color-swatch-wrapper { padding: 3px; }
+.bcolor-input::-webkit-color-swatch { border: 2px solid rgba(201,169,110,.35); border-radius: 8px; }
+.bcolor-input::-moz-color-swatch { border: 2px solid rgba(201,169,110,.35); border-radius: 8px; }
+
+.bcolor-reset-btn {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 6px 0 2px;
+  padding: 9px 14px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--muted);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background .15s, color .15s;
+}
+.bcolor-reset-btn:hover { background: rgba(255,255,255,.05); color: var(--text); }
+html.theme-light .bcolor-reset-btn:hover { background: rgba(0,0,0,.04); }
