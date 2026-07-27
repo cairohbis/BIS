@@ -52,6 +52,7 @@
     screen:"home", allRecords:null, expandedYears:{}, editing:false,
     fullName:"", specialization:"", year:"", term:"",
     subjectCount:0, subjects:[], isSaving:false, isLoading:false,
+    lockIdentity:false,
   };
 
   /* ─────────────────────────────────────────
@@ -933,16 +934,20 @@
           <div class="grades-field">
             <label class="grades-label">الاسم الثلاثي</label>
             <input id="gr-fullName" class="grades-input" type="text"
-              placeholder="أدخل اسمك الثلاثي" maxlength="80" value="${_escHtml(_state.fullName)}" />
+              placeholder="أدخل اسمك الثلاثي" maxlength="80" value="${_escHtml(_state.fullName)}"
+              ${(_state.editing||_state.lockIdentity)?"readonly":""} />
+            ${(_state.editing||_state.lockIdentity)?`<div class="grades-edit-note"><i class="fa-solid fa-lock"></i> الاسم مسجّل من أول سجل ولا يمكن تغييره هنا</div>`:""}
           </div>
           <div class="grades-field">
             <label class="grades-label">التخصص</label>
             <div class="grades-chips">
               ${SPECIALIZATIONS.map(s=>`<button
-                class="grades-chip${_state.specialization===s?" active":""}"
+                class="grades-chip${_state.specialization===s?" active":""}${(_state.editing||_state.lockIdentity)?" disabled":""}"
+                ${(_state.editing||_state.lockIdentity)?"disabled":""}
                 onclick="window.GradesModule._pick('specialization','${_escAttr(s)}',this)"
               >${s}</button>`).join("")}
             </div>
+            ${(_state.editing||_state.lockIdentity)?`<div class="grades-edit-note"><i class="fa-solid fa-lock"></i> التخصص مسجّل من أول سجل ولا يمكن تغييره هنا</div>`:""}
           </div>
           <div class="grades-field">
             <label class="grades-label">الفرقة الدراسية</label>
@@ -1076,8 +1081,15 @@
 
     _startNew: function(){
       _state.screen="form"; _state.editing=false;
-      _state.fullName=""; _state.specialization=""; _state.year=""; _state.term="";
-      _state.subjectCount=0; _state.subjects=[];
+      _state.year=""; _state.term=""; _state.subjectCount=0; _state.subjects=[];
+
+      const prev = (_state.allRecords||[]).slice().sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0))[0];
+      if (prev && (prev.fullName || prev.specialization)) {
+        _state.fullName = prev.fullName||""; _state.specialization = prev.specialization||"";
+        _state.lockIdentity = true;
+      } else {
+        _state.fullName=""; _state.specialization=""; _state.lockIdentity=false;
+      }
       _renderForm(_root());
     },
 
