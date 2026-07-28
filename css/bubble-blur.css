@@ -1,0 +1,48 @@
+/* ══════════════════════════════════════════════════════════════
+   css/bubble-blur.css — ستايل شريط تحكم الشفافية/الضبابية
+   ملف معزول بالكامل — لا يعدّل أي قاعدة موجودة في style.css
+══════════════════════════════════════════════════════════════ */
+
+.bblur-slider-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 14px 10px;
+}
+.bblur-edge-label {
+  color: var(--muted);
+  font-size: 13px;
+  flex-shrink: 0;
+  width: 16px;
+  text-align: center;
+}
+
+.bblur-input {
+  -webkit-appearance: none;
+  appearance: none;
+  flex: 1;
+  height: 5px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, rgba(201,169,110,.18), var(--gold));
+  outline: none;
+  cursor: pointer;
+}
+.bblur-input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--gold);
+  border: 3px solid var(--card, #0d1117);
+  box-shadow: 0 1px 4px rgba(0,0,0,.35);
+  cursor: pointer;
+}
+.bblur-input::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--gold);
+  border: 3px solid var(--card, #0d1117);
+  box-shadow: 0 1px 4px rgba(0,0,0,.35);
+  cursor: pointer;
+}
