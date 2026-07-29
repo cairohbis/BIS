@@ -9,9 +9,8 @@
    بدون أي تغيير في الشكل الافتراضي الحالي).
 ══════════════════════════════════════════════════════════════ */
 (function () {
-  const MIN_BLUR = 0;    // شفاف جداً — بدون أي تشويش
-  const MAX_BLUR = 30;   // ضبابية عالية — تأثير زجاج مصنفر قوي
-  const MAX_DARK = 0.38; // أعلى عتمة عند أقصى ضبابية (تدّي التأثير إحساس فعلي وملموس)
+  const MIN_BLUR = 0;    // شفاف جداً — بدون أي تشويش (blur(0px))
+  const MAX_BLUR = 20;   // ضبابية زجاجية حقيقية (Frosted Glass)
   const DEFAULT_SLIDER = 60; // موضع افتراضي للسلايدر (يقابل تقريباً القيم الحالية 8-20px)
 
   let _value = null; // null = لا يوجد تخصيص، يرجع لقيم كل فقاعة الافتراضية
@@ -20,20 +19,14 @@
     const v = Math.max(0, Math.min(100, Number(sliderVal) || 0));
     return MIN_BLUR + (v / 100) * (MAX_BLUR - MIN_BLUR);
   }
-  function _sliderToDark(sliderVal) {
-    const v = Math.max(0, Math.min(100, Number(sliderVal) || 0));
-    return (v / 100) * MAX_DARK;
-  }
 
   function _apply(sliderVal) {
     if (sliderVal === null || sliderVal === undefined) {
       document.documentElement.style.removeProperty("--user-bubble-blur");
-      document.documentElement.style.removeProperty("--user-bubble-dark");
       return;
     }
     const px = _sliderToBlurPx(sliderVal);
     document.documentElement.style.setProperty("--user-bubble-blur", `${px.toFixed(1)}px`);
-    document.documentElement.style.setProperty("--user-bubble-dark", _sliderToDark(sliderVal).toFixed(3));
   }
 
   async function _load(uid) {
