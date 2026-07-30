@@ -58,26 +58,32 @@
   100% { opacity: 0; }
 }
 
-/* ===== الغيوم (تظهر في الوضع الفاتح بس) ===== */
+/* ===== الغيوم (تظهر في الوضع الفاتح بس) — نفس شكل التصميم الأصلي المُرفَق (3 دوائر متراكبة) ===== */
 .theme-toggle-switch .ttg-cloud {
   position: absolute;
-  width: 9px; height: 3.5px;
+  width: 10px; height: 3.5px;
   background: #fff;
   border-radius: 999px;
   opacity: 0;
   transition: opacity .4s ease .1s;
 }
-.theme-toggle-switch .ttg-cloud::before {
+.theme-toggle-switch .ttg-cloud::before,
+.theme-toggle-switch .ttg-cloud::after {
   content: "";
   position: absolute;
-  width: 4.5px; height: 4.5px;
   border-radius: 50%;
   background: #fff;
-  top: -2px; left: 1px;
 }
+.theme-toggle-switch .ttg-cloud::before { width: 4.4px; height: 4.4px; top: -2.2px; left: 1.3px; }
+.theme-toggle-switch .ttg-cloud::after  { width: 3.3px; height: 3.3px; top: -1.5px; left: 5.2px; }
+
 .theme-toggle-switch .ttg-cloud.ttg-c1 { top: 5px;  right: 5px; }
-.theme-toggle-switch .ttg-cloud.ttg-c2 { top: 16px; right: 12px; width:6px; height:2.5px; }
-.theme-toggle-switch .ttg-cloud.ttg-c2::before { width:3px; height:3px; top:-1.5px; left:0.5px; }
+.theme-toggle-switch .ttg-cloud.ttg-c2 {
+  top: 16px; right: 12px;
+  width: 6.6px; height: 2.4px;
+}
+.theme-toggle-switch .ttg-cloud.ttg-c2::before { width: 2.9px; height: 2.9px; top: -1.3px; left: 0.9px; }
+.theme-toggle-switch .ttg-cloud.ttg-c2::after  { width: 2.2px; height: 2.2px; top: -1px;   left: 3.4px; }
 
 /* ===== الدائرة المتحركة (قمر / شمس) ===== */
 .theme-toggle-switch .ttg-thumb {
