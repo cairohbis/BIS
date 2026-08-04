@@ -1003,9 +1003,9 @@
               <i class="fa-solid fa-plus"></i>
               ${hasAny?"إضافة سجل جديد":"إنشاء أول سجل أكاديمي"}
             </button>
-            ${hasAny?`<button class="gr-btn-stats"
+            ${hasAny?`<button class="gr-btn-stats" title="المؤشرات"
                 onclick="window.GradesModule._goStats()">
-              <i class="fa-solid fa-chart-line"></i> المؤشرات
+              <i class="fa-solid fa-chart-line"></i>
             </button>
             <button class="gr-btn-acadstats"
                 onclick="window.GradesModule._goAcadStats()">
