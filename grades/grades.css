@@ -37,7 +37,7 @@
 
 .gr-home-actions { display:flex; gap:10px; }
 .gr-home-actions .grades-btn-primary { flex:1; }
-.gr-btn-stats { flex-shrink:0; padding:14px 16px; border:1.5px solid rgba(59,130,246,.3); border-radius:16px; background:rgba(59,130,246,.1); color:#3b82f6; font-family:inherit; font-size:14px; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:7px; transition:all .18s; white-space:nowrap; }
+.gr-btn-stats { flex-shrink:0; width:50px; padding:14px 0; border:1.5px solid rgba(59,130,246,.3); border-radius:16px; background:rgba(59,130,246,.1); color:#3b82f6; font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all .18s; }
 .gr-btn-stats:hover { background:rgba(59,130,246,.2); }
 
 /* ─── Empty / Loading ─── */
