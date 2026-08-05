@@ -70,6 +70,7 @@ self.addEventListener('notificationclick', function(event) {
 
 const CACHE_VERSION = 'v1';
 const CACHE_NAME = 'bariq-shell-' + CACHE_VERSION;
+const MEDIA_CACHE_NAME = 'bariq-media-' + CACHE_VERSION;
 
 // المسارات نسبةً لمكان هذا الملف (تشتغل صح مع GitHub Pages تحت مجلد فرعي)
 const PRECACHE_PATHS = [
@@ -136,10 +137,33 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   const req = event.request;
+  if (req.method !== 'GET') return;
 
-  // نتعامل بس مع طلبات GET من نفس أصل الموقع (نسيب Firebase/Cloudinary/CDN
-  // وغيرها من الطلبات الخارجية تعدي عادي بدون أي تدخل)
-  if (req.method !== 'GET' || !req.url.startsWith(self.location.origin)) return;
+  const isSameOrigin = req.url.startsWith(self.location.origin);
+  const isMediaHost = req.url.startsWith('https://res.cloudinary.com') ||
+                       req.url.startsWith('https://firebasestorage.googleapis.com');
+
+  // ── وسائط خارجية (صور/ملفات/صوتيات من Cloudinary أو Firebase Storage) ──
+  // كاش أولًا عشان أي ملف سبق فتحه يفضل ظاهر بدون نت، ولو مش موجود
+  // في الكاش نجيبه من النت ونخزنه لأول مرة
+  if (isMediaHost) {
+    event.respondWith(
+      caches.match(req).then((cached) => {
+        if (cached) return cached;
+        return fetch(req).then((res) => {
+          if (res && (res.status === 200 || res.type === 'opaque')) {
+            const resClone = res.clone();
+            caches.open(MEDIA_CACHE_NAME).then((cache) => cache.put(req, resClone));
+          }
+          return res;
+        }).catch(() => cached);
+      })
+    );
+    return;
+  }
+
+  // نسيب أي طلب تاني مش من نفس الموقع يعدي عادي (Firestore API، إلخ)
+  if (!isSameOrigin) return;
 
   // طلبات التنقل (فتح الصفحة نفسها) — نجرب الشبكة الأول عشان تحديثات
   // الموقع توصل فورًا، ولو مفيش نت نرجع للنسخة المخزنة (app shell)
