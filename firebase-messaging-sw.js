@@ -1,6 +1,7 @@
 // firebase-messaging-sw.js
 // ══════════════════════════════════════════
 // FCM Service Worker — Background & Closed-Tab Notifications
+// + تخزين مؤقت لملفات الواجهة (App Shell) عشان الموقع يفتح بدون إنترنت
 //
 // DEPLOYMENT:
 //   • Place this file in the SAME directory as index.html
@@ -59,11 +60,120 @@ self.addEventListener('notificationclick', function(event) {
   );
 });
 
-// Keep SW alive — prevents Chrome from killing it mid-notification
-self.addEventListener('install',  () => self.skipWaiting());
-self.addEventListener('activate', (e) => e.waitUntil(clients.claim()));
+/* ══════════════════════════════════════════
+   إضافة — تخزين مؤقت لملفات الواجهة (App Shell)
+   عشان الموقع يفتح ويشتغل بدون إنترنت (زي أي تطبيق حقيقي)
 
-// معالج fetch بسيط (تمرير مباشر للشبكة، بلا أي تخزين مؤقت أو تغيير سلوك) —
-// مطلوب من Chrome ليُحتسب الموقع "قابل للتثبيت كتطبيق" (Install app) بدل
-// "إضافة اختصار" فقط. لا يغيّر أي طلب شبكة موجود.
-self.addEventListener('fetch', () => {});
+   ⚠️ لو ضفت أو غيرت ملفات CSS/JS جديدة، حدّث القايمة تحت وزوّد
+   رقم CACHE_VERSION عشان المستخدمين ياخدوا النسخة الجديدة.
+   ══════════════════════════════════════════ */
+
+const CACHE_VERSION = 'v1';
+const CACHE_NAME = 'bariq-shell-' + CACHE_VERSION;
+
+// المسارات نسبةً لمكان هذا الملف (تشتغل صح مع GitHub Pages تحت مجلد فرعي)
+const PRECACHE_PATHS = [
+  '',
+  'index.html',
+  'manifest.json',
+  'terms.html',
+
+  'css/style.css',
+  'css/military.css',
+  'css/dms-page.css',
+  'css/bubble-blur.css',
+  'css/bubble-color.css',
+  'css/splash.css',
+  'css/theme-toggle.css',
+
+  'grades/grades.css',
+  'grades/grades.js',
+
+  'js/ai-assistant.js', 'js/ai-config.js', 'js/announcement.js', 'js/audit-log.js',
+  'js/back-nav.js', 'js/bubble-blur.js', 'js/bubble-color.js', 'js/change-password.js',
+  'js/chat-backgrounds.js', 'js/chat-search.js', 'js/connectivity.js', 'js/dm-extras.js',
+  'js/dms-page.js', 'js/draft-messages.js', 'js/emoji-picker.js', 'js/lamp-login.js',
+  'js/library.js', 'js/lightbox.js', 'js/maintenance.js', 'js/mention.js', 'js/military.js',
+  'js/notif-panel.js', 'js/notif-settings.js', 'js/pin-message.js', 'js/poll.js',
+  'js/report.js', 'js/settings-modal.js', 'js/sidebar-search.js', 'js/skeleton-loader.js',
+  'js/spark.js', 'js/splash.js', 'js/theme-toggle.js', 'js/upload-engine.js',
+
+  'images/app-icon.png',
+  'images/app-icon-maskable.png',
+  'images/default-student-female.png',
+  'images/default-student-male.png',
+  'images/military-icon.png',
+];
+
+self.addEventListener('install', (event) => {
+  self.skipWaiting();
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => {
+      const base = self.registration.scope; // ينتهي بـ "/" دايمًا
+      const urls = PRECACHE_PATHS.map((p) => new URL(p, base).toString());
+      // addAll بيفشل كله لو ملف واحد فشل، فبنحاول كل ملف لوحده
+      // عشان ملف ناقص أو اتغير اسمه ميوقفش باقي التخزين
+      return Promise.all(
+        urls.map((u) => cache.add(u).catch(() => {}))
+      );
+    })
+  );
+});
+
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    (async () => {
+      const names = await caches.keys();
+      await Promise.all(
+        names
+          .filter((n) => n.startsWith('bariq-shell-') && n !== CACHE_NAME)
+          .map((n) => caches.delete(n))
+      );
+      await clients.claim();
+    })()
+  );
+});
+
+self.addEventListener('fetch', (event) => {
+  const req = event.request;
+
+  // نتعامل بس مع طلبات GET من نفس أصل الموقع (نسيب Firebase/Cloudinary/CDN
+  // وغيرها من الطلبات الخارجية تعدي عادي بدون أي تدخل)
+  if (req.method !== 'GET' || !req.url.startsWith(self.location.origin)) return;
+
+  // طلبات التنقل (فتح الصفحة نفسها) — نجرب الشبكة الأول عشان تحديثات
+  // الموقع توصل فورًا، ولو مفيش نت نرجع للنسخة المخزنة (app shell)
+  if (req.mode === 'navigate') {
+    event.respondWith(
+      fetch(req)
+        .then((res) => {
+          const resClone = res.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(req, resClone));
+          return res;
+        })
+        .catch(() =>
+          caches.match(req).then(
+            (cached) => cached || caches.match(new URL('index.html', self.registration.scope).toString())
+          )
+        )
+    );
+    return;
+  }
+
+  // باقي الملفات الثابتة (CSS/JS/صور) — كاش أولًا للسرعة وللعمل بدون نت،
+  // مع تحديث النسخة المخزنة في الخلفية كل ما فيه اتصال (stale-while-revalidate)
+  event.respondWith(
+    caches.match(req).then((cached) => {
+      const networkFetch = fetch(req)
+        .then((res) => {
+          if (res && res.status === 200) {
+            const resClone = res.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(req, resClone));
+          }
+          return res;
+        })
+        .catch(() => cached);
+      return cached || networkFetch;
+    })
+  );
+});
