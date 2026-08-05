@@ -1,0 +1,8 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "com.bariq.app",
+    "sha256_cert_fingerprints": ["BF:D9:2F:45:E1:E3:EE:A0:84:8E:75:F9:DA:55:9A:86:7B:FC:A6:65:96:D7:7E:80:3D:D9:8A:71:73:58:AB:4C"]
+  }
+}]
