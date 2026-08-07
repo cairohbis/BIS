@@ -378,9 +378,9 @@ window._dmsStartListeners = function() {
   // المحادثات الخاصة
   const privQ = query(collection(window.db,"privateChats"), where("participants","array-contains",uid));
   onSnapshot(privQ, async snap => {
-    const items = [];
     const activeRoomIds  = new Set();
     const activeOtherIds = new Set();
+    const pairs = [];
     for (const ds of snap.docs) {
       const d       = ds.data();
       const roomId  = ds.id;
@@ -388,8 +388,17 @@ window._dmsStartListeners = function() {
       if (!otherId) continue;
       activeRoomIds.add(roomId);
       activeOtherIds.add(otherId);
-      const u = await _getUser(otherId);
+      pairs.push({ d, roomId, otherId });
+    }
 
+    // نجيب بيانات كل الأطراف الأخرى مرة واحدة بالتوازي (بدل الانتظار
+    // لكل محادثة على حدة بالتتابع — ده كان سبب البطء اللي بياخد ثواني
+    // كتير مع زيادة عدد المحادثات) ─────────────────────────────────
+    await Promise.all(pairs.map(p => _getUser(p.otherId)));
+
+    const items = [];
+    for (const { d, roomId, otherId } of pairs) {
+      const u = _nameCache[otherId] || { name:"مستخدم", photo:"", role:"user", gender:"" };
       const existing = _dmsItems.find(i => i.id === otherId);
       items.push({
         id: otherId, name: u.name, photo: u.photo, cls: "",
