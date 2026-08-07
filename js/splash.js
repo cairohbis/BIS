@@ -3,17 +3,22 @@
    ملف مستقل: splash.js
 
    طريقة الربط بالموقع (جذع index.html):
-   1) ضيف سطر واحد فقط في <head> عشان الأيقونات:
+   1) ضيف سطر واحد في <head> عشان الأيقونات:
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-   2) ضيف سطرين قبل إغلاق </body>:
-      <link rel="stylesheet" href="splash.css">
-      <script src="splash.js"></script>
-   3) الملف بيبني شاشة التحميل تلقائي، مفيش أي تعديل تاني مطلوب في index.html.
+   2) ضيف سطرين أول حاجة بعد فتح <body> مباشرة (مش قبل </body>) —
+      عشان الشاشة تظهر فورًا قبل ما باقي محتوى الصفحة يتحمل، بدل
+      شاشة بدائية منفصلة:
+      <link rel="stylesheet" href="css/splash.css">
+      <script src="js/splash.js"></script>
+   3) الملف بيبني شاشة التحميل تلقائيًا بمجرد ما عنصر body يبقى موجود
+      (مش بينتظر اكتمال تحليل باقي الصفحة)، مفيش أي تعديل تاني مطلوب.
    4) لما يكون عندك مكان في كودك بيتأكد فيه إن البيانات الحقيقية
-      (Firebase / أول تحميل للبيانات) خلصت، نادي على السطر ده:
+      (Firebase / أول تحميل للبيانات) خلصت، نادي على السطر ده —
+      في هذا المشروع بينادى تلقائيًا من داخل window.showPage():
          window.dispatchEvent(new Event('uniAppReady'));
       لو معملتش كده، الشاشة هتقفل تلقائي بمجرد ما المتصفح يخلص تحميل
-      الصفحة (حدث window.onload) أو لما تنتهي دورة الكلام، أيهما أسرع.
+      الصفحة (حدث window.onload)، أو لما تنتهي دورة الكلام، أو بعد
+      8 ثواني كحد أقصى (شبكة أمان) — أيهما أسرع.
    ========================================================================== */
 
 (function () {
@@ -158,11 +163,18 @@
 
         // حدث مخصص ينده منه الموقع نفسه لما بياناته الحقيقية (Firebase مثلاً) تخلص
         window.addEventListener("uniAppReady", markReady, { once: true });
+
+        // شبكة أمان: لو لأي سبب حدث uniAppReady وحدث load الاتنين ماحصلوش
+        // (مشكلة شبكة أو سكريبت عالق مثلاً)، الشاشة مش هتفضل عالقة أبدًا
+        setTimeout(markReady, 8000);
     }
 
-    if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", init);
-    } else {
+    // نبني الشاشة فورًا بمجرد ما عنصر body يبقى موجود — من غير ما ننتظر
+    // اكتمال تحليل باقي الصفحة (DOMContentLoaded)، عشان تظهر أسرع ما يمكن
+    // (الملف متوقَّع إنه يتحط أول حاجة جوه <body> — راجع التعليق فوق)
+    if (document.body) {
         init();
+    } else {
+        document.addEventListener("DOMContentLoaded", init);
     }
 })();
