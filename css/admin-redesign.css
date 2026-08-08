@@ -1,0 +1,223 @@
+/* ══════════════════════════════════════════════════════════════════
+   css/admin-redesign.css
+   إعادة تصميم كاملة لصفحة الأدمن فقط (#page-admin) — أسلوب زجاجي
+   ضبابي حديث (Glassmorphism). كل قاعدة هنا مربوطة بـ #page-admin
+   عشان محدش يأثر على صفحة الأونر أو أي صفحة تانية بالغلط، حتى لو
+   بتشارك نفس أسماء الكلاسات (owner-collapse-item, .inp, .btn...).
+   ══════════════════════════════════════════════════════════════════ */
+
+/* ── خلفية الصفحة: تدرّج غامق هادئ بدل اللون الفلات ── */
+#page-admin.admin-glass-page {
+  background:
+    radial-gradient(1200px 600px at 15% -5%, rgba(249,115,22,.10), transparent 60%),
+    radial-gradient(1000px 500px at 105% 20%, rgba(201,169,110,.07), transparent 55%),
+    var(--bg);
+}
+
+/* ── الشريط العلوي: زجاج حقيقي بدل خلفية مسطحة ── */
+#page-admin .panel-topbar {
+  background: var(--glass-bg) !important;
+  backdrop-filter: var(--glass-blur) !important;
+  -webkit-backdrop-filter: var(--glass-blur) !important;
+  border-bottom: 1px solid rgba(249,115,22,.28) !important;
+  box-shadow: var(--glass-shadow-soft), inset 0 1px 0 rgba(255,255,255,.06);
+}
+#page-admin .panel-topbar h2 {
+  display: flex; align-items: center; gap: 8px;
+  background: linear-gradient(90deg, var(--orangeL), var(--orange) 60%);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+#page-admin .panel-topbar h2 i { color: var(--orange); -webkit-text-fill-color: var(--orange); }
+#page-admin .back-btn {
+  background: rgba(255,255,255,.05);
+  border: 1px solid rgba(255,255,255,.1);
+  backdrop-filter: blur(10px);
+  transition: background .2s ease, transform .15s ease;
+}
+#page-admin .back-btn:hover  { background: rgba(255,255,255,.09); }
+#page-admin .back-btn:active { transform: scale(.96); }
+#page-admin .role-badge.admin {
+  background: linear-gradient(135deg, rgba(249,115,22,.22), rgba(249,115,22,.1));
+  border-color: rgba(249,115,22,.5);
+  box-shadow: 0 0 14px rgba(249,115,22,.18);
+}
+
+#page-admin .panel-body { padding: 14px 12px 28px; gap: 14px; }
+
+/* ── كروت الأقسام: زجاج ضبابي حقيقي + حواف ناعمة + رفعة عند اللمس ── */
+#page-admin .owner-collapse-item {
+  background: var(--glass-bg-light);
+  backdrop-filter: var(--glass-blur-soft);
+  -webkit-backdrop-filter: var(--glass-blur-soft);
+  border: 1px solid var(--glass-border);
+  border-radius: 20px;
+  box-shadow: var(--glass-shadow-soft);
+  overflow: hidden;
+  transition: border-color .25s ease, box-shadow .25s ease, transform .2s ease;
+}
+#page-admin .owner-collapse-item:hover {
+  border-color: rgba(249,115,22,.3);
+  box-shadow: var(--glass-shadow), 0 0 0 1px rgba(249,115,22,.08);
+}
+#page-admin .owner-collapse-item:active { transform: scale(.996); }
+
+#page-admin .owner-collapse-header {
+  padding: 15px 16px;
+  gap: 13px;
+  transition: background .2s ease;
+}
+#page-admin .owner-collapse-header:active { background: rgba(255,255,255,.035); }
+
+/* ── دوائر الأيقونات: زجاج + توهج لوني خفيف بدل الألوان المسطحة ── */
+#page-admin .owner-collapse-icon-wrap {
+  width: 44px; height: 44px; font-size: 17px;
+  border-radius: 14px;
+  border: 1px solid;
+  backdrop-filter: blur(6px);
+  display: flex; align-items: center; justify-content: center;
+  transition: transform .2s ease, box-shadow .2s ease;
+}
+#page-admin .owner-collapse-header:active .owner-collapse-icon-wrap { transform: scale(.92); }
+
+#page-admin .icon-users {
+  background: linear-gradient(150deg, rgba(59,130,246,.20), rgba(59,130,246,.06));
+  border-color: rgba(59,130,246,.35); color: var(--blueL);
+  box-shadow: 0 0 16px rgba(59,130,246,.12);
+}
+#page-admin .icon-news {
+  background: linear-gradient(150deg, rgba(249,115,22,.20), rgba(249,115,22,.06));
+  border-color: rgba(249,115,22,.35); color: var(--orangeL);
+  box-shadow: 0 0 16px rgba(249,115,22,.12);
+}
+#page-admin .icon-lectures {
+  background: linear-gradient(150deg, rgba(20,184,166,.20), rgba(20,184,166,.06));
+  border-color: rgba(20,184,166,.35); color: var(--teal);
+  box-shadow: 0 0 16px rgba(20,184,166,.12);
+}
+#page-admin .icon-exams {
+  background: linear-gradient(150deg, rgba(201,169,110,.20), rgba(201,169,110,.06));
+  border-color: rgba(201,169,110,.35); color: var(--goldL);
+  box-shadow: 0 0 16px rgba(201,169,110,.12);
+}
+#page-admin .icon-sections {
+  background: linear-gradient(150deg, rgba(168,85,247,.20), rgba(168,85,247,.06));
+  border-color: rgba(168,85,247,.35); color: #c084fc;
+  box-shadow: 0 0 16px rgba(168,85,247,.12);
+}
+#page-admin .icon-reports {
+  background: linear-gradient(150deg, rgba(239,68,68,.20), rgba(239,68,68,.06));
+  border-color: rgba(239,68,68,.35); color: #fca5a5;
+  box-shadow: 0 0 16px rgba(239,68,68,.12);
+}
+#page-admin .icon-announcements {
+  background: linear-gradient(150deg, rgba(201,169,110,.22), rgba(201,169,110,.07));
+  border-color: rgba(201,169,110,.4); color: var(--gold);
+  box-shadow: 0 0 16px rgba(201,169,110,.14);
+}
+
+#page-admin .owner-collapse-title { font-size: 14.5px; font-weight: 800; letter-spacing: .1px; }
+#page-admin .owner-collapse-sub   { font-size: 12px; color: var(--muted); margin-top: 2px; }
+#page-admin .owner-collapse-arrow {
+  color: rgba(255,255,255,.35);
+  transition: transform .3s cubic-bezier(.4,0,.2,1), color .2s ease;
+}
+#page-admin .owner-collapse-arrow.open { color: var(--orange); }
+
+/* ── لوحة المحتوى الداخلية: خلفية زجاجية أعمق شوية + فاصل علوي ── */
+#page-admin .owner-collapse-inner {
+  background: rgba(0,0,0,.14);
+  border-top: 1px solid rgba(255,255,255,.06);
+  padding: 16px;
+  gap: 12px;
+}
+
+/* ── عناوين الأقسام الفرعية جوه كل كارت ── */
+#page-admin .panel-sec-title {
+  font-size: 13px; font-weight: 800;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+  padding-bottom: 8px; margin-bottom: 10px;
+  display: flex; align-items: center; gap: 7px;
+}
+
+/* ── حقول الإدخال: زجاج شفاف بدل الخلفية الصلبة ── */
+#page-admin .inp {
+  background: rgba(255,255,255,.045);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 13px;
+  transition: border-color .2s ease, box-shadow .2s ease, background .2s ease;
+}
+#page-admin .inp:focus {
+  background: rgba(255,255,255,.07);
+  border-color: rgba(249,115,22,.55);
+  box-shadow: 0 0 0 3px rgba(249,115,22,.14);
+}
+#page-admin .label { color: rgba(232,237,245,.55); }
+
+/* ── الأزرار: تدرّج ناعم + توهج عند اللمس ── */
+#page-admin .btn {
+  border-radius: 13px;
+  transition: transform .15s ease, box-shadow .2s ease, opacity .2s ease;
+}
+#page-admin .btn-orange {
+  background: linear-gradient(135deg, var(--orangeL), var(--orange));
+  box-shadow: 0 6px 18px rgba(249,115,22,.28);
+  border: none;
+}
+#page-admin .btn-orange:active { transform: scale(.97); box-shadow: 0 3px 10px rgba(249,115,22,.22); }
+#page-admin .btn-dark {
+  background: rgba(255,255,255,.05);
+  border: 1px solid rgba(255,255,255,.12);
+  backdrop-filter: blur(8px);
+}
+#page-admin .btn-danger { box-shadow: 0 6px 18px rgba(239,68,68,.22); }
+
+/* ── قائمة المستخدمين / البلاغات ── */
+#page-admin #adminUsersList,
+#page-admin #adminReportsList {
+  display: flex; flex-direction: column; gap: 10px;
+}
+#page-admin .empty-state {
+  background: rgba(255,255,255,.03);
+  border: 1px dashed rgba(255,255,255,.12);
+  border-radius: 14px;
+}
+
+/* ── كروت الإحصائيات (مفتوحة/معالجة/مرفوضة) ── */
+#page-admin .stat-card {
+  background: var(--glass-bg-light);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 15px;
+  transition: border-color .2s ease;
+}
+#page-admin .stat-card:hover { border-color: rgba(255,255,255,.18); }
+#page-admin .stat-num { font-weight: 900; font-size: 20px; }
+
+/* ── تابات فلترة البلاغات: شكل كبسولة زجاجية حديثة ── */
+#page-admin .rpt-admin-tabs {
+  gap: 8px; flex-wrap: wrap;
+}
+#page-admin .rpt-admin-tab {
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.09);
+  border-radius: 999px;
+  padding: 7px 14px;
+  font-size: 12.5px; font-weight: 700;
+  backdrop-filter: blur(6px);
+  transition: background .2s ease, border-color .2s ease, color .2s ease;
+}
+#page-admin .rpt-admin-tab.active {
+  background: linear-gradient(135deg, rgba(249,115,22,.28), rgba(249,115,22,.14));
+  border-color: rgba(249,115,22,.5);
+  color: var(--orangeL);
+  box-shadow: 0 0 14px rgba(249,115,22,.18);
+}
+
+/* ── سبينر التحميل بلمسة أدفأ متناسقة مع لون الأدمن ── */
+#page-admin .spinner { border-top-color: var(--orange); }
+
+/* ── حركة فتح/قفل السكاشن أنعم شوية ── */
+#page-admin .owner-collapse-panel {
+  transition: max-height .35s cubic-bezier(.4,0,.2,1), opacity .3s ease;
+}
