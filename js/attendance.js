@@ -23,7 +23,8 @@
 ══════════════════════════════════════════════════════════════════ */
 
 import {
-  collection, doc, getDoc, getDocs, setDoc
+  collection, doc, getDoc, getDocs,
+  writeBatch, setDoc
 } from "./firestore-safe.js";
 
 function _db() { return window.db; }
@@ -265,10 +266,14 @@ window.__attShowDayDetail = (ds) => {
 };
 
 /* ══════════════════════════════════════════
-   جانب المالك — إعدادات نظام الحضور
+   جانب المالك — إعدادات نظام الحضور (جدول أسبوعي متكرر)
+══════════════════════════════════════════
+   الجدول (Schedule) منفصل عن السجل (Record): تعديل الجدول
+   بيأثر على الأيام القادمة بس، والسجلات القديمة تفضل زي ما هي.
+   يوم اتشال من الاختيار مش بيتحذف، بيتقفل (enabled:false) بس —
+   عشان سجلاته القديمة تفضل محفوظة.
 ══════════════════════════════════════════ */
-let _ownerSelectedDay = "sunday";
-let _ownerDaySubjects = []; // [{name}]
+let _weeklyCache = {}; // { sunday: {enabled,startTime,subjects:[{name,order}]}, ... }
 
 export async function attOwnerInit() {
   try {
@@ -277,8 +282,38 @@ export async function attOwnerInit() {
     const sw = _el("attOwnerEnableSwitch");
     if (sw) sw.checked = enabled;
   } catch (e) {}
-  _renderOwnerDayPills();
-  await attOwnerLoadDay(_ownerSelectedDay);
+  await _loadWeeklyCache();
+  _renderWeeklySummary();
+}
+
+async function _loadWeeklyCache() {
+  const results = await Promise.all(DAY_ORDER.map(async (k) => {
+    try {
+      const snap = await getDoc(doc(_db(), "attendanceSchedules", k));
+      return [k, snap.exists() ? snap.data() : null];
+    } catch (e) { return [k, null]; }
+  }));
+  _weeklyCache = Object.fromEntries(results);
+}
+
+function _renderWeeklySummary() {
+  const wrap = _el("attWeeklySummary");
+  if (!wrap) return;
+  const activeDays = DAY_ORDER.filter(k => _weeklyCache[k] && _weeklyCache[k].enabled);
+  if (!activeDays.length) {
+    wrap.innerHTML = `<div class="empty-state">لا يوجد جدول حضور مفعّل حاليًا</div>`;
+    return;
+  }
+  wrap.innerHTML = activeDays.map(k => {
+    const d = _weeklyCache[k];
+    const count = (d.subjects || []).length;
+    return `
+      <div class="att-weekly-row">
+        <span class="att-weekly-day">${DAY_LABELS[k]}</span>
+        <span class="att-weekly-count">${count} ${count === 1 ? "مادة" : "مواد"}</span>
+        <span class="att-weekly-time">${d.startTime || ""}</span>
+      </div>`;
+  }).join("");
 }
 
 window.attOwnerToggleSystem = async () => {
@@ -294,75 +329,147 @@ window.attOwnerToggleSystem = async () => {
   }
 };
 
-function _renderOwnerDayPills() {
-  const wrap = _el("attOwnerDayPills");
+/* ── نافذة إعداد جدول الحضور (Modal مستقل) ── */
+let _modalSelectedDays = new Set();
+let _modalDayData = {}; // { sunday: { time:"15:00", subjects:["اسم1","اسم2"] } }
+
+window.__attOpenScheduleModal = async (editMode) => {
+  _modalSelectedDays = new Set();
+  _modalDayData = {};
+  if (editMode) {
+    await _loadWeeklyCache();
+    DAY_ORDER.forEach(k => {
+      const d = _weeklyCache[k];
+      if (d && d.enabled) {
+        _modalSelectedDays.add(k);
+        _modalDayData[k] = {
+          time: d.startTime || "15:00",
+          subjects: (d.subjects || []).slice().sort((a, b) => (a.order || 0) - (b.order || 0)).map(s => s.name)
+        };
+      }
+    });
+  }
+  _renderModalDayPills();
+  _renderModalDaysConfig();
+  _el("attScheduleModalBackdrop")?.classList.add("show");
+};
+
+window.__attCloseScheduleModal = () => {
+  _el("attScheduleModalBackdrop")?.classList.remove("show");
+};
+
+function _renderModalDayPills() {
+  const wrap = _el("attModalDayPills");
   if (!wrap) return;
   wrap.innerHTML = DAY_ORDER.map(k => `
-    <button type="button" class="att-day-pill ${k === _ownerSelectedDay ? "active" : ""}" data-day="${k}" onclick="window.__attOwnerSelectDay('${k}')">
+    <button type="button" class="att-day-pill ${_modalSelectedDays.has(k) ? "active" : ""}" onclick="window.__attModalToggleDay('${k}')">
       ${DAY_LABELS[k]}
     </button>`).join("");
+  const countEl = _el("attSelectedCount");
+  if (countEl) countEl.textContent = _modalSelectedDays.size;
 }
 
-window.__attOwnerSelectDay = async (dayKey) => {
-  _ownerSelectedDay = dayKey;
-  _renderOwnerDayPills();
-  await attOwnerLoadDay(dayKey);
-};
-
-export async function attOwnerLoadDay(dayKey) {
-  try {
-    const snap = await getDoc(doc(_db(), "attendanceSchedules", dayKey));
-    const data = snap.exists() ? snap.data() : { enabled: false, startTime: "15:00", endTime: "23:59", subjects: [] };
-    _el("attDayEnable").checked = !!data.enabled;
-    _el("attDayStart").value = data.startTime || "15:00";
-    _el("attDayEnd").value   = data.endTime   || "23:59";
-    _ownerDaySubjects = (data.subjects || []).slice().sort((a,b)=>(a.order||0)-(b.order||0)).map(s => ({ name: s.name }));
-    _renderOwnerSubjects();
-  } catch (e) { console.error(e); }
-}
-
-function _renderOwnerSubjects() {
-  const wrap = _el("attDaySubjectsList");
-  if (!wrap) return;
-  if (!_ownerDaySubjects.length) {
-    wrap.innerHTML = `<div class="empty-state">لا توجد مواد مضافة لهذا اليوم</div>`;
-    return;
+window.__attModalToggleDay = (dayKey) => {
+  if (_modalSelectedDays.has(dayKey)) {
+    _modalSelectedDays.delete(dayKey);
+    delete _modalDayData[dayKey];
+  } else {
+    _modalSelectedDays.add(dayKey);
+    if (!_modalDayData[dayKey]) _modalDayData[dayKey] = { time: "15:00", subjects: [""] };
   }
-  wrap.innerHTML = _ownerDaySubjects.map((s, i) => `
-    <div class="att-subj-edit-row">
-      <span>${s.name}</span>
-      <button type="button" class="att-subj-remove" onclick="window.__attOwnerRemoveSubject(${i})"><i class="fa-solid fa-xmark"></i></button>
-    </div>`).join("");
+  _renderModalDayPills();
+  _renderModalDaysConfig();
+};
+
+function _renderModalDaysConfig() {
+  const wrap = _el("attModalDaysConfig");
+  if (!wrap) return;
+  const days = DAY_ORDER.filter(k => _modalSelectedDays.has(k));
+  if (!days.length) { wrap.innerHTML = ""; return; }
+  wrap.innerHTML = days.map(k => {
+    const data = _modalDayData[k];
+    const count = data.subjects.length;
+    const subjInputs = data.subjects.map((name, i) => `
+      <div style="margin-top:8px;">
+        <div class="label">المادة ${i + 1}</div>
+        <input class="inp" value="${(name || "").replace(/"/g, "&quot;")}"
+          oninput="window.__attModalSubjNameChange('${k}',${i},this.value)" placeholder="اسم المادة">
+      </div>`).join("");
+    return `
+      <div class="att-modal-day-block">
+        <div class="att-modal-day-title">${DAY_LABELS[k]}</div>
+        <div class="att-day-row">
+          <div style="flex:1">
+            <div class="label">وقت ظهور الحضور</div>
+            <input class="inp" type="time" value="${data.time}" onchange="window.__attModalTimeChange('${k}',this.value)">
+          </div>
+          <div style="flex:1">
+            <div class="label">عدد المواد</div>
+            <input class="inp" type="number" min="1" max="12" value="${count}" onchange="window.__attModalCountChange('${k}',this.value)">
+          </div>
+        </div>
+        ${subjInputs}
+      </div>`;
+  }).join("");
 }
 
-window.__attOwnerAddSubject = () => {
-  const inp = _el("attNewSubjInput");
-  const name = inp.value.trim();
-  if (!name) return;
-  _ownerDaySubjects.push({ name });
-  inp.value = "";
-  _renderOwnerSubjects();
+window.__attModalTimeChange = (dayKey, val) => {
+  if (_modalDayData[dayKey]) _modalDayData[dayKey].time = val;
 };
-window.__attOwnerRemoveSubject = (idx) => {
-  _ownerDaySubjects.splice(idx, 1);
-  _renderOwnerSubjects();
+window.__attModalSubjNameChange = (dayKey, idx, val) => {
+  if (_modalDayData[dayKey]) _modalDayData[dayKey].subjects[idx] = val;
+};
+window.__attModalCountChange = async (dayKey, val) => {
+  const data = _modalDayData[dayKey];
+  if (!data) return;
+  const newCount = Math.max(1, Math.min(12, parseInt(val, 10) || 1));
+  const oldSubjects = data.subjects;
+  if (newCount < oldSubjects.length) {
+    const removed = oldSubjects.slice(newCount);
+    const hasData = removed.some(s => (s || "").trim());
+    if (hasData) {
+      const ok = await window._appConfirm("تقليل عدد المواد", "فيه مواد مكتوبة هتتحذف من الشاشة، متأكد؟");
+      if (!ok) { _renderModalDaysConfig(); return; } // نرجّع القيمة القديمة زي ما هي
+    }
+  }
+  data.subjects = Array.from({ length: newCount }, (_, i) => oldSubjects[i] || "");
+  _renderModalDaysConfig();
 };
 
-window.attOwnerSaveDay = async () => {
-  const btn = _el("attDaySaveBtn");
-  const enabled   = _el("attDayEnable").checked;
-  const startTime = _el("attDayStart").value || "15:00";
-  const endTime   = _el("attDayEnd").value   || "23:59";
-  const subjects  = _ownerDaySubjects.map((s, i) => ({ id: `subject_${i + 1}`, name: s.name, order: i + 1 }));
+window.attScheduleSave = async () => {
+  const days = Array.from(_modalSelectedDays);
+  if (!days.length) { window.toast?.("اختر يوم واحد على الأقل", "error"); return; }
+  for (const k of days) {
+    const names = _modalDayData[k].subjects.map(s => (s || "").trim()).filter(Boolean);
+    if (!names.length) { window.toast?.(`اكتب مواد ${DAY_LABELS[k]} الأول`, "error"); return; }
+  }
+  const btn = _el("attScheduleSaveBtn");
   if (btn) { btn.disabled = true; btn.textContent = "جاري الحفظ..."; }
   try {
-    await setDoc(doc(_db(), "attendanceSchedules", _ownerSelectedDay), { enabled, startTime, endTime, subjects }, { merge: true });
-    window.toast?.(`تم حفظ إعدادات ${DAY_LABELS[_ownerSelectedDay]} ✅`);
+    const batch = writeBatch(_db());
+    days.forEach(k => {
+      const names = _modalDayData[k].subjects.map(s => (s || "").trim()).filter(Boolean);
+      const subjects = names.map((name, i) => ({ id: `subject_${i + 1}`, name, order: i + 1 }));
+      batch.set(doc(_db(), "attendanceSchedules", k), {
+        enabled: true, startTime: _modalDayData[k].time || "15:00", endTime: "23:59", subjects
+      }, { merge: true });
+    });
+    // أي يوم كان مفعّل قبل كده وماعادش مختار دلوقتي — يتقفل بس (مش يتحذف)
+    DAY_ORDER.forEach(k => {
+      if (!_modalSelectedDays.has(k) && _weeklyCache[k] && _weeklyCache[k].enabled) {
+        batch.set(doc(_db(), "attendanceSchedules", k), { enabled: false }, { merge: true });
+      }
+    });
+    await batch.commit();
+    window.toast?.("تم حفظ جدول الحضور ✅");
+    window.__attCloseScheduleModal();
+    await _loadWeeklyCache();
+    _renderWeeklySummary();
   } catch (e) {
     console.error(e);
     window.toast?.("حصل خطأ أثناء الحفظ", "error");
   } finally {
-    if (btn) { btn.disabled = false; btn.textContent = "حفظ إعدادات اليوم"; }
+    if (btn) { btn.disabled = false; btn.textContent = "حفظ الجدول"; }
   }
 };
 
