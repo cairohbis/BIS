@@ -1,0 +1,180 @@
+/* ══════════════════════════════════════════════════════════════════
+   css/attendance.css — نظام الحضور والغياب (ملف مستقل بالكامل)
+   ══════════════════════════════════════════════════════════════════ */
+
+/* ══ نافذة تسجيل الحضور اليومية (Popup) ══ */
+.att-popup-backdrop {
+  position: fixed; inset: 0; z-index: 99998;
+  background: rgba(0,0,0,.55);
+  backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; visibility: hidden; pointer-events: none;
+  transition: opacity .25s ease, visibility .25s ease;
+  padding: 20px;
+}
+.att-popup-backdrop.show { opacity: 1; visibility: visible; pointer-events: auto; }
+
+.att-popup {
+  width: 100%; max-width: 380px;
+  background: rgba(20,26,38,.85);
+  backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 22px;
+  padding: 24px 20px;
+  box-shadow: 0 20px 60px rgba(0,0,0,.5);
+  text-align: center;
+  animation: att-pop-in .3s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes att-pop-in {
+  from { transform: scale(.9) translateY(10px); opacity: 0; }
+  to   { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+.att-popup-icon {
+  width: 56px; height: 56px; margin: 0 auto 12px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(249,115,22,.25), rgba(249,115,22,.08));
+  border: 1px solid rgba(249,115,22,.35);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; color: #fb923c;
+}
+.att-popup-title { font-size: 16px; font-weight: 800; color: #e8edf5; margin-bottom: 5px; }
+.att-popup-sub   { font-size: 13px; color: rgba(232,237,245,.6); margin-bottom: 18px; }
+.att-popup-actions { display: flex; gap: 10px; }
+.att-popup-actions .btn { flex: 1; }
+
+.att-popup-subjects { display: flex; flex-direction: column; gap: 8px; text-align: right; margin-top: 6px; max-height: 46vh; overflow-y: auto; }
+
+.att-subj-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 11px 13px;
+  background: rgba(255,255,255,.045);
+  border: 1px solid rgba(255,255,255,.09);
+  border-radius: 13px;
+  cursor: pointer;
+  transition: background .2s ease, border-color .2s ease;
+}
+.att-subj-row.absent { background: rgba(239,68,68,.08); border-color: rgba(239,68,68,.25); }
+.att-subj-name { font-size: 13.5px; font-weight: 700; color: #e8edf5; }
+.att-subj-toggle { display: flex; align-items: center; gap: 7px; }
+.att-subj-check { width: 19px; height: 19px; accent-color: #22c55e; cursor: pointer; }
+.att-subj-state { font-size: 11.5px; font-weight: 700; color: #86efac; min-width: 32px; }
+.att-subj-row.absent .att-subj-state { color: #fca5a5; }
+
+/* ══ صفحة المالك: إعدادات نظام الحضور ══ */
+.att-owner-toprow {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 14px;
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 14px;
+  margin-bottom: 14px;
+}
+.att-owner-toprow-label { font-size: 13.5px; font-weight: 800; }
+
+/* Switch بسيط */
+.att-switch { position: relative; display: inline-block; width: 46px; height: 26px; flex-shrink: 0; }
+.att-switch input { opacity: 0; width: 0; height: 0; }
+.att-switch-track {
+  position: absolute; inset: 0; border-radius: 999px;
+  background: rgba(255,255,255,.15);
+  border: 1px solid rgba(255,255,255,.15);
+  transition: background .25s ease;
+  cursor: pointer;
+}
+.att-switch-track::before {
+  content: ""; position: absolute; top: 2px; right: 2px;
+  width: 20px; height: 20px; border-radius: 50%;
+  background: #fff; transition: transform .25s ease;
+  box-shadow: 0 2px 6px rgba(0,0,0,.3);
+}
+.att-switch input:checked + .att-switch-track { background: linear-gradient(135deg,#f97316,#fb923c); border-color: transparent; }
+.att-switch input:checked + .att-switch-track::before { transform: translateX(-20px); }
+
+.att-day-pills { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 14px; }
+.att-day-pill {
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.1);
+  color: rgba(232,237,245,.7);
+  border-radius: 999px;
+  padding: 7px 14px;
+  font-size: 12.5px; font-weight: 700;
+  cursor: pointer;
+  transition: background .2s ease, border-color .2s ease, color .2s ease;
+}
+.att-day-pill.active {
+  background: linear-gradient(135deg, rgba(249,115,22,.28), rgba(249,115,22,.14));
+  border-color: rgba(249,115,22,.5); color: #fb923c;
+}
+
+.att-day-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.att-day-row .inp { flex: 1; }
+
+#attDaySubjectsList { display: flex; flex-direction: column; gap: 7px; margin: 10px 0; }
+.att-subj-edit-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 12px;
+  background: rgba(255,255,255,.035);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 11px;
+  font-size: 13px; font-weight: 600;
+}
+.att-subj-remove {
+  background: rgba(239,68,68,.12); border: 1px solid rgba(239,68,68,.3);
+  color: #fca5a5; width: 26px; height: 26px; border-radius: 8px;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+}
+
+.att-add-subj-row { display: flex; gap: 8px; margin-top: 6px; }
+.att-add-subj-row .inp { flex: 1; }
+
+/* ══ سجل الحضور والغياب (المنتدى) ══ */
+.att-hist-stats { display: flex; gap: 10px; margin-bottom: 18px; }
+.att-stat-card {
+  flex: 1; text-align: center;
+  background: rgba(255,255,255,.03);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 15px; padding: 14px 8px;
+}
+.att-stat-num { font-size: 21px; font-weight: 900; color: #e8edf5; }
+.att-stat-num.good { color: #4ade80; }
+.att-stat-num.bad  { color: #f87171; }
+.att-stat-label { font-size: 11px; color: rgba(232,237,245,.55); margin-top: 4px; }
+
+.att-cal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 10px;
+}
+.att-cal-header button {
+  background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1);
+  color: #e8edf5; width: 32px; height: 32px; border-radius: 10px; cursor: pointer;
+}
+#attCalMonthLabel { font-size: 14px; font-weight: 800; }
+
+.att-cal-dow-row { display: grid; grid-template-columns: repeat(7,1fr); margin-bottom: 6px; }
+.att-cal-dow { text-align: center; font-size: 11px; color: rgba(232,237,245,.45); font-weight: 700; }
+.att-cal-days { display: grid; grid-template-columns: repeat(7,1fr); gap: 5px; }
+.att-cal-cell {
+  aspect-ratio: 1; display: flex; align-items: center; justify-content: center;
+  border-radius: 10px; font-size: 12.5px; font-weight: 700;
+  background: rgba(255,255,255,.035);
+  border: 1px solid rgba(255,255,255,.06);
+  cursor: pointer; color: rgba(232,237,245,.55);
+  transition: transform .15s ease;
+}
+.att-cal-cell:active { transform: scale(.9); }
+.att-cal-cell.empty  { background: transparent; border: none; cursor: default; }
+.att-cal-cell.good   { background: rgba(34,197,94,.18); border-color: rgba(34,197,94,.4); color: #4ade80; }
+.att-cal-cell.mid    { background: rgba(245,158,11,.18); border-color: rgba(245,158,11,.4); color: #fbbf24; }
+.att-cal-cell.bad    { background: rgba(239,68,68,.18); border-color: rgba(239,68,68,.4); color: #f87171; }
+
+#attDayDetail { margin-top: 16px; }
+.att-detail-title { font-size: 13.5px; font-weight: 800; margin-bottom: 6px; }
+.att-detail-summary { font-size: 12px; color: rgba(232,237,245,.6); margin-bottom: 10px; }
+.att-detail-subjects { display: flex; flex-direction: column; gap: 6px; }
+.att-detail-subj {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 12px; border-radius: 10px; font-size: 12.5px; font-weight: 700;
+}
+.att-detail-subj.good { background: rgba(34,197,94,.1); color: #4ade80; }
+.att-detail-subj.bad  { background: rgba(239,68,68,.1); color: #f87171; }
