@@ -110,23 +110,79 @@
 .att-day-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
 .att-day-row .inp { flex: 1; }
 
-#attDaySubjectsList { display: flex; flex-direction: column; gap: 7px; margin: 10px 0; }
-.att-subj-edit-row {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 8px 12px;
+/* صف ملخص يوم مفعّل في جدول الحضور الأسبوعي */
+#attWeeklySummary { display: flex; flex-direction: column; gap: 7px; }
+.att-weekly-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  padding: 10px 13px;
   background: rgba(255,255,255,.035);
   border: 1px solid rgba(255,255,255,.08);
-  border-radius: 11px;
-  font-size: 13px; font-weight: 600;
+  border-radius: 12px;
+  font-size: 12.5px;
 }
-.att-subj-remove {
-  background: rgba(239,68,68,.12); border: 1px solid rgba(239,68,68,.3);
-  color: #fca5a5; width: 26px; height: 26px; border-radius: 8px;
-  cursor: pointer; display: flex; align-items: center; justify-content: center;
+.att-weekly-day   { font-weight: 800; color: #e8edf5; flex: 1; }
+.att-weekly-count { color: rgba(232,237,245,.6); }
+.att-weekly-time  { color: #fb923c; font-weight: 700; }
+
+/* تصحيح تباين حقول الإدخال داخل قسم الحضور (نص/Placeholder واضح دايمًا) */
+.att-owner-panel .inp,
+.att-schedule-modal .inp {
+  color: #e8edf5 !important;
+  background: rgba(15,23,42,.55);
+  border: 1px solid rgba(96,165,250,.25);
+}
+.att-owner-panel .inp::placeholder,
+.att-schedule-modal .inp::placeholder {
+  color: rgba(232,237,245,.4);
+  opacity: 1;
+}
+.att-owner-panel .inp:focus,
+.att-schedule-modal .inp:focus {
+  border-color: rgba(249,115,22,.55);
+  box-shadow: 0 0 0 3px rgba(249,115,22,.14);
 }
 
-.att-add-subj-row { display: flex; gap: 8px; margin-top: 6px; }
-.att-add-subj-row .inp { flex: 1; }
+/* ══ نافذة إعداد جدول الحضور (Modal) ══ */
+.att-schedule-modal {
+  max-width: 420px;
+  text-align: right;
+  max-height: 88vh;
+  display: flex; flex-direction: column;
+  padding: 0;
+  overflow: hidden;
+}
+.att-modal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+  font-size: 15px; font-weight: 800; color: #e8edf5;
+  flex-shrink: 0;
+}
+.att-modal-close {
+  background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1);
+  color: #e8edf5; width: 30px; height: 30px; border-radius: 9px;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+}
+.att-modal-body {
+  padding: 16px 20px 20px;
+  overflow-y: auto;
+}
+.att-days-selected-count {
+  font-size: 12px; color: rgba(232,237,245,.55);
+  margin: 8px 0 4px;
+}
+.att-modal-day-block {
+  background: rgba(255,255,255,.03);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 15px;
+  padding: 14px;
+  margin-top: 14px;
+}
+.att-modal-day-title {
+  font-size: 13.5px; font-weight: 800; color: #fb923c;
+  margin-bottom: 10px;
+  display: flex; align-items: center; gap: 6px;
+}
 
 /* ══ سجل الحضور والغياب (المنتدى) ══ */
 .att-hist-stats { display: flex; gap: 10px; margin-bottom: 18px; }
