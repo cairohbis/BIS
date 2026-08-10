@@ -67,25 +67,36 @@
   function translateAttr(el, attr, dict) {
     if (isExcluded(el)) return;
     var mapKey = "_i18nOrig_" + attr;
+    var lastSetKey = "_i18nLastSet_" + attr;
     var current = el.getAttribute(attr);
     if (current === null) return;
 
-    if (!el[mapKey]) {
-      if (!current.trim()) return;
-      el[mapKey] = current;
+    /* لو القيمة الحالية هي نفس آخر قيمة إحنا كتبناها بأنفسنا، متعملش حاجة
+       (يمنع حلقة لا نهائية مع الـ MutationObserver اللي بيراقب نفس الخاصية) */
+    if (el[lastSetKey] === current) return;
+    if (!current.trim()) return;
+
+    /* لو القيمة الحالية مش النص الأصلي المحفوظ ولا أي ترجمة معروفة له،
+       يبقى كود الصفحة غيّر النص الأصلي فعليًا (مثال: تبديل placeholder
+       حسب التاب المفتوح) — نحدّث النص الأصلي المحفوظ للنص الجديد */
+    var knownOriginal = el[mapKey];
+    var isKnownVariant = false;
+    if (knownOriginal) {
+      var k = knownOriginal.trim();
+      var eg = getDict("egyptian"), en = getDict("english");
+      isKnownVariant = current === knownOriginal ||
+        (eg && eg[k] === current) || (en && en[k] === current);
     }
+    if (!knownOriginal || !isKnownVariant) el[mapKey] = current;
+
     var original = el[mapKey];
     var key = original.trim();
-
-    if (dict === null) {
-      el.setAttribute(attr, original);
-      return;
+    var target = original;
+    if (dict !== null && Object.prototype.hasOwnProperty.call(dict, key)) {
+      target = dict[key];
     }
-    if (Object.prototype.hasOwnProperty.call(dict, key)) {
-      el.setAttribute(attr, dict[key]);
-    } else {
-      el.setAttribute(attr, original);
-    }
+    el[lastSetKey] = target;
+    if (current !== target) el.setAttribute(attr, target);
   }
 
   function walkAndTranslate(root, dict) {
@@ -132,14 +143,25 @@
       if (lang === "default") return;
       var dict = getDict(lang);
       mutations.forEach(function (m) {
+        /* نص/عناصر جديدة اتضافت (مثلاً innerHTML/textContent اتغيّر) */
         m.addedNodes && m.addedNodes.forEach(function (n) {
           if (n.nodeType === Node.ELEMENT_NODE || n.nodeType === Node.TEXT_NODE) {
             walkAndTranslate(n, dict);
           }
         });
+        /* خاصية زي placeholder/title/aria-label اتغيّرت برمجيًا بعد التحميل
+           (مثال: تبديل placeholder صندوق البحث لما تفتح تاب "الأعضاء") */
+        if (m.type === "attributes" && m.target && m.target.nodeType === Node.ELEMENT_NODE) {
+          translateAttr(m.target, m.attributeName, dict);
+        }
       });
     });
-    _observer.observe(document.body, { childList: true, subtree: true });
+    _observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ATTRS_TO_TRANSLATE
+    });
   }
 
   function init() {
