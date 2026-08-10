@@ -23,14 +23,25 @@
     return `rgba(${r},${g},${b},${alpha})`;
   }
 
+  /* حساب لون خط مقابل (أبيض/أسود) يضمن ظهور النص فوق أي لون فقاعة */
+  function _contrastText(hex) {
+    const m = /^#([0-9a-fA-F]{2})([0-9a-fA-F]{2})([0-9a-fA-F]{2})$/.exec(hex);
+    if (!m) return "#ffffff";
+    const r = parseInt(m[1], 16), g = parseInt(m[2], 16), b = parseInt(m[3], 16);
+    const brightness = (r * 299 + g * 587 + b * 114) / 1000; // 0 (غامق) → 255 (فاتح)
+    return brightness >= 140 ? "#111111" : "#ffffff";
+  }
+
   /* تطبيق اللون فوراً (معاينة حية + بعد القراءة من Firestore) */
   function _apply(hex, transparent) {
     if (!hex || !HEX_RE.test(hex)) {
       document.documentElement.style.removeProperty("--user-bubble-color");
+      document.documentElement.style.removeProperty("--user-bubble-text");
       return;
     }
     const value = transparent ? (_hexToRgba(hex, 0.24) || hex) : hex;
     document.documentElement.style.setProperty("--user-bubble-color", value);
+    document.documentElement.style.setProperty("--user-bubble-text", _contrastText(hex));
   }
 
   /* قراءة الاختيار المحفوظ (مرة واحدة بس عند التحميل) */
