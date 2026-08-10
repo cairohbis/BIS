@@ -23,13 +23,23 @@
     return `rgba(${r},${g},${b},${alpha})`;
   }
 
+  function _contrastText(hex) {
+    const m = /^#([0-9a-fA-F]{2})([0-9a-fA-F]{2})([0-9a-fA-F]{2})$/.exec(hex);
+    if (!m) return "#ffffff";
+    const r = parseInt(m[1], 16), g = parseInt(m[2], 16), b = parseInt(m[3], 16);
+    const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+    return brightness >= 140 ? "#111111" : "#ffffff";
+  }
+
   function _apply(hex, transparent) {
     if (!hex || !HEX_RE.test(hex)) {
       document.documentElement.style.removeProperty("--other-bubble-color");
+      document.documentElement.style.removeProperty("--other-bubble-text");
       return;
     }
     const value = transparent ? (_hexToRgba(hex, 0.24) || hex) : hex;
     document.documentElement.style.setProperty("--other-bubble-color", value);
+    document.documentElement.style.setProperty("--other-bubble-text", _contrastText(hex));
   }
 
   async function _load(uid) {
