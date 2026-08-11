@@ -141,6 +141,16 @@
   border-color: rgba(249,115,22,.55);
   box-shadow: 0 0 0 3px rgba(249,115,22,.14);
 }
+html.theme-light .att-owner-panel .inp,
+html.theme-light .att-schedule-modal .inp {
+  color: var(--text) !important;
+  background: rgba(255,255,255,.9);
+  border: 1px solid rgba(37,99,235,.25);
+}
+html.theme-light .att-owner-panel .inp::placeholder,
+html.theme-light .att-schedule-modal .inp::placeholder {
+  color: rgba(13,31,60,.4);
+}
 
 /* ══ نافذة إعداد جدول الحضور (Modal) ══ */
 .att-schedule-modal {
@@ -234,3 +244,55 @@
 }
 .att-detail-subj.good { background: rgba(34,197,94,.1); color: #4ade80; }
 .att-detail-subj.bad  { background: rgba(239,68,68,.1); color: #f87171; }
+
+/* ══════════════════════════════════════════════════════════════════
+   الوضع الفاتح — كل الألوان فوق كانت مبنية على خلفية غامقة (نص/خطوط
+   بيضا شبه شفافة). في الوضع الفاتح دول بتختفي لأن الخلفية بيضا هي كمان.
+   هنا بنعكس كل قيمة rgba(255,255,255,x) → rgba(0,0,0,x) المناسبة،
+   وكل لون نص فاتح (#e8edf5 / rgba(232,237,245,x)) → لون غامق مناسب،
+   بنفس أسلوب باقي المشروع (html.theme-light .class-name).
+   ══════════════════════════════════════════════════════════════════ */
+
+/* نافذة تسجيل الحضور اليومية */
+html.theme-light .att-popup { background: rgba(255,255,255,.92); border-color: rgba(0,0,0,.1); }
+html.theme-light .att-popup-title { color: var(--text); }
+html.theme-light .att-popup-sub   { color: var(--muted); }
+html.theme-light .att-subj-row { background: rgba(0,0,0,.03); border-color: rgba(0,0,0,.08); }
+html.theme-light .att-subj-row.absent { background: rgba(239,68,68,.06); border-color: rgba(239,68,68,.22); }
+html.theme-light .att-subj-name { color: var(--text); }
+
+/* صفحة المالك: إعدادات نظام الحضور */
+html.theme-light .att-owner-toprow { background: rgba(0,0,0,.025); border-color: rgba(0,0,0,.08); }
+html.theme-light .att-owner-toprow-label { color: var(--text); }
+html.theme-light .att-switch-track { background: rgba(0,0,0,.12); border-color: rgba(0,0,0,.12); }
+
+html.theme-light .att-day-pill { background: rgba(0,0,0,.03); border-color: rgba(0,0,0,.1); color: var(--muted); }
+html.theme-light .att-day-pill.active { color: #c2530a; }
+
+html.theme-light .att-weekly-row { background: rgba(0,0,0,.02); border-color: rgba(0,0,0,.07); }
+html.theme-light .att-weekly-day   { color: var(--text); }
+html.theme-light .att-weekly-count { color: var(--muted); }
+
+/* نافذة إعداد جدول الحضور */
+html.theme-light .att-modal-header { color: var(--text); border-bottom-color: rgba(0,0,0,.08); }
+html.theme-light .att-modal-close { background: rgba(0,0,0,.04); border-color: rgba(0,0,0,.1); color: var(--text); }
+html.theme-light .att-days-selected-count { color: var(--muted); }
+html.theme-light .att-modal-day-block { background: rgba(0,0,0,.02); border-color: rgba(0,0,0,.07); }
+
+/* سجل الحضور والغياب (المنتدى) */
+html.theme-light .att-stat-card { background: rgba(255,255,255,.85); border-color: rgba(0,0,0,.08); }
+html.theme-light .att-stat-num { color: var(--text); }
+html.theme-light .att-stat-label { color: var(--muted); }
+
+html.theme-light .att-cal-header button { background: rgba(0,0,0,.04); border-color: rgba(0,0,0,.1); color: var(--text); }
+html.theme-light #attCalMonthLabel { color: var(--text); }
+html.theme-light .att-cal-dow { color: var(--muted); }
+html.theme-light .att-cal-cell {
+  background: rgba(0,0,0,.03);
+  border-color: rgba(0,0,0,.08);
+  color: var(--muted);
+}
+html.theme-light .att-cal-cell.empty { background: transparent; border-color: transparent; }
+
+html.theme-light .att-detail-title { color: var(--text); }
+html.theme-light .att-detail-summary { color: var(--muted); }
