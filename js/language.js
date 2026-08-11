@@ -12,8 +12,7 @@
 
   /* حاويات لا تُترجم أبدًا — محتوى ديناميكي/رسائل مستخدمين */
   var EXCLUDE_IDS = [
-    "chatMessages", "dmList", "roomsList", "membersList",
-    "grades-app-root", "military-app-root"
+    "chatMessages", "dmList", "roomsList", "membersList"
   ];
   var SKIP_TAGS = { SCRIPT: 1, STYLE: 1, NOSCRIPT: 1, TEXTAREA: 1 };
   var ATTRS_TO_TRANSLATE = ["placeholder", "title", "aria-label"];
