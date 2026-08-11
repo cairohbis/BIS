@@ -293,6 +293,16 @@ html.theme-light .att-cal-cell {
   color: var(--muted);
 }
 html.theme-light .att-cal-cell.empty { background: transparent; border-color: transparent; }
+/* ── ألوان حالة اليوم (حضور/غياب/جزئي) — لازم تفضل ظاهرة فوق الوضع الفاتح ── */
+html.theme-light .att-cal-cell.good { background: rgba(22,163,74,.14);  border-color: rgba(22,163,74,.4);  color: #15803d; }
+html.theme-light .att-cal-cell.mid  { background: rgba(217,119,6,.14); border-color: rgba(217,119,6,.4);  color: #b45309; }
+html.theme-light .att-cal-cell.bad  { background: rgba(220,38,38,.14); border-color: rgba(220,38,38,.4);  color: #b91c1c; }
 
 html.theme-light .att-detail-title { color: var(--text); }
 html.theme-light .att-detail-summary { color: var(--muted); }
+/* تفاصيل اليوم المختار — نفس منطق الألوان في الوضع الفاتح */
+html.theme-light .att-detail-subj.good { background: rgba(22,163,74,.1); color: #15803d; }
+html.theme-light .att-detail-subj.bad  { background: rgba(220,38,38,.1); color: #b91c1c; }
+/* كروت الإحصائيات (أيام حضور/غياب) في أعلى الصفحة */
+html.theme-light .att-stat-num.good { color: #15803d; }
+html.theme-light .att-stat-num.bad  { color: #b91c1c; }
