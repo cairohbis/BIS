@@ -14,7 +14,7 @@
 ══════════════════════════════════════════════════════════════ */
 
 // ── المفتاح ──
-const GEMINI_API_KEY = "AQ.Ab8RN6KJtNx6B9jRS9584uCYODDOpgU41P_mfWksAwLVx8izqA";
+const GEMINI_API_KEY = "AQ.Ab8RN6LJUlAlrSXSAu4ydISIS1y2OhNn4MMAs1eD7is5Q5M_Hw";
 
 // ── الموديل والـ Endpoint ──
 const GEMINI_MODEL = "gemini-3.5-flash";
