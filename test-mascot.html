@@ -40,17 +40,33 @@
 
       window.Mascot.show({ mood: key, size: "lg", container: slot, decorative: true });
 
-      // تحقق فعلي: هل استُبدل الـ placeholder بصورة حقيقية أم لا
-      setTimeout(function () {
-        var img = slot.querySelector(".mascot__img");
-        if (img && img.complete && img.naturalWidth > 0) {
-          loaded++;
-        } else {
-          failed++;
-          label.innerHTML += ' <span class="bad">✗ فشل تحميل</span>';
-        }
+      // فحص فعلي دقيق: بيستنى الصورة تخلص تحميل فعليًا (load/error)
+      // بدل توقيت ثابت، عشان يشتغل صح حتى مع نت بطيء
+      var settled = false;
+      function settle(ok) {
+        if (settled) return;
+        settled = true;
+        if (ok) { loaded++; }
+        else { failed++; label.innerHTML += ' <span class="bad">✗ فشل تحميل</span>'; }
         updateStatus();
-      }, 400);
+      }
+      function waitForImg(attemptsLeft) {
+        var img = slot.querySelector(".mascot__img");
+        if (img) {
+          if (img.complete) {
+            settle(img.naturalWidth > 0);
+          } else {
+            img.addEventListener("load", function () { settle(true); });
+            img.addEventListener("error", function () { settle(false); });
+          }
+        } else if (attemptsLeft > 0) {
+          // العنصر لسه ماتحطش في الـ DOM (Renderer بينشئه async) — نجرب تاني بعد شوية
+          setTimeout(function () { waitForImg(attemptsLeft - 1); }, 150);
+        } else {
+          settle(false); // مفيش .mascot__img خالص بعد كل المحاولات → placeholder فعلي
+        }
+      }
+      waitForImg(20); // يعطي حتى 3 ثواني قبل ما يعتبرها فشل حقيقي
     });
 
     function updateStatus() {
