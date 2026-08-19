@@ -1,0 +1,136 @@
+/* ============================================================================
+   Mascot System v2 — الأنماط
+   أسماء الكلاسات هنا مطابقة تمامًا لما يولّده AnimationManager في mascot.js
+   ملف مستقل بالكامل، لا يتداخل مع أي كلاس موجود في style.css
+   ========================================================================= */
+
+.mascot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  line-height: 0;
+}
+
+/* أحجام */
+.mascot--sm { width: 28px;  height: 28px; }
+.mascot--md { width: 52px;  height: 52px; }
+.mascot--lg { width: 96px;  height: 96px; }
+.mascot--xl { width: 160px; height: 160px; }
+
+.mascot__inner {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  /* حشو موحّد — نفس الصندوق بالظبط هياخده الـ Placeholder والصورة
+     الحقيقية لما تتسجل، عشان مفيش أي قفشة/تغيير حجم مرئي وقت الاستبدال */
+  padding: 12%;
+  box-sizing: border-box;
+  transition: background-color .25s ease, border-color .25s ease, transform .18s ease;
+}
+
+/* ---------------------------------------------------------------------
+   Placeholder (لحد ما تتسجل أصول حقيقية عبر Mascot.registerAsset)
+   دائرة بلون الحالة + أيقونة SVG مضمّنة، ثابتة على كل الأجهزة
+   --------------------------------------------------------------------- */
+.mascot__inner--placeholder {
+  background-color: color-mix(in srgb, var(--mascot-color, #c9a96e) 16%, transparent);
+  border: 2px solid var(--mascot-color, #c9a96e);
+  color: var(--mascot-color, #c9a96e);
+}
+
+/* نفس القاعدة بالحرف الواحد لكل من الأيقونة المؤقتة والصورة النهائية
+   (width/height/display) — الفرق الوحيد بينهم هو المحتوى نفسه، مش
+   الصندوق اللي بيتحط فيه */
+.mascot__icon,
+.mascot__img {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* ---------------------------------------------------------------------
+   وضع الصورة الحقيقية — يتفعّل تلقائيًا فور تسجيل أصل، بدون أي تعديل
+   في هذا الملف أو في التطبيق
+   --------------------------------------------------------------------- */
+.mascot__inner--image {
+  background: transparent;
+  border: none;
+}
+.mascot__img {
+  object-fit: contain; /* width/height/display موحّدين فوق مع .mascot__icon */
+}
+
+/* ---------------------------------------------------------------------
+   حركات AnimationManager — نفس الكلاسات تفضل شغالة بعد استبدال
+   الـ Placeholder بصور حقيقية، لأنها بتتحط على mascot__inner مش على
+   نوع المحتوى جواه
+   --------------------------------------------------------------------- */
+.mascot-anim-spin .mascot__icon,
+.mascot-anim-spin.mascot__inner--image .mascot__img {
+  animation: mascot-spin 1s linear infinite;
+  transform-origin: 50% 50%;
+}
+
+.mascot-anim-pop {
+  animation: mascot-pop .35s ease;
+}
+
+.mascot-anim-shake {
+  animation: mascot-shake .4s ease;
+}
+
+.mascot-anim-wiggle .mascot__icon,
+.mascot-anim-wiggle.mascot__inner--image .mascot__img {
+  animation: mascot-wiggle .9s ease-in-out infinite;
+  transform-origin: 70% 90%;
+}
+
+.mascot-anim-run .mascot__icon,
+.mascot-anim-run.mascot__inner--image .mascot__img {
+  animation: mascot-run .5s ease-in-out infinite;
+}
+
+@keyframes mascot-spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes mascot-pop {
+  0%   { transform: scale(.55); opacity: 0; }
+  70%  { transform: scale(1.08); opacity: 1; }
+  100% { transform: scale(1); }
+}
+
+@keyframes mascot-shake {
+  0%, 100% { transform: translateX(0); }
+  20%      { transform: translateX(-4px); }
+  40%      { transform: translateX(4px); }
+  60%      { transform: translateX(-3px); }
+  80%      { transform: translateX(3px); }
+}
+
+@keyframes mascot-wiggle {
+  0%, 100% { transform: rotate(0deg); }
+  25%      { transform: rotate(-14deg); }
+  75%      { transform: rotate(14deg); }
+}
+
+@keyframes mascot-run {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-10%); }
+}
+
+/* إلغاء كل الحركات لمن يفضّل تقليل الحركة على جهازه */
+@media (prefers-reduced-motion: reduce) {
+  .mascot__inner,
+  .mascot__icon,
+  .mascot__img {
+    animation: none !important;
+    transition: none !important;
+  }
+}
