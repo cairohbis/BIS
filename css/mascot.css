@@ -13,10 +13,10 @@
 }
 
 /* أحجام */
-.mascot--sm { width: 44px;  height: 44px; }
-.mascot--md { width: 72px;  height: 72px; }
-.mascot--lg { width: 128px; height: 128px; }
-.mascot--xl { width: 200px; height: 200px; }
+.mascot--sm { width: 72px;  height: 72px; }
+.mascot--md { width: 110px; height: 110px; }
+.mascot--lg { width: 180px; height: 180px; }
+.mascot--xl { width: 260px; height: 260px; }
 
 .mascot__inner {
   width: 100%;
