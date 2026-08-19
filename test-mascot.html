@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>اختبار بريق — كل الصور (17)</title>
+<link rel="stylesheet" href="css/mascot.css">
+<style>
+  body { background:#0c1528; color:#e8edf5; font-family: system-ui, sans-serif; padding:24px; }
+  h1 { margin-bottom: 24px; }
+  .grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(180px,1fr)); gap:20px; }
+  .cell { background:#101e33; border:1px solid #1a2d47; border-radius:12px; padding:16px; text-align:center; }
+  .cell span { display:block; margin-top:10px; font-size:13px; color:#5a7499; }
+  .status { margin-top:24px; padding:12px; background:#101e33; border-radius:8px; font-size:14px; }
+  .ok { color:#22c55e; } .bad { color:#ef4444; }
+</style>
+</head>
+<body>
+  <h1>اختبار بريق — الـ17 حالة</h1>
+  <div class="grid" id="grid"></div>
+  <div class="status" id="status">جاري الفحص...</div>
+
+  <script src="js/mascot.js"></script>
+  <script src="js/mascot-assets-registration.js"></script>
+  <script>
+    var keys = ["happy","sad","angry","thinking","surprised","love",
+                "wave","celebrate","run","write","sleep",
+                "loading","success","error","offline","empty"];
+    var grid = document.getElementById("grid");
+    var loaded = 0, failed = 0, total = keys.length;
+
+    keys.forEach(function (key) {
+      var cell = document.createElement("div");
+      cell.className = "cell";
+      var slot = document.createElement("div");
+      cell.appendChild(slot);
+      var label = document.createElement("span");
+      label.textContent = key;
+      cell.appendChild(label);
+      grid.appendChild(cell);
+
+      window.Mascot.show({ mood: key, size: "lg", container: slot, decorative: true });
+
+      // تحقق فعلي: هل استُبدل الـ placeholder بصورة حقيقية أم لا
+      setTimeout(function () {
+        var img = slot.querySelector(".mascot__img");
+        if (img && img.complete && img.naturalWidth > 0) {
+          loaded++;
+        } else {
+          failed++;
+          label.innerHTML += ' <span class="bad">✗ فشل تحميل</span>';
+        }
+        updateStatus();
+      }, 400);
+    });
+
+    function updateStatus() {
+      var done = loaded + failed;
+      var el = document.getElementById("status");
+      el.innerHTML = "الحالة: " + done + "/" + total + " — " +
+        "<span class='ok'>" + loaded + " نجحوا</span> / " +
+        "<span class='bad'>" + failed + " فشلوا</span>" +
+        (done === total ? (failed === 0 ? " — ✅ كل الصور شغالة ممتاز" : " — ⚠️ فيه صور ناقصة") : "");
+    }
+  </script>
+</body>
+</html>
