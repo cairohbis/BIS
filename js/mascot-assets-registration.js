@@ -44,7 +44,8 @@
     success: "images/mascot/ui/success.webp",
     error: "images/mascot/ui/error.webp",
     offline: "images/mascot/ui/offline.webp",
-    empty: "images/mascot/ui/empty.webp"
+    empty: "images/mascot/ui/empty.webp",
+    construction: "images/mascot/ui/construction.webp"
   };
 
   for (var key in assets) {
