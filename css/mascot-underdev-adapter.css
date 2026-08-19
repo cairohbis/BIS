@@ -1,0 +1,11 @@
+/* ============================================================================
+   Mascot UnderDev Adapter — الأنماط
+   ملف منفصل، بيصمم بس .mascot-underdev-slot، مايلمسش .dms-under-dev
+   ولا .dms-ud-title ولا .dms-ud-sub الأصليين
+   ========================================================================= */
+
+.mascot-underdev-slot {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 6px;
+}
