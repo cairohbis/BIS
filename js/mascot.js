@@ -148,7 +148,8 @@
     success: { color: "#22c55e", icon: "check" },
     error:   { color: "#ef4444", icon: "x" },
     offline: { color: "#5a7499", icon: "offline" },
-    empty:   { color: "#5a7499", icon: "box" }
+    empty:   { color: "#5a7499", icon: "box" },
+    construction: { color: "#f59e0b", icon: "tools" }
   };
   var UiStates = {
     has: function (key) { return Object.prototype.hasOwnProperty.call(UI_STATES, key); },
