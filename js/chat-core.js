@@ -3,12 +3,40 @@
    ▸ منقول من index.html بالحرف (1:1) — بدون إعادة كتابة أو تحسين
    ▸ يعتمد على window.* لكل تواصل مع باقي التطبيق (نفس نمط
      pin-message.js و chat-backgrounds.js)
-   ▸ هذه أول دفعة فقط: قسم "Voice Recording" (كان index.html:5150-5414)
+   ▸ دفعات النقل حتى الآن:
+     1. Voice Recording        (كان index.html:5150-5414)
+     2. Private Chat Identity  (privateChatId, chatColPath)
      باقي أقسام الشات لسه في index.html، هتتنقل تباعًا في دفعات لاحقة
    ══════════════════════════════════════════════════════════════ */
 
 import { doc, addDoc, collection, updateDoc, serverTimestamp }
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+/* ──────────────────────────────────────────────────────────────
+   PRIVATE CHAT IDENTITY / PATHS
+   منقولة حرفيًا من index.html — pure functions، بدون أي state
+   ────────────────────────────────────────────────────────────── */
+// Deterministic room ID — same for both participants, always
+// chatId ثابت بين طرفين — نفس النتيجة بغض النظر عمّن يبدأ
+function privateChatId(otherUid) {
+  return [currentUser.uid, otherUid].sort().join("_");
+}
+
+// Collection path helper — يستخدم chatId المرتب
+function chatColPath(chatId) {
+  if (chatId === "public") return "messages";
+  if (chatId && chatId.startsWith("room:")) {
+    // ✅ Path traversal protection — only allow clean room IDs
+    const roomId = chatId.slice(5);
+    if (!/^[a-zA-Z0-9_-]{1,100}$/.test(roomId)) return "messages"; // fallback to public
+    return `rooms/${roomId}/messages`;
+  }
+  // ✅ Validate uid-like chatId (Firebase UIDs are alphanumeric + underscores)
+  if (chatId && !/^[a-zA-Z0-9_]{1,200}$/.test(chatId.replace('_', ''))) return "messages";
+  return `privateChats/${privateChatId(chatId)}/messages`;
+}
+window.privateChatId = privateChatId;
+window.chatColPath   = chatColPath;
 
 /* ══════════════════════════════════════════
    CHAT — VOICE RECORDING SYSTEM
