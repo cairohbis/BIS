@@ -55,8 +55,10 @@
       slot.className = "mascot-empty-state-slot";
       el.insertBefore(slot, el.firstChild);
 
+      var mood = el.closest("#chatMessages") ? "emptyChat" : "empty";
+
       window.Mascot.show({
-        mood: "empty",
+        mood: mood,
         size: "xl",
         container: slot,
         decorative: true

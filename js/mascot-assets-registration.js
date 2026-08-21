@@ -45,7 +45,8 @@
     error: "images/mascot/ui/error.webp",
     offline: "images/mascot/ui/offline.webp",
     empty: "images/mascot/ui/empty.webp",
-    construction: "images/mascot/ui/construction.webp"
+    construction: "images/mascot/ui/construction.webp",
+    emptyChat: "images/mascot/ui/empty-chat.webp"
   };
 
   for (var key in assets) {
