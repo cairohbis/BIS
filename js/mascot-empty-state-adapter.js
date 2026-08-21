@@ -43,6 +43,11 @@
     el.setAttribute(PROCESSED_ATTR, "1");
 
     try {
+      // لو العنصر جواه أيقونة قديمة (زي fa-comment-dots في .dms-empty)
+      // نشيلها عشان بريق يحل محلها، مش يتضاف جنبها
+      var oldIcon = el.querySelector("i.fa-regular, i.fa-solid");
+      if (oldIcon) oldIcon.remove();
+
       var slot = document.createElement("span");
       slot.className = "mascot-empty-state-slot";
       el.insertBefore(slot, el.firstChild);
@@ -58,8 +63,12 @@
     }
   }
 
+  // الكلاسات المستهدفة: .empty-state (الأصلي) + .dms-empty (أرشيف/قائمة
+  // الدردشات) + .dm-empty (نتائج بحث المستخدمين/الأعضاء)
+  var TARGET_SELECTOR = ".empty-state, .dms-empty, .dm-empty";
+
   function scanAll() {
-    var els = document.querySelectorAll(".empty-state");
+    var els = document.querySelectorAll(TARGET_SELECTOR);
     for (var i = 0; i < els.length; i++) enhance(els[i]);
   }
 
@@ -74,12 +83,12 @@
       for (var j = 0; j < added.length; j++) {
         var node = added[j];
         if (node.nodeType !== 1) continue; // Element nodes بس
-        if (node.classList && node.classList.contains("empty-state")) {
+        if (node.classList && (node.classList.contains("empty-state") || node.classList.contains("dms-empty") || node.classList.contains("dm-empty"))) {
           enhance(node);
         }
         // العنصر المضاف ممكن يكون Container فيه .empty-state جواه
         if (node.querySelectorAll) {
-          var inner = node.querySelectorAll(".empty-state");
+          var inner = node.querySelectorAll(TARGET_SELECTOR);
           for (var k = 0; k < inner.length; k++) enhance(inner[k]);
         }
       }
