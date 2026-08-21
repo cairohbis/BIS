@@ -39,6 +39,7 @@
     run: "images/mascot/actions/run.webp",
     write: "images/mascot/actions/write.webp",
     sleep: "images/mascot/actions/sleep.webp",
+    salute: "images/mascot/actions/military-salute.webp",
     // UI States
     loading: "images/mascot/ui/loading.webp",
     success: "images/mascot/ui/success.webp",

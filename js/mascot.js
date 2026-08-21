@@ -131,7 +131,8 @@
       celebrate: { color: "#f59e0b", icon: "star" },
       run:       { color: "#14b8a6", icon: "run" },
       write:     { color: "#3b82f6", icon: "write" },
-      sleep:     { color: "#5a7499", icon: "moon" }
+      sleep:     { color: "#5a7499", icon: "moon" },
+      salute:    { color: "#8a7a5c", icon: "shield" }
     };
     function has(key) { return Object.prototype.hasOwnProperty.call(ACTIONS, key); }
     function get(key) { return ACTIONS[key] || null; }

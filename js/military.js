@@ -154,7 +154,7 @@
       <div class="mil-sheet">
         <div class="mil-sheet-header">
           <button class="mil-back-btn" onclick="window.MilitaryModule.close()"><i class="fa-solid fa-arrow-right"></i> رجوع</button>
-          <div class="mil-sheet-title"><i class="fa-solid fa-shield-halved"></i> الخدمة العسكرية</div>
+          <div class="mil-sheet-title"><span class="mascot-mil-title-slot"></span> الخدمة العسكرية</div>
           ${isOwner ? `
           <button class="mil-add-btn" id="milAddBtn" onclick="window.MilitaryModule._openUploadForm()">
             <i class="fa-solid fa-plus"></i>
@@ -181,6 +181,15 @@
           </div>
         </div>
       </div>`;
+
+    // بريق بدل أيقونة الدرع — محاولة اختيارية، لو Mascot مش محمّل
+    // الشاشة فضلت شغالة عادي (بدون بريق) من غير أي كسر
+    try {
+      var _milTitleSlot = root.querySelector(".mascot-mil-title-slot");
+      if (_milTitleSlot && window.Mascot) {
+        window.Mascot.show({ mood: "salute", size: "md", container: _milTitleSlot, decorative: true });
+      }
+    } catch (e) { console.error("[Military] تعذّر عرض بريق في العنوان:", e); }
   }
 
   window.MilitaryModule._onSearch = function (val) {
