@@ -54,7 +54,7 @@
 
       window.Mascot.show({
         mood: "empty",
-        size: "sm",
+        size: "xl",
         container: slot,
         decorative: true
       });
