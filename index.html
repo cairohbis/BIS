@@ -8268,13 +8268,7 @@ function showMsgCtxMenu(e, docId, data) {
   _showCtxAt(x, y, docId, data);
 }
 
-function hideMsgCtxMenu() {
-  const menu = document.getElementById("msgCtxMenu");
-  const overlay = document.getElementById("msgCtxOverlay");
-  if (menu) menu.classList.remove("show");
-  if (overlay) overlay.style.display = "none";
-}
-window.hideMsgCtxMenu = hideMsgCtxMenu;
+// hideMsgCtxMenu → منقولة لـ js/chat-ctxmenu.js (مع window.hideMsgCtxMenu export)
 window.showMsgCtxMenu = showMsgCtxMenu;
 window._showCtxAt     = _showCtxAt;
 window._avm           = _avm;
@@ -8286,23 +8280,13 @@ function ctxReply() {
 }
 window.ctxReply = ctxReply;
 
-function ctxDelete() {
-  hideMsgCtxMenu();
-  if (!_ctxDocId) return;
-  if (typeof adminDeleteMsg === "function") adminDeleteMsg(_ctxDocId);
-}
-window.ctxDelete = ctxDelete;
+// ctxDelete → منقولة لـ js/chat-ctxmenu.js (مع window.ctxDelete export)
 
 /* ══════════════════════════════════════════
    FORWARD MESSAGE SYSTEM
    ↳ ctxForward → openFwdModal → forwardMsgTo
 ══════════════════════════════════════════ */
-function ctxForward() {
-  hideMsgCtxMenu();
-  if (!_ctxData) return;
-  openFwdModal(_ctxData);
-}
-window.ctxForward = ctxForward;
+// ctxForward → منقولة لـ js/chat-ctxmenu.js (مع window.ctxForward export)
 
 function openFwdModal(data) {
   const backdrop = document.getElementById("fwdBackdrop");
@@ -8487,21 +8471,9 @@ async function forwardMsgTo(targetChatId, msgData) {
 }
 window.forwardMsgTo = forwardMsgTo;
 
-function ctxCopy() {
-  hideMsgCtxMenu();
-  if (!_ctxData?.text) return;
-  navigator.clipboard?.writeText(_ctxData.text).then(() => toast("تم النسخ","success")).catch(() => toast("فشل النسخ","error"));
-}
-window.ctxCopy = ctxCopy;
+// ctxCopy → منقولة لـ js/chat-ctxmenu.js (مع window.ctxCopy export)
 
-function ctxCopyLink() {
-  hideMsgCtxMenu();
-  if (!_ctxData) return;
-  const url = _ctxData.image || _ctxData.pdf || _ctxData.audio || _ctxData.fileUrl || _ctxData.url || null;
-  if (!url) return;
-  navigator.clipboard?.writeText(url).then(() => toast("تم نسخ الرابط","success")).catch(() => toast("فشل نسخ الرابط","error"));
-}
-window.ctxCopyLink = ctxCopyLink;
+// ctxCopyLink → منقولة لـ js/chat-ctxmenu.js (مع window.ctxCopyLink export)
 
 
 
@@ -8653,6 +8625,7 @@ try { window._listenPinnedMsg?.(); } catch(e) {}
 <script type="module" src="js/announcement.js"></script>
 <script type="module" src="js/chat-core.js"></script>
 <script src="js/chat-reactions.js"></script>
+<script src="js/chat-ctxmenu.js"></script>
 <script type="module" src="js/upload-engine.js"></script>
 <script type="module" src="js/draft-messages.js"></script>
 <script type="module" src="js/sidebar-search.js"></script>
