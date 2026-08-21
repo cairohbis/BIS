@@ -8,18 +8,5 @@
   display: inline-flex;
   align-items: center;
   vertical-align: middle;
-  margin-inline-end: 8px; /* RTL-aware تلقائيًا */
-}
-
-/* تظبيط تخطيط كبسولة #toast نفسها عشان تحتضن بريق بحجمه الطبيعي (كامل،
-   زي كل مكان تاني في الموقع) من غير فراغ زيادة — بس من جوه ملف الأدابتر
-   ده، مش لمس style.css الأصلي. الحجم نفسه (.mascot--sm) فضل زي ما هو. */
-#toast.show {
-  display: inline-flex !important;
-  align-items: center !important;
-  width: fit-content !important;
-  height: auto !important;
-  padding: 2px 6px !important;
-  gap: 4px;
-  border-radius: 12px !important;
+  margin-inline-end: 6px; /* RTL-aware تلقائيًا */
 }
