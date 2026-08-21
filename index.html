@@ -2099,6 +2099,7 @@ Object.defineProperty(window, 'currentName', { get: () => currentName, configura
 let currentPhoto  = "";
 Object.defineProperty(window, 'currentPhoto', { get: () => currentPhoto, configurable: true });
 let msgUnsub      = null;
+Object.defineProperty(window, 'msgUnsub', { get: () => msgUnsub, set: (v) => { msgUnsub = v; }, configurable: true }); // ← bridge: محتاجها js/chat-listener.js (قراءة+كتابة)
 // _reactionsUnsub → منقول لـ js/chat-listener.js (كان مستخدم بس جوه startChatListener)
 let _isChatBanned = false;
 Object.defineProperty(window, '_isChatBanned', { get: () => _isChatBanned, set: (v) => { _isChatBanned = v; }, configurable: true });
