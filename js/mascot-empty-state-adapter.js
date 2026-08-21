@@ -43,8 +43,11 @@
     el.setAttribute(PROCESSED_ATTR, "1");
 
     try {
-      // لو العنصر جواه أيقونة قديمة (زي fa-comment-dots في .dms-empty)
-      // نشيلها عشان بريق يحل محلها، مش يتضاف جنبها
+      // لو العنصر جواه أيقونة قديمة (زي fa-comment-dots في .dms-empty،
+      // أو fa-shield-halved جوه .mil-empty-icon) نشيلها/نشيل حاويتها
+      // بالكامل عشان بريق يحل محلها، مش يتضاف جنبها أو تفضل مساحة فاضية
+      var oldIconWrap = el.querySelector(".mil-empty-icon");
+      if (oldIconWrap) oldIconWrap.remove();
       var oldIcon = el.querySelector("i.fa-regular, i.fa-solid");
       if (oldIcon) oldIcon.remove();
 
@@ -65,7 +68,7 @@
 
   // الكلاسات المستهدفة: .empty-state (الأصلي) + .dms-empty (أرشيف/قائمة
   // الدردشات) + .dm-empty (نتائج بحث المستخدمين/الأعضاء)
-  var TARGET_SELECTOR = ".empty-state, .dms-empty, .dm-empty";
+  var TARGET_SELECTOR = ".empty-state, .dms-empty, .dm-empty, .mil-empty-state";
 
   function scanAll() {
     var els = document.querySelectorAll(TARGET_SELECTOR);
@@ -83,7 +86,7 @@
       for (var j = 0; j < added.length; j++) {
         var node = added[j];
         if (node.nodeType !== 1) continue; // Element nodes بس
-        if (node.classList && (node.classList.contains("empty-state") || node.classList.contains("dms-empty") || node.classList.contains("dm-empty"))) {
+        if (node.classList && (node.classList.contains("empty-state") || node.classList.contains("dms-empty") || node.classList.contains("dm-empty") || node.classList.contains("mil-empty-state"))) {
           enhance(node);
         }
         // العنصر المضاف ممكن يكون Container فيه .empty-state جواه
