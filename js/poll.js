@@ -404,6 +404,33 @@ function _attachLongPress(row, docId, data) {
     e.preventDefault();
     if (!_moved) _showCtxAt(e.clientX || _cx, e.clientY || _cy, docId, data);
   });
+
+  // ── دعم الماوس (Desktop) — إضافة جديدة، بدون أي تعديل على منطق اللمس فوق ──
+  const startMouse = (e) => {
+    if (e.button !== 0) return; // الزرار الشمال بس
+    _fired = false; _moved = false;
+    _sx = e.clientX; _sy = e.clientY;
+    _cx = _sx; _cy = _sy;
+    _lpTimer = setTimeout(() => {
+      if (_moved) return;
+      _fired = true;
+      _showCtxAt(_cx, _cy, docId, data);
+    }, LP_DELAY);
+  };
+  const onMoveMouse = (e) => {
+    if (_moved) return;
+    _cx = e.clientX; _cy = e.clientY;
+    const dx = Math.abs(_cx - _sx);
+    const dy = Math.abs(_cy - _sy);
+    if (dx > MOVE_THRESHOLD || dy > MOVE_THRESHOLD) {
+      _moved = true;
+      clearTimeout(_lpTimer); _lpTimer = null;
+    }
+  };
+  row.addEventListener("mousedown",  startMouse);
+  row.addEventListener("mousemove",  onMoveMouse);
+  row.addEventListener("mouseup",    cancel);
+  row.addEventListener("mouseleave", cancel);
 }
 window._attachLongPress = _attachLongPress;
 
