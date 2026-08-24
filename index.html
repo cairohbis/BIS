@@ -3484,6 +3484,7 @@ onAuthStateChanged(auth, async (user) => {
       if (!currentUser?.uid) return;
       if (document.hidden) {
         _setOffline();
+        window._stopTyping?.(); // ← إضافة: نمسح "يكتب الآن..." لو الصفحة اتخبت (مش مقفولة بس)
       } else {
         _setOnline();
       }
@@ -3493,6 +3494,7 @@ onAuthStateChanged(auth, async (user) => {
     function _onUnload() {
       if (!currentUser?.uid) return;
       _setOffline();
+      window._stopTyping?.(); // ← إضافة: نمسح "يكتب الآن..." لو التطبيق اتقفل فجأة
     }
 
     // إزالة المستمعين القديمة لتجنب التكرار
@@ -4090,6 +4092,9 @@ let _typingUnsub   = null;
 let _typingTimeout = null;
 let _typingActive  = false;
 
+const TYPING_STALE_MS = 4000; // ← أي حالة كتابة أقدم من كده تتجاهل تلقائيًا، حتى لو محدش مسحها
+let _lastTypingWriteAt = 0;
+
 async function _setTyping(isTyping) {
   if (!currentUser?.uid) return;
   const cid = _currentChatId;
@@ -4097,7 +4102,7 @@ async function _setTyping(isTyping) {
   const roomId = privateChatId(cid);
   try {
     const upd = {};
-    upd[`typing_${currentUser.uid}`] = isTyping ? true : deleteField();
+    upd[`typing_${currentUser.uid}`] = isTyping ? Date.now() : deleteField(); // ← وقت بدل true — بيسمح بفحص القِدَم
     await updateDoc(doc(db, "privateChats", roomId), upd);
   } catch(e) {}
 }
@@ -4105,7 +4110,12 @@ async function _setTyping(isTyping) {
 function _onTypingInput() {
   const cid = _currentChatId;
   if (!cid || cid === "public" || cid.startsWith("room:")) return;
-  if (!_typingActive) { _typingActive = true; _setTyping(true); }
+  _typingActive = true;
+  const now = Date.now();
+  if (now - _lastTypingWriteAt > 1500) { // throttle: كتابة Firestore كل 1.5 ثانية بحد أقصى، مش كل حرف
+    _lastTypingWriteAt = now;
+    _setTyping(true);
+  }
   clearTimeout(_typingTimeout);
   _typingTimeout = setTimeout(() => { _typingActive = false; _setTyping(false); }, 2500);
 }
@@ -4129,7 +4139,8 @@ function _startTypingListener(chatId) {
     if (!snap.exists()) return;
     const data = snap.data();
     const someone = Object.keys(data).some(k =>
-      k.startsWith("typing_") && k !== ("typing_" + currentUser?.uid) && data[k] === true
+      k.startsWith("typing_") && k !== ("typing_" + currentUser?.uid) &&
+      typeof data[k] === "number" && (Date.now() - data[k] < TYPING_STALE_MS) // ← تجاهل أي حالة قديمة، حتى لو محدش مسحها
     );
     const statusEl = document.getElementById("chatTopOnline");
     if (!statusEl) return;
