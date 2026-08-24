@@ -6,10 +6,13 @@
    ▸ دفعات النقل حتى الآن:
      1. Voice Recording        (كان index.html:5150-5414)
      2. Private Chat Identity  (privateChatId, chatColPath)
+     3. appendChatMsg
+     4. ensurePrivateChatDoc   (+ window._ensuredRooms، doLogout بيوصلها
+        عبر bare reference fallback تلقائيًا، بدون أي تعديل في index.html)
      باقي أقسام الشات لسه في index.html، هتتنقل تباعًا في دفعات لاحقة
    ══════════════════════════════════════════════════════════════ */
 
-import { doc, addDoc, collection, updateDoc, serverTimestamp }
+import { doc, addDoc, collection, updateDoc, serverTimestamp, getDoc, setDoc }
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 /* ──────────────────────────────────────────────────────────────
@@ -37,6 +40,46 @@ function chatColPath(chatId) {
 }
 window.privateChatId = privateChatId;
 window.chatColPath   = chatColPath;
+
+// ══════════════════════════════════════════
+// ensurePrivateChatDoc
+// chatId = [currentUid, otherUid].sort().join("_")
+// participants = [uid1, uid2]  (Array — ليس Object)
+// ══════════════════════════════════════════
+async function ensurePrivateChatDoc(otherUid) {
+  if (!currentUser?.uid || !otherUid) return;
+
+  // chatId ثابت ومحدد — نفس النتيجة بغض النظر عمّن يبدأ المحادثة
+  const chatId  = [currentUser.uid, otherUid].sort().join("_");
+
+  // إذا سبق وتحققنا من وجوده في هذه الجلسة — لا نعيد الاستعلام
+  if (_ensuredRooms.has(chatId)) return;
+
+  const chatRef = doc(db, "privateChats", chatId);
+
+  // نحاول القراءة أولاً — إذا موجود لا نفعل شيئاً
+  let snap;
+  try {
+    snap = await getDoc(chatRef);
+  } catch(e) {
+    // فشل القراءة = الوثيقة غير موجودة أو Rules تمنع القراءة
+    // نحاول الإنشاء على أي حال
+    snap = { exists: () => false };
+  }
+
+  if (snap.exists()) { _ensuredRooms.add(chatId); return; } // موجود بالفعل ✓
+
+  // إنشاء الغرفة
+  // Rules تتطلب: participants (Array, size 2, يشمل currentUser.uid)
+  await setDoc(chatRef, {
+    participants: [currentUser.uid, otherUid].sort(), // Array — مرتب
+    createdAt:    serverTimestamp(),
+    updatedAt:    serverTimestamp(),
+    lastMessage:  ""
+  });
+  _ensuredRooms.add(chatId);
+}
+window.ensurePrivateChatDoc = ensurePrivateChatDoc;
 
 /* ══════════════════════════════════════════
    CHAT — VOICE RECORDING SYSTEM
