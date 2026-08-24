@@ -4172,41 +4172,9 @@ function dmRoomId(otherUid) { return privateChatId(otherUid); }
 // participants = [uid1, uid2]  (Array — ليس Object)
 // ══════════════════════════════════════════
 const _ensuredRooms = new Set(); // cache — منع setDoc المتكررة
+window._ensuredRooms = _ensuredRooms; // ← تصدير: محتاجها js/chat-core.js (Private Chat Identity section)
+// ensurePrivateChatDoc → منقولة لـ js/chat-core.js (مع window.ensurePrivateChatDoc export)
 
-async function ensurePrivateChatDoc(otherUid) {
-  if (!currentUser?.uid || !otherUid) return;
-
-  // chatId ثابت ومحدد — نفس النتيجة بغض النظر عمّن يبدأ المحادثة
-  const chatId  = [currentUser.uid, otherUid].sort().join("_");
-
-  // إذا سبق وتحققنا من وجوده في هذه الجلسة — لا نعيد الاستعلام
-  if (_ensuredRooms.has(chatId)) return;
-
-  const chatRef = doc(db, "privateChats", chatId);
-
-  // نحاول القراءة أولاً — إذا موجود لا نفعل شيئاً
-  let snap;
-  try {
-    snap = await getDoc(chatRef);
-  } catch(e) {
-    // فشل القراءة = الوثيقة غير موجودة أو Rules تمنع القراءة
-    // نحاول الإنشاء على أي حال
-    snap = { exists: () => false };
-  }
-
-  if (snap.exists()) { _ensuredRooms.add(chatId); return; } // موجود بالفعل ✓
-
-  // إنشاء الغرفة
-  // Rules تتطلب: participants (Array, size 2, يشمل currentUser.uid)
-  await setDoc(chatRef, {
-    participants: [currentUser.uid, otherUid].sort(), // Array — مرتب
-    createdAt:    serverTimestamp(),
-    updatedAt:    serverTimestamp(),
-    lastMessage:  ""
-  });
-  _ensuredRooms.add(chatId);
-}
-window.ensurePrivateChatDoc = ensurePrivateChatDoc; // ← تصدير: محتاجها js/chat-listener.js
 
 
 /* ══════════════════════════════════════════
