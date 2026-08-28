@@ -1,0 +1,126 @@
+/* ══════════════════════════════════════════════════════════════
+   CHAT REPLY — كل CSS نظام الرد على الرسائل
+   ▸ منقول حرفيًا من css/style.css (بدون توحيد أو تعديل أي تكرار)
+   ▸ كان مبعثر في 7 مواضع منفصلة في الملف الأصلي — اتنقل بنفس
+     ترتيب ظهوره الأصلي بالضبط، للحفاظ على نفس الـ Cascade
+   ▸ يعتمد على .bubble (باقية في style.css) — آمن، لأن المتصفح
+     بيدمج كل ملفات CSS في cascade واحد بغض النظر عن مصدرها
+   ══════════════════════════════════════════════════════════════ */
+
+/* ══════════════════════════════════════════
+   REPLY SYSTEM — iOS / Telegram Style
+══════════════════════════════════════════ */
+
+/* Reply preview inside bubble */
+.reply-preview {
+  background: rgba(255,255,255,0.07);
+  border-right: 3px solid var(--gold);
+  border-radius: 8px 8px 0 0;
+  padding: 6px 10px;
+  margin-bottom: 6px;
+  cursor: pointer;
+  transition: background .15s;
+  position: relative; overflow: hidden;
+  max-width: 100%;
+}
+.bubble.me .reply-preview {
+  border-right-color: rgba(255,255,255,.5);
+  background: rgba(0,0,0,.12);
+}
+.reply-preview:hover { background: rgba(255,255,255,.12); }
+.reply-preview-name {
+  font-size: 11px; font-weight: 800; color: var(--gold);
+  margin-bottom: 2px;
+}
+.bubble.me .reply-preview-name { color: var(--user-bubble-text, rgba(255,255,255,.8)); }
+.reply-preview-text {
+  font-size: 12px; color: rgba(255,255,255,.65);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  max-width: 240px;
+}
+.bubble.me .reply-preview-text { color: var(--user-bubble-text, rgba(255,255,255,.5)); }
+.reply-preview-img {
+  width: 36px; height: 36px; border-radius: 4px; object-fit: cover;
+  float: left; margin-left: 6px;
+}
+
+/* Reply bar above input */
+#replyBar {
+  display: none;
+  align-items: center; gap: 10px;
+  padding: 8px 16px;
+  background: rgba(255,255,255,0.04);
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  border-top: 1px solid rgba(255,255,255,.08);
+  border-bottom: 1px solid rgba(255,255,255,.06);
+  animation: replyBarIn .2s cubic-bezier(.34,1.4,.64,1);
+  flex-shrink: 0;
+}
+#replyBar.show { display: flex; }
+@keyframes replyBarIn {
+  from { opacity:0; transform: translateY(8px); }
+  to   { opacity:1; transform: translateY(0); }
+}
+.reply-bar-line {
+  width: 3px; height: 36px; border-radius: 3px;
+  background: linear-gradient(180deg, var(--gold), rgba(201,169,110,.4));
+  flex-shrink: 0;
+}
+.reply-bar-content { flex: 1; min-width: 0; }
+.reply-bar-name { font-size: 11px; font-weight: 800; color: var(--gold); margin-bottom: 2px; }
+.reply-bar-text {
+  font-size: 12px; color: var(--muted);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.reply-bar-close {
+  background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.1);
+  border-radius: 50%; width: 26px; height: 26px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; color: var(--muted); cursor: pointer;
+  flex-shrink: 0; transition: all .15s;
+}
+.reply-bar-close:hover { background: rgba(255,255,255,.14); color: var(--text); }
+
+/* Highlight flash when jumping to replied message */
+@keyframes replyHighlight {
+  0%  { background: rgba(201,169,110,.22); }
+  100%{ background: transparent; }
+}
+.msg-row.reply-flash .bubble { animation: replyHighlight 1.4s ease forwards; }
+/* ── Swipe-to-Reply ── */
+/* me  → swipe LEFT  → icon on the LEFT  of bubble (center direction in RTL) */
+/* other→ swipe RIGHT → icon on the RIGHT of bubble (center direction in RTL) */
+.swipe-reply-icon {
+  position: absolute; top: 50%;
+  transform: translateY(-50%) scale(0);
+  width: 32px; height: 32px; border-radius: 50%;
+  background: rgba(224,178,60,.14);
+  border: 1px solid rgba(224,178,60,.3);
+  display: flex; align-items: center; justify-content: center;
+  pointer-events: none; opacity: 0; z-index: 5;
+  will-change: opacity, transform;
+  box-shadow: 0 2px 10px rgba(0,0,0,.25);
+}
+/* WhatsApp: drag right → icon appears on LEFT of bubble */
+.msg-row .swipe-reply-icon { left: calc(100% + 8px); right: auto; }
+.swipe-reply-icon svg { width: 14px; height: 14px; fill: var(--gold); }
+
+/* ── Permanent Reply Button ── */
+.msg-reply-btn{
+  width:26px; height:26px; border-radius:50%; flex-shrink:0;
+  background: rgba(255,255,255,0.06);
+  border:none;
+  display:flex; align-items:center; justify-content:center;
+  color: var(--muted); opacity:0.75; cursor:pointer;
+  margin-bottom: 0;
+}
+.msg-reply-btn:active { transform: scale(.9); }
+.msg-reply-btn svg { pointer-events: none; }
+/* ── الأصل: كان في قسم تنقيحات عامة، سطر 6468 تقريبًا ── */
+/* ── Reply bar text ── */
+.reply-bar-text { color: rgba(160,195,235,.72); }
+
+/* ── الأصل: كانت جوه كتلة html.theme-light الكبيرة، سطر 6638-6653 تقريبًا ── */
+html.theme-light .bubble.me .reply-preview-name { color: var(--user-bubble-text, rgba(13,31,60,.85)); }
+html.theme-light .bubble.me .reply-preview-text { color: var(--user-bubble-text, rgba(13,31,60,.6)); }
+html.theme-light .reply-bar-text { color: var(--muted); }
