@@ -1,0 +1,187 @@
+/* ══════════════════════════════════════════════════════════════
+   CHAT HEADER — هيدر الشات + بارات الحظر/الإعلان + بار البحث
+   ▸ منقول حرفيًا من css/style.css (بدون توحيد أو تعديل أي تكرار)
+   ▸ نطاق محدود ومعتمد: بس القواعد المحصورة بـ #page-chat أو الخاصة
+     حصرًا بشاتنا. .chat-header / .chat-header-info / .chat-back-btn
+     (بدون scope) فضلوا عمدًا في style.css لأنهم مشتركين مع صفحة AI Chat
+   ▸ .srch-nav-btn / #chatSearchClose / .srch-hl فضلوا عمدًا في style.css
+     (نطاق بار البحث اتحدد بدقة زي التقرير المعتمد، بدون توسيع)
+   ══════════════════════════════════════════════════════════════ */
+
+/* ══════════════════════════════════════════
+   CHAT HEADER — Floating/Overlay pill design
+   (صفحة المحادثة الرئيسية فقط #page-chat — مبيأثرش على هيدر صفحة المساعد الذكي)
+══════════════════════════════════════════ */
+#page-chat .chat-header{
+  position:absolute; top:0; left:0; right:0;
+  padding: calc(env(safe-area-inset-top,0px) + 10px) 12px 0;
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border-bottom: none;
+  box-shadow: none;
+  z-index: 6;
+  gap: 8px;
+}
+#page-chat .chat-header-spacer{
+  height: calc(env(safe-area-inset-top,0px) + 78px);
+  flex-shrink: 0;
+}
+#page-chat .chat-header-capsule{
+  display:flex; align-items:center; gap:10px;
+  flex:1; min-width:0;
+  background: rgba(255,255,255,.94);
+  border-radius: 999px;
+  padding: 6px 16px 6px 6px;
+  box-shadow: 0 4px 18px rgba(0,0,0,.18);
+}
+#page-chat .chat-header-capsule .avatar-wrap,
+#page-chat .chat-header-capsule .avatar-ring{ width:44px; height:44px; }
+#page-chat .chat-header-capsule .name{ color:#101828; }
+#page-chat .chat-header-capsule .status{ color:#667085; }
+#page-chat .chat-header-actions-capsule{
+  display:flex; align-items:center; gap:2px;
+  flex-shrink:0;
+  background: rgba(255,255,255,.94);
+  border-radius: 999px;
+  padding: 4px;
+  box-shadow: 0 4px 18px rgba(0,0,0,.18);
+}
+#page-chat .chat-header-actions-capsule .header-icon-btn{
+  background: transparent; color:#1d2433;
+}
+#page-chat .chat-header-search-standalone{
+  flex-shrink:0;
+  background: rgba(255,255,255,.94);
+  color:#1d2433;
+  box-shadow: 0 4px 14px rgba(0,0,0,.16);
+}
+@media (max-width: 360px){
+  #page-chat .chat-header-capsule .name{ font-size:14px; }
+  #page-chat .chat-header-capsule{ padding: 5px 12px 5px 5px; gap:8px; }
+}
+
+/* ══════════════════════════════════════════
+   CHAT SEARCH BAR
+══════════════════════════════════════════ */
+#chatSearchBar {
+  display: none; flex-shrink: 0;
+  align-items: center; gap: 8px;
+  padding: 8px 12px;
+  background: rgba(6,13,26,.85);
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255,255,255,.08);
+  animation: srchBarIn .18s ease;
+  position: relative; z-index: 10;
+}
+#chatSearchBar.open { display: flex; }
+@keyframes srchBarIn {
+  from { opacity:0; transform:translateY(-6px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+#chatSearchInput {
+  flex: 1; background: rgba(255,255,255,.07);
+  border: 1.5px solid rgba(255,255,255,.1);
+  border-radius: 20px; padding: 8px 14px;
+  color: var(--text); font-family: inherit; font-size: 13px;
+  outline: none; transition: border-color .2s;
+  direction: rtl;
+}
+#chatSearchInput:focus { border-color: rgba(201,169,110,.5); }
+#chatSearchInput::placeholder { color: var(--muted); }
+#chatSearchNav {
+  display: flex; align-items: center; gap: 4px; flex-shrink: 0;
+}
+#chatSearchCount {
+  font-size: 11px; color: var(--muted); white-space: nowrap;
+  min-width: 44px; text-align: center; font-weight: 600;
+}
+
+/* ════════════════════════════════
+   CHAT BANNED BARS
+════════════════════════════════ */
+.chat-banned-bar {
+  background: linear-gradient(135deg, rgba(239,68,68,.14), rgba(180,20,20,.1));
+  border-top: 1px solid rgba(239,68,68,.35);
+  color: #fca5a5; font-size: 13px; font-weight: 700;
+  padding: 14px 20px; text-align: center; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  letter-spacing: .2px;
+}
+
+/* Owner Emergency Banner */
+.owner-emergency-banner {
+  flex-shrink: 0;
+  background: linear-gradient(135deg, rgba(239,68,68,.2), rgba(180,20,20,.25));
+  border-top: 2px solid rgba(239,68,68,.65);
+  border-bottom: 2px solid rgba(201,169,110,.4);
+  padding: 13px 16px;
+  animation: emergencePulse 2.5s ease-in-out infinite;
+}
+@keyframes emergencePulse {
+  0%,100% { box-shadow: none; }
+  50%      { box-shadow: 0 0 22px 4px rgba(239,68,68,.2); }
+}
+.owner-emergency-inner {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; flex-wrap: wrap;
+}
+.owner-emergency-inner span {
+  font-size: 13px; font-weight: 700; color: #fca5a5; flex: 1; min-width: 0;
+}
+.owner-self-unban-btn {
+  flex-shrink: 0;
+  background: linear-gradient(135deg, var(--gold), var(--goldL));
+  color: #060d1a; border: none; border-radius: 12px;
+  padding: 10px 18px; font-family: inherit; font-size: 13px; font-weight: 900;
+  cursor: pointer; white-space: nowrap;
+  transition: transform .15s, box-shadow .2s;
+  box-shadow: 0 4px 16px rgba(201,169,110,.4);
+}
+.owner-self-unban-btn:hover  { transform: translateY(-1px); box-shadow: 0 7px 24px rgba(201,169,110,.55); }
+.owner-self-unban-btn:active { transform: scale(.96); }
+.owner-self-unban-btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+
+/* ════════════════════════════════
+   ANNOUNCEMENT BAR
+════════════════════════════════ */
+#chatAnnouncementBar {
+  display: none;
+  flex-shrink: 0;
+  background: linear-gradient(135deg, rgba(201,169,110,.18), rgba(201,169,110,.10));
+  border-bottom: 1.5px solid rgba(201,169,110,.35);
+  padding: 9px 14px;
+  position: relative;
+  animation: annPulse 4s ease-in-out infinite;
+  z-index: 4;
+}
+#chatAnnouncementBar.show { display: flex; align-items: flex-start; gap: 10px; }
+@keyframes annPulse {
+  0%,100% { border-bottom-color: rgba(201,169,110,.35); }
+  50%      { border-bottom-color: rgba(201,169,110,.6); }
+}
+.ann-bar-icon {
+  flex-shrink: 0; width: 28px; height: 28px; border-radius: 8px;
+  background: rgba(201,169,110,.18); border: 1px solid rgba(201,169,110,.3);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; color: var(--gold); margin-top: 1px;
+}
+.ann-bar-body { flex: 1; min-width: 0; }
+.ann-bar-label {
+  font-size: 10px; font-weight: 800; color: var(--gold);
+  letter-spacing: .5px; text-transform: uppercase; margin-bottom: 2px;
+  display: flex; align-items: center; gap: 4px;
+}
+.ann-bar-text {
+  font-size: 13px; color: var(--text); line-height: 1.45;
+  word-break: break-word; white-space: pre-wrap;
+}
+.ann-bar-dismiss {
+  flex-shrink: 0; background: none; border: none; color: var(--muted);
+  font-size: 13px; cursor: pointer; padding: 3px; opacity: .6;
+  transition: opacity .15s; align-self: flex-start; margin-top: 1px;
+}
+.ann-bar-dismiss:hover { opacity: 1; color: var(--text); }
+
+/* ── الأصل: كان محشور في قائمة placeholders مشتركة، سطر 6146 تقريبًا ── */
+#chatSearchInput::placeholder { color: rgba(120,155,200,.6) !important; }
