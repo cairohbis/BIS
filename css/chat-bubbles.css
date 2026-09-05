@@ -28,7 +28,7 @@
   border: 1px solid rgba(255,255,255,0.08);
   backdrop-filter: blur(var(--user-bubble-blur, 8px));
   -webkit-backdrop-filter: blur(var(--user-bubble-blur, 8px));
-  color: #f2f2f4;
+  color: var(--other-bubble-text, #f2f2f4);
   border-bottom-left-radius: 6px;
 }
 .bubble.me{
@@ -36,7 +36,7 @@
   border: 1px solid rgba(201,169,110,.3);
   backdrop-filter: blur(var(--user-bubble-blur, 20px)) saturate(180%);
   -webkit-backdrop-filter: blur(var(--user-bubble-blur, 20px)) saturate(180%);
-  color:#fff;
+  color: var(--user-bubble-text, #fff);
   border-bottom-right-radius: 6px;
   box-shadow: 0 4px 14px rgba(0,0,0,0.22);
 }
@@ -267,11 +267,9 @@
 }
 
 /* ── Chat bubble text — mine (new design: pure white on glass) ── */
-.bubble.me { color: var(--user-bubble-text, #fff); }
 .bubble.me .bubble-text { color: var(--user-bubble-text, #fff); }
 
 /* ── Chat bubble text — other (new design) ── */
-.bubble.other { color: var(--other-bubble-text, #f2f2f4); }
 .bubble.other .bubble-text { color: var(--other-bubble-text, #f2f2f4); }
 
 /* ── الأصل: كانت أسطر فردية محشورة في قائمة html.theme-light مشتركة، سطر 6153-6170 تقريبًا ── */
