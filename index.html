@@ -514,16 +514,6 @@ if ("serviceWorker" in navigator) {
       <button class="pinned-bar-close" id="pinnedBarUnpinBtn" title="إلغاء التثبيت" onclick="event.stopPropagation();_unpinMsg()"><i class="fa-solid fa-xmark"></i></button>
     </div>
 
-    <!-- Announcement Bar -->
-    <div id="chatAnnouncementBar">
-      <div class="ann-bar-icon"><i class="fa-solid fa-bullhorn"></i></div>
-      <div class="ann-bar-body">
-        <div class="ann-bar-label"><i class="fa-solid fa-bullhorn fa-xs"></i> إعلان</div>
-        <div class="ann-bar-text" id="annBarText">—</div>
-      </div>
-      <button class="ann-bar-dismiss" id="annBarDismiss" title="إخفاء"><i class="fa-solid fa-xmark"></i></button>
-    </div>
-
     <!-- Messages -->
     <div class="chat-body" id="chatMessages"></div>
 
@@ -824,6 +814,30 @@ if ("serviceWorker" in navigator) {
         </div>
       </div>
 
+      <!-- ══ قسم: إخطار سريع (مستقل عن نظام الأخبار) ══ -->
+      <div class="owner-collapse-item">
+        <div class="owner-collapse-header" onclick="ownerToggleSection(this)">
+          <div class="owner-collapse-icon-wrap"><i class="fa-solid fa-bullhorn"></i></div>
+          <div class="owner-collapse-body-text">
+            <div class="owner-collapse-title">إخطار سريع</div>
+            <div class="owner-collapse-sub">نافذة منبثقة فورية لكل المستخدمين</div>
+          </div>
+          <i class="fa-solid fa-chevron-down owner-collapse-arrow"></i>
+        </div>
+        <div class="owner-collapse-panel">
+          <div class="owner-collapse-inner">
+            <div class="panel-sec">
+              <div class="panel-sec-title"><i class="fa-solid fa-bullhorn"></i> إرسال إخطار سريع</div>
+              <div class="label">عنوان الإخطار *</div>
+              <input class="inp" id="adminQnTitleInput" placeholder="مثال: تم تحديد موعد امتحان مهم غداً">
+              <div class="label">نص الإخطار</div>
+              <textarea class="inp" id="adminQnBodyInput" placeholder="اكتب نص الإخطار هنا..." rows="3" style="resize:none;line-height:1.5"></textarea>
+              <button class="btn" id="adminAddQuickNotifBtn" style="margin-top:10px;"><i class="fa-solid fa-paper-plane"></i> نشر الإخطار</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- ══ قسم 3: المحاضرات ══ -->
       <div class="owner-collapse-item">
         <div class="owner-collapse-header" onclick="ownerToggleSection(this)">
@@ -961,35 +975,6 @@ if ("serviceWorker" in navigator) {
       </div>
 
     </div><!-- end owner-sections-list (admin) -->
-
-      <!-- ══ الإعلانات ══ -->
-      <div class="owner-collapse-item" style="margin-top:10px;">
-        <div class="owner-collapse-header" onclick="ownerToggleSection(this)">
-          <div class="owner-collapse-icon-wrap icon-announcements"><i class="fa-solid fa-bullhorn"></i></div>
-          <div class="owner-collapse-body-text">
-            <div class="owner-collapse-title">الإعلانات المثبتة</div>
-            <div class="owner-collapse-sub">إعلان ثابت أعلى الشات</div>
-          </div>
-          <i class="fa-solid fa-chevron-down owner-collapse-arrow"></i>
-        </div>
-        <div class="owner-collapse-panel">
-          <div class="owner-collapse-inner">
-            <div class="panel-sec">
-              <div class="panel-sec-title orange"><i class="fa-solid fa-bullhorn"></i> إدارة الإعلان</div>
-              <div class="label">نص الإعلان</div>
-              <textarea class="inp" id="aAnnText" placeholder="اكتب نص الإعلان هنا..." rows="3" style="resize:none;line-height:1.5"></textarea>
-              <div style="display:flex;gap:8px;margin-top:4px;">
-                <button class="btn btn-orange" id="aSaveAnnBtn" style="flex:1;" onclick="saveAnnouncement('admin')"><i class="fa-solid fa-bullhorn"></i> نشر الإعلان</button>
-                <button class="btn btn-danger btn-sm" id="aDelAnnBtn" onclick="deleteAnnouncement()" style="flex-shrink:0;width:auto;padding:10px 14px;font-size:13px;border-radius:12px;"><i class="fa-solid fa-trash"></i> حذف</button>
-              </div>
-              <div id="aAnnCurrentWrap" style="display:none;margin-top:10px;">
-                <div class="label">الإعلان الحالي</div>
-                <div id="aAnnCurrentText" style="font-size:13px;color:var(--text);background:rgba(201,169,110,.07);border:1px solid rgba(201,169,110,.2);border-radius:10px;padding:10px;line-height:1.5;white-space:pre-wrap;word-break:break-word;"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
 
   </div>
 </div>
@@ -1438,35 +1423,6 @@ if ("serviceWorker" in navigator) {
       </div>
 
     </div><!-- end owner-sections-list -->
-
-      <!-- ══ قسم: الإعلانات ══ -->
-      <div class="owner-collapse-item" style="margin-top:10px;">
-        <div class="owner-collapse-header" onclick="ownerToggleSection(this)">
-          <div class="owner-collapse-icon-wrap" style="background:rgba(201,169,110,.12);border-color:rgba(201,169,110,.25);color:var(--gold);"><i class="fa-solid fa-bullhorn"></i></div>
-          <div class="owner-collapse-body-text">
-            <div class="owner-collapse-title">الإعلانات المثبتة</div>
-            <div class="owner-collapse-sub">إعلان ثابت أعلى الشات لجميع المستخدمين</div>
-          </div>
-          <i class="fa-solid fa-chevron-down owner-collapse-arrow"></i>
-        </div>
-        <div class="owner-collapse-panel">
-          <div class="owner-collapse-inner">
-            <div class="panel-sec">
-              <div class="panel-sec-title" style="color:var(--gold);"><i class="fa-solid fa-bullhorn"></i> إدارة الإعلان</div>
-              <div class="label">نص الإعلان</div>
-              <textarea class="inp" id="oAnnText" placeholder="اكتب نص الإعلان هنا..." rows="3" style="resize:none;line-height:1.5"></textarea>
-              <div style="display:flex;gap:8px;margin-top:4px;">
-                <button class="btn" id="oSaveAnnBtn" style="flex:1;" onclick="saveAnnouncement()"><i class="fa-solid fa-bullhorn"></i> نشر الإعلان</button>
-                <button class="btn btn-danger btn-sm" id="oDelAnnBtn" onclick="deleteAnnouncement()" style="flex-shrink:0;width:auto;padding:10px 14px;font-size:13px;border-radius:12px;"><i class="fa-solid fa-trash"></i> حذف</button>
-              </div>
-              <div id="oAnnCurrentWrap" style="display:none;margin-top:10px;">
-                <div class="label">الإعلان الحالي</div>
-                <div id="oAnnCurrentText" style="font-size:13px;color:var(--text);background:rgba(201,169,110,.07);border:1px solid rgba(201,169,110,.2);border-radius:10px;padding:10px;line-height:1.5;white-space:pre-wrap;word-break:break-word;"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
 
       <!-- ══ قسم: وضع الصيانة ══ -->
       <div class="owner-collapse-item" style="margin-top:10px;">
@@ -2053,8 +2009,6 @@ window.toggleNotifPanel = function() {
 function _startNotifListener(uid) {
   if (_fcmNotifsUnsub) { try { _fcmNotifsUnsub(); } catch(e){} _fcmNotifsUnsub = null; }
   if (!uid) return;
-  // ── Start announcement listener ──
-  if (window._startAnnListener) window._startAnnListener();
   const q = query(collection(db, "fcmNotifications"),
     where("recipientUid", "==", uid),
     where("read", "==", false),
@@ -2122,12 +2076,6 @@ const _formatSize = (...args) => window._formatSize(...args);
 ══════════════════════════════════════════ */
 const AUDIT_ACTIONS = new Proxy({}, { get: (_, prop) => window.AUDIT_ACTIONS?.[prop] });
 const writeAuditLog = (...args) => window.writeAuditLog(...args);
-
-/* ══════════════════════════════════════════
-   ANNOUNCEMENT SYSTEM — منقول بالكامل لـ js/announcement.js
-   (الاستدعاء بقى بيقرأ window._startAnnListener مباشرة وقت التنفيذ
-   جوه _startNotifListener، عشان يشتغل صح بغض النظر عن ترتيب تحميل السكريبتات)
-══════════════════════════════════════════ */
 
 let currentUser   = null;
 let currentRole   = null;
@@ -4954,18 +4902,21 @@ makeAdder("oAddNewsBtn", () => {
 }, "news", "تم نشر الخبر", loadNews);
 
 // إخطار سريع — نظام مستقل، بيستخدم window.qnPublish من quick-notifications.js
-(function () {
-  var btn = document.getElementById("oAddQuickNotifBtn");
+// شغّال من صفحتين مختلفتين (الأونر والأدمن) بنفس المنطق، كل واحدة بحقولها
+function _wireQuickNotifBtn(btnId, titleId, bodyId) {
+  var btn = document.getElementById(btnId);
   if (!btn) return;
   btn.addEventListener("click", async function () {
     if (!isAdmin()) return toast("ليس لديك صلاحية", "error");
-    var title = document.getElementById("qnTitleInput").value;
-    var body  = document.getElementById("qnBodyInput").value;
+    var title = document.getElementById(titleId).value;
+    var body  = document.getElementById(bodyId).value;
     await window.qnPublish(title, body);
-    document.getElementById("qnTitleInput").value = "";
-    document.getElementById("qnBodyInput").value = "";
+    document.getElementById(titleId).value = "";
+    document.getElementById(bodyId).value = "";
   });
-})();
+}
+_wireQuickNotifBtn("oAddQuickNotifBtn", "qnTitleInput", "qnBodyInput");
+_wireQuickNotifBtn("adminAddQuickNotifBtn", "adminQnTitleInput", "adminQnBodyInput");
 
 makeAdder("oAddLecBtn", () => {
   const subject = document.getElementById("oLecSubject")?.value.trim();
@@ -8029,7 +7980,6 @@ try { window._listenPinnedMsg?.(); } catch(e) {}
      ولا تعتمد وقت التحميل على db/auth/currentUser، فتنفيذ الكود الحرج (فحص تسجيل الدخول) ما بقاش
      مضطر ينتظر تحميل الملفات دي الأول ══ -->
 <script type="module" src="js/audit-log.js"></script>
-<script type="module" src="js/announcement.js"></script>
 <script type="module" src="js/chat-core.js"></script>
 <script type="module" src="js/chat-listener.js"></script>
 <script type="module" src="js/chat-send.js"></script>
