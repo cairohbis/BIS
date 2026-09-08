@@ -98,6 +98,14 @@ import {
     document.getElementById("qnRemindBtn").onclick = close;
 
     document.getElementById("qnDismissBtn").onclick = async function () {
+      var confirmed = true;
+      if (window._appConfirm) {
+        confirmed = await window._appConfirm(
+          "إخفاء الإخطار نهائيًا",
+          "لن يظهر لك هذا الإخطار مرة أخرى أبدًا. متأكد؟"
+        );
+      }
+      if (!confirmed) return;
       try {
         var uid = window.currentUser && window.currentUser.uid;
         if (uid) {
