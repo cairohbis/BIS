@@ -90,7 +90,7 @@ const PRECACHE_PATHS = [
   'grades/grades.css',
   'grades/grades.js',
 
-  'js/ai-assistant.js', 'js/ai-config.js', 'js/announcement.js', 'js/audit-log.js',
+  'js/ai-assistant.js', 'js/ai-config.js', 'js/audit-log.js',
   'js/back-nav.js', 'js/bubble-blur.js', 'js/bubble-color.js', 'js/change-password.js',
   'js/chat-backgrounds.js', 'js/chat-search.js', 'js/connectivity.js', 'js/dm-extras.js',
   'js/dms-page.js', 'js/draft-messages.js', 'js/emoji-picker.js', 'js/lamp-login.js',
