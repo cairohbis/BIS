@@ -278,3 +278,22 @@ html.theme-light .bubble.me { background: var(--user-bubble-color, #ffffff); bor
 html.theme-light .bubble.other .bubble-text { color: var(--other-bubble-text, var(--chat-other-text)); }
 html.theme-light .bubble.me .bubble-text { color: var(--user-bubble-text, #0d1f3c); }
 html.theme-light .bubble.me .bubble-time-in { color: var(--user-bubble-text, rgba(13,31,60,.65)); }
+
+/* ══════════════════════════════════════════════════════════════
+   BUBBLE COLORS v2 — ألوان الفقاعات بنفس التصميم الزجاجي المعتمد
+   ▸ نطاق محصور على #page-chat فقط — صفر تأثير على #page-ai-chat
+     (اللي عنده override خاص بيه أصلاً في #page-ai-chat .bubble.me
+     جوه style.css، فضل زي ما هو من غير أي لمسة)
+   ▸ لسه بيستخدم var(--user-bubble-color) / var(--other-bubble-color)
+     كـ fallback mechanism — يعني لو المستخدم مختار لون مخصص لنفسه
+     من قبل (عن طريق bubble-color.js) اختياره هيفضل شغال زي ما هو
+     بالظبط، إحنا بس بنغيّر اللون الافتراضي (لما محدش اختار حاجة)
+   ══════════════════════════════════════════════════════════════ */
+#page-chat .bubble.me{
+  background: var(--user-bubble-color, linear-gradient(135deg, #5b6ef5, #6f80f8));
+}
+#page-chat .bubble.other{
+  background: var(--other-bubble-color, #2b3242);
+}
+#page-chat .bubble.me .bubble-text{ color: var(--user-bubble-text, #fff); }
+#page-chat .bubble.other .bubble-text{ color: var(--other-bubble-text, #f2f2f4); }

@@ -28,11 +28,15 @@
   z-index: 20;
 }
 
-/* الحشو اللي بيدفع الرسائل/بار البحث/بار التثبيت تحت الهيدر العايم */
-#page-chat .qc-header-spacer{
-  height: calc(env(safe-area-inset-top,0px) + 82px);
-  flex-shrink: 0;
+/* الحشو اللي بيدفع الرسائل/بار البحث/بار التثبيت تحت الهيدر العايم —
+   مفيش عنصر spacer منفصل في الـ HTML (كان بيسبب شريط خلفية ظاهر تحت
+   الهيدر)؛ بدل كده المسافة اتحطت direct على العناصر الحقيقية نفسها */
+#page-chat .chat-body{
+  padding-top: calc(env(safe-area-inset-top,0px) + 92px);
+  padding-bottom: calc(env(safe-area-inset-bottom,0px) + 92px);
 }
+#page-chat #chatSearchBar{ margin-top: calc(env(safe-area-inset-top,0px) + 82px); }
+#page-chat #pinnedMsgBar{ margin-top: calc(env(safe-area-inset-top,0px) + 82px); }
 
 /*
   ⚠️ التأثير الزجاجي المشترك بين كل عناصر الهيدر (الدايرتين +
@@ -137,6 +141,80 @@
   #page-chat .chat-header{ gap:6px; padding-left:8px; padding-right:8px; }
 }
 
-/* دفع الرسائل/بار البحث المثبت تحت الهيدر العايم — نطاق #page-chat فقط،
-   الرسائل نفسها هتبان شفافة تحت زجاج الهيدر وقت السكرول لفوق (مقصود) */
+/* دفع الرسائل تحت الهيدر العايم — الرسائل نفسها هتبان شفافة تحت زجاج
+   الهيدر وقت السكرول لفوق (مقصود، بالظبط زي التصميم المعتمد) */
 #page-chat .chat-body{ position: relative; z-index: 1; }
+
+/* ══════════════════════════════════════════════════════════════
+   INPUT BAR v2 — شريط الكتابة السفلي (نفس أسلوب الهيدر تمامًا)
+   ▸ نفس القاعدة: كل سطر هنا لازم يبدأ بـ "#page-chat" أو
+     "#page-chat #chatInputBar" — #chatInputBar عنصر فريد بمعرّف
+     unique أصلاً، لكن الـ #page-chat اتحطت كمان للاتساق ووضوح
+     النية، ولإن الكلاسات المستخدمة هنا (.plus-btn / .input-pill /
+     .emoji-btn / .mic-btn / .send-btn / .inp) مشتركة حرفيًا مع
+     هيدر AI Chat (#aiChatInputBar) — بالظبط نفس خطورة هيدر الشات.
+   ══════════════════════════════════════════════════════════════ */
+#page-chat #chatInputBar{
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  padding: 0 14px calc(env(safe-area-inset-bottom,0px) + 16px);
+  z-index: 20;
+  gap: 10px;
+}
+
+/* زر الإرفاق (+) — دايرة زجاجية شفافة، بنفس أسلوب دوائر الهيدر بالظبط */
+#page-chat #chatImgBtn{
+  width: 50px; height: 50px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.14);
+  backdrop-filter: blur(14px) saturate(180%);
+  -webkit-backdrop-filter: blur(14px) saturate(180%);
+  border: 1px solid rgba(255,255,255,0.16);
+  color: #fff;
+}
+#page-chat #chatImgBtn:active{ background: rgba(255,255,255,0.22); }
+
+/* الكبسولة الرئيسية (إيموجي + الكتابة + مايك) — زجاج غامق زي المرجع */
+#page-chat #chatInputBar .input-pill{
+  height: 50px;
+  background: rgba(20,24,34,0.55);
+  backdrop-filter: blur(14px) saturate(160%);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 999px;
+}
+#page-chat #chatInputBar .emoji-btn,
+#page-chat #chatInputBar .mic-btn{
+  width: 22px; height: 22px;
+  color: rgba(255,255,255,0.75);
+}
+
+/* زر الإرسال — دايرة لون accent صريح (نفس دور الكاميرا في التصميم المعتمد) */
+#page-chat #chatInputBar .send-btn{
+  width: 50px; height: 50px;
+  border-radius: 50%;
+  background: #29b6f6;
+  box-shadow: none;
+  color: #fff;
+}
+
+/* بار الرد (Reply) — يترفع فوق شريط الكتابة العايم بدل ما يتغطى تحته */
+#page-chat #replyBar.show{
+  position: absolute;
+  left: 14px; right: 14px;
+  bottom: calc(env(safe-area-inset-bottom,0px) + 82px);
+  border-radius: 14px;
+  z-index: 19;
+  border-top: none; border-bottom: none;
+}
+
+/* بار تسجيل الصوت — نفس مكان شريط الكتابة العايم بالظبط وقت التسجيل */
+#page-chat #voiceRecBar{
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  z-index: 20;
+  padding-bottom: calc(env(safe-area-inset-bottom,0px) + 16px) !important;
+}
