@@ -1,0 +1,142 @@
+/* ══════════════════════════════════════════════════════════════
+   CHAT HEADER v2 — التصميم الزجاجي العايم (نسخة تليجرام)
+   ▸ نطاق محصور بالكامل على #page-chat — صفر تأثير على هيدر
+     صفحة المساعد الذكي (#page-ai-chat) اللي بيستخدم نفس أسامي
+     الكلاسات الأساسية (.chat-header / .avatar-wrap / .avatar-ring /
+     .chat-header-info / .status / .dot / .chat-back-btn). كل سطر
+     هنا لازم يبدأ بـ "#page-chat" أو "#page-chat.something" —
+     ما تضيفش قاعدة من غير الـ scope ده مهما كانت بسيطة.
+   ▸ الهيدر position:absolute وعايم فوق الرسائل (زجاج شفاف حقيقي
+     بيوري المحتوى اللي وراه وقت السكرول) — عشان كده لازم
+     #page-chat .qc-header-spacer يفضل موجود في الـ HTML بعد
+     الهيدر مباشرة، وإلا أول رسائل/بار البحث/بار الرسالة المثبتة
+     هيتغطوا تحت الهيدر.
+   ══════════════════════════════════════════════════════════════ */
+
+#page-chat .chat-header{
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: calc(env(safe-area-inset-top,0px) + 14px) 10px 0;
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border-bottom: none;
+  box-shadow: none;
+  z-index: 20;
+}
+
+/* الحشو اللي بيدفع الرسائل/بار البحث/بار التثبيت تحت الهيدر العايم */
+#page-chat .qc-header-spacer{
+  height: calc(env(safe-area-inset-top,0px) + 82px);
+  flex-shrink: 0;
+}
+
+/*
+  ⚠️ التأثير الزجاجي المشترك بين كل عناصر الهيدر (الدايرتين +
+  الكبسولة). القيم دي (rgba الخلفية، مقدار الـ blur، rgba
+  الـ border) اتظبطت يدويًا بعد كذا محاولة — أي تغيير بسيط فيها
+  بيحوّل الزجاج لصندوق واضح أو يخفيه خالص. انسخها زي ما هي.
+*/
+#page-chat .qc-glass{
+  height: var(--qc-pill-h, 50px);
+  background: rgba(255,255,255,0.14);
+  backdrop-filter: blur(14px) saturate(180%);
+  -webkit-backdrop-filter: blur(14px) saturate(180%);
+  border: 1px solid rgba(255,255,255,0.16);
+}
+
+#page-chat .chat-header{ --qc-pill-h: 50px; }
+
+/* دايرة السهم/فتح القائمة الجانبية — أقصى الشمال بصريًا */
+#page-chat .qc-back-arrow{
+  width: var(--qc-pill-h, 50px);
+  border-radius: 50%;
+  color:#fff;
+  display:flex; align-items:center; justify-content:center;
+  flex-shrink:0;
+  padding:0; border:none;
+  cursor:pointer;
+}
+#page-chat .qc-back-arrow.menu-toggle-btn{ font-size:15px; }
+#page-chat .qc-back-arrow:active{ background: rgba(255,255,255,0.22); }
+
+/* الكبسولة الوسطى: الصورة + الاسم + الحالة */
+#page-chat .qc-header-pill{
+  flex:1;
+  min-width:0;
+  display:flex;
+  align-items:center;
+  gap:9px;
+  border-radius: 999px;
+  padding: 0 16px 0 6px;
+}
+#page-chat .qc-header-pill .avatar-wrap,
+#page-chat .qc-header-pill .avatar-ring{ width:38px; height:38px; }
+#page-chat .qc-header-pill .chat-header-info .name{ color:#fff; font-size:14.5px; }
+#page-chat .qc-header-pill .chat-header-info .status{ color: rgba(255,255,255,0.65); font-size:11px; }
+
+/* دايرة المكالمة + القائمة (مدمجين في نفس الدايرة) — أقصى اليمين بصريًا */
+#page-chat .qc-menu-circle{
+  position: relative;
+  border-radius: 999px;
+  padding: 0 16px;
+  display:flex; align-items:center; justify-content:center;
+  gap:12px;
+  flex-shrink:0;
+}
+#page-chat .qc-icon-btn{
+  background:none; border:none; padding:0; margin:0;
+  color:#fff; display:flex; align-items:center; justify-content:center;
+  cursor:pointer; flex-shrink:0;
+}
+#page-chat .qc-icon-btn:active{ opacity:0.65; }
+
+/* القائمة المنسدلة (بحث في الرسائل، إلخ) */
+#page-chat .qc-header-menu{
+  display:none;
+  flex-direction:column;
+  gap:2px;
+  position:absolute;
+  top: calc(100% + 8px);
+  right:0; left:auto;
+  min-width:180px;
+  background: rgba(22,26,36,0.92);
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 14px;
+  padding: 6px;
+  box-shadow: 0 12px 30px rgba(0,0,0,0.4);
+  z-index: 30;
+}
+#page-chat .qc-header-menu.qc-open{
+  display:flex;
+  animation: qcMenuIn 0.15s ease;
+}
+#page-chat .qc-header-menu button{
+  display:flex; align-items:center; gap:10px;
+  background:none; border:none;
+  color:#fff; font-family:inherit; font-size:13px; font-weight:600;
+  padding:10px 12px; border-radius:9px;
+  cursor:pointer; text-align:right; white-space:nowrap;
+}
+#page-chat .qc-header-menu button:active{ background: rgba(255,255,255,0.1); }
+#page-chat .qc-header-menu svg{ flex-shrink:0; }
+
+@keyframes qcMenuIn{
+  from{ opacity:0; transform: translateY(-6px); }
+  to  { opacity:1; transform: translateY(0); }
+}
+
+@media (max-width: 360px){
+  #page-chat .qc-header-pill .chat-header-info .name{ font-size:13.5px; }
+  #page-chat .qc-header-pill{ padding: 0 12px 0 5px; gap:7px; }
+  #page-chat .chat-header{ gap:6px; padding-left:8px; padding-right:8px; }
+}
+
+/* دفع الرسائل/بار البحث المثبت تحت الهيدر العايم — نطاق #page-chat فقط،
+   الرسائل نفسها هتبان شفافة تحت زجاج الهيدر وقت السكرول لفوق (مقصود) */
+#page-chat .chat-body{ position: relative; z-index: 1; }
