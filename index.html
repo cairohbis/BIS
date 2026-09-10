@@ -65,6 +65,7 @@ if ("serviceWorker" in navigator) {
 <link rel="stylesheet" href="css/chat-reply.css">
 <link rel="stylesheet" href="css/chat-list.css">
 <link rel="stylesheet" href="css/chat-header.css">
+<link rel="stylesheet" href="css/chat-header-v2.css">
 <link rel="stylesheet" href="css/chat-bubbles.css">
 <link rel="stylesheet" href="css/dms-page.css">
 <link rel="stylesheet" href="css/bubble-color.css">
@@ -467,31 +468,49 @@ if ("serviceWorker" in navigator) {
     <!-- Header -->
     <div class="chat-header">
 
-      <button class="chat-back-btn" onclick="closeChatPage()" title="رجوع" style="display:none;">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 6l-6 6 6 6"/></svg>
-      </button>
+      <!-- يمين (RTL): دايرة زجاجية واحدة فيها التلات نقط + زر المكالمة -->
+      <div class="qc-glass qc-menu-circle" id="qcHeaderMenuAnchor">
+        <button type="button" class="qc-icon-btn" title="القائمة" onclick="event.stopPropagation(); _qcToggleHeaderMenu();">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="12" cy="5" r="1.4" fill="currentColor" stroke="none"/><circle cx="12" cy="19" r="1.4" fill="currentColor" stroke="none"/></svg>
+        </button>
+        <button type="button" class="qc-icon-btn" title="مكالمة" onclick="event.stopPropagation(); _qcCallComingSoon();">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+        </button>
 
-      <button class="menu-toggle-btn" id="menuToggleBtn" onclick="openSidebar()" style="display:none;">
-        <i class="fa-solid fa-bars"></i>
-      </button>
-
-      <div class="avatar-wrap">
-        <div class="avatar-ring" id="chatTopAvatar"><i class="fa-solid fa-graduation-cap"></i></div>
-      </div>
-
-      <div class="chat-header-info">
-        <div class="name" id="chatTopName">الشات العام</div>
-        <div class="status">
-          <span class="dot"></span>
-          <span id="chatTopOnline">مباشر</span>
+        <div class="qc-header-menu" id="qcHeaderMenu">
+          <button type="button" onclick="event.stopPropagation(); _qcCloseHeaderMenu(); toggleChatSearch();">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <span>بحث في الرسائل</span>
+          </button>
         </div>
       </div>
 
-      <button class="header-icon-btn" id="chatSearchToggleBtn" title="بحث في الرسائل" onclick="toggleChatSearch()">
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <!-- الوسط: الصورة + الاسم + الحالة -->
+      <div class="qc-glass qc-header-pill">
+        <div class="avatar-wrap">
+          <div class="avatar-ring" id="chatTopAvatar"><i class="fa-solid fa-graduation-cap"></i></div>
+        </div>
+        <div class="chat-header-info">
+          <div class="name" id="chatTopName">الشات العام</div>
+          <div class="status">
+            <span class="dot"></span>
+            <span id="chatTopOnline">مباشر</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- شمال: رجوع (موبايل) / فتح القائمة الجانبية (ديسكتوب) — واحد منهم بس ظاهر حسب الشاشة -->
+      <button class="qc-glass qc-back-arrow chat-back-btn" onclick="closeChatPage()" title="رجوع" style="display:none;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 6l-6 6 6 6"/></svg>
+      </button>
+
+      <button class="qc-glass qc-back-arrow menu-toggle-btn" id="menuToggleBtn" onclick="openSidebar()" style="display:none;">
+        <i class="fa-solid fa-bars"></i>
       </button>
 
     </div>
+
+    <div class="qc-header-spacer"></div>
 
     <!-- Search Bar -->
     <div id="chatSearchBar">
@@ -4024,6 +4043,29 @@ Object.defineProperty(window, '_currentChatName', { get: () => _currentChatName,
 let _currentChatPhoto= "";
 Object.defineProperty(window, '_currentChatPhoto', { get: () => _currentChatPhoto, set: (v) => { _currentChatPhoto = v; }, configurable: true }); // ← bridge: محتاجها js/chat-select.js
 
+// تنسيق نص "آخر ظهور" بتوقيت حقيقي: اليوم / أمس / تاريخ كامل
+function _formatLastSeenText(ts) {
+  const ms = ts?.toMillis ? ts.toMillis() : (ts?.seconds ? ts.seconds * 1000 : (typeof ts === "number" ? ts : 0));
+  if (!ms) return "آخر ظهور غير معروف";
+
+  const d   = new Date(ms);
+  const now = new Date();
+  const hh  = d.getHours().toString().padStart(2, "0");
+  const mm  = d.getMinutes().toString().padStart(2, "0");
+  const timeStr = `${hh}:${mm}`;
+
+  const sameDay = d.toDateString() === now.toDateString();
+  if (sameDay) return `آخر ظهور اليوم الساعة ${timeStr}`;
+
+  const yesterday = new Date(now);
+  yesterday.setDate(now.getDate() - 1);
+  if (d.toDateString() === yesterday.toDateString()) return `آخر ظهور أمس الساعة ${timeStr}`;
+
+  const months = ["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"];
+  return `آخر ظهور ${d.getDate()} ${months[d.getMonth()]} الساعة ${timeStr}`;
+}
+window._formatLastSeenText = _formatLastSeenText; // ← تصدير: محتاجها js/chat-header-v2.js لو احتاجها لاحقًا
+
 // تحديث نص + نقطة الحضور (Online/Offline) في هيدر الشات — يعيد استخدام
 // نفس نظام الحضور الموجود فعلاً (_isOnlineVisible + _userCache + _ensureVipListener)
 function _updateChatHeaderPresence(chatId) {
@@ -4038,13 +4080,13 @@ function _updateChatHeaderPresence(chatId) {
     return;
   }
 
-  // خاص (DM) — نفس القيمة النصية القديمة "خاص"، بدون تغيير
-  if (statusText) statusText.textContent = "خاص";
-
   // إعادة استخدام نفس الكاش والدالة المستخدمين فعليًا في _updateDmItemUI
   const cached = _userCache[chatId];
   const u = cached?.data || cached || {};
   const isOnline = _isOnlineVisible(u);
+
+  // خاص (DM) — "متصل" لو أونلاين فعليًا، وإلا نص آخر ظهور حقيقي بالتوقيت
+  if (statusText) statusText.textContent = isOnline ? "متصل" : _formatLastSeenText(u.lastSeen);
 
   if (avatarRing) {
     avatarRing.classList.toggle("online", isOnline);
@@ -4106,7 +4148,7 @@ function _startTypingListener(chatId) {
   if (_typingUnsub) { _typingUnsub(); _typingUnsub = null; }
   if (!chatId || chatId === "public" || chatId.startsWith("room:")) {
     const statusEl = document.getElementById("chatTopOnline");
-    if (statusEl) statusEl.textContent = chatId === "public" ? "مباشر — الجميع" : "خاص";
+    if (statusEl) statusEl.textContent = chatId === "public" ? "مباشر — الجميع" : "غرفة عامة";
     return;
   }
   const roomId = privateChatId(chatId);
@@ -4124,7 +4166,8 @@ function _startTypingListener(chatId) {
     if (someone) {
       statusEl.innerHTML = '<span style="color:var(--gold);animation:pulse 1s infinite;">يكتب الآن...</span>';
     } else {
-      statusEl.textContent = "خاص";
+      // يرجع النص الحقيقي (متصل / آخر ظهور بالتوقيت الفعلي) بدل نص ثابت
+      _updateChatHeaderPresence(_currentChatId);
     }
   }, () => {});
 }
@@ -7997,6 +8040,7 @@ try { window._listenPinnedMsg?.(); } catch(e) {}
 <script type="module" src="js/mention.js"></script>
 <script type="module" src="js/dms-page.js"></script>
 <script type="module" src="js/dm-extras.js"></script>
+<script src="js/chat-header-v2.js" defer></script>
 <script type="module" src="js/attendance.js"></script>
 <script src="js/ai-config.js"></script>
 <script src="js/bubble-color.js" defer></script>
