@@ -1,19 +1,21 @@
 /* ══════════════════════════════════════════════════════════════
-   CHAT HEADER v2 — التصميم الزجاجي العايم (نسخة تليجرام)
+   CHAT HEADER v2 — نفس أسامي الكلاسات الحرفية من التصميم المعتمد
+   (.chat-header / .glass / .back-arrow / .header-pill / .call-circle
+   / .input-bar / .bar-main) — القيم (rgba, blur, px) منسوخة حرفيًا.
    ▸ نطاق محصور بالكامل على #page-chat — صفر تأثير على هيدر
      صفحة المساعد الذكي (#page-ai-chat) اللي بيستخدم نفس أسامي
-     الكلاسات الأساسية (.chat-header / .avatar-wrap / .avatar-ring /
+     الكلاسات الوظيفية (.chat-header / .avatar-wrap / .avatar-ring /
      .chat-header-info / .status / .dot / .chat-back-btn). كل سطر
-     هنا لازم يبدأ بـ "#page-chat" أو "#page-chat.something" —
-     ما تضيفش قاعدة من غير الـ scope ده مهما كانت بسيطة.
-   ▸ الهيدر position:absolute وعايم فوق الرسائل (زجاج شفاف حقيقي
-     بيوري المحتوى اللي وراه وقت السكرول). مفيش عنصر spacer منفصل
-     في الـ HTML — المسافة اتحطت direct على .chat-body/#chatSearchBar/
-     #pinnedMsgBar (تحت مباشرة).
-   ▸ !important على الشفافية هنا مقصودة: تأمين ضد أي احتمال (كاش
-     متصفح قديم، أو أي قاعدة تانية تظهر لاحقًا) تخلي خلفية الهيدر
-     تبان كصندوق solid بدل الشفافية — لو شايف صندوق خلف الهيدر
-     برضو بعد كده، يبقى المتصفح محتاج hard refresh / مسح الكاش.
+     هنا لازم يبدأ بـ "#page-chat" — ما تضيفش قاعدة من غير الـ scope ده.
+   ▸ الكلاسات الوظيفية (avatar-ring, chat-header-info, name, status,
+     dot, plus-btn, mic-btn, send-btn, emoji-btn, inp) فضلت زي ما هي
+     بالاسم لأن 15+ ملف JS بيعتمدوا عليها فعليًا (حضور، تسجيل صوتي،
+     إرسال، مسودات...) — الأسامي دي بس اتاخدت حرفيًا من التصميم
+     المعتمد: glass / back-arrow / header-pill / call-circle /
+     input-bar / bar-main (مفيش أي وظيفة JS مرتبطة بيهم، فأمن تمامًا
+     نستخدم نفس الاسم الحرفي من غير أي مخاطرة).
+   ▸ !important على شفافية الهيدر مقصودة: تأمين ضد أي كاش قديم أو
+     قاعدة تانية تخلي الخلفية تبان solid.
    ══════════════════════════════════════════════════════════════ */
 
 #page-chat .chat-header{
@@ -29,33 +31,34 @@
   border-bottom: none !important;
   box-shadow: none !important;
   z-index: 20;
+  --pill-h: 50px;
 }
 
 #page-chat .chat-body{
   padding: calc(env(safe-area-inset-top,0px) + 80px) 12px calc(env(safe-area-inset-bottom,0px) + 90px);
+  position: relative;
+  z-index: 1;
 }
 #page-chat #chatSearchBar{ margin-top: calc(env(safe-area-inset-top,0px) + 70px); }
 #page-chat #pinnedMsgBar{ margin-top: calc(env(safe-area-inset-top,0px) + 70px); }
 
 /*
-  ⚠️ التأثير الزجاجي المشترك بين كل عناصر الهيدر (الدايرتين +
-  الكبسولة). القيم دي (rgba الخلفية، مقدار الـ blur، rgba
-  الـ border) اتظبطت يدويًا بعد كذا محاولة — أي تغيير بسيط فيها
-  بيحوّل الزجاج لصندوق واضح أو يخفيه خالص. انسخها زي ما هي.
+  ⚠️ .glass — التأثير الزجاجي المشترك بين كل عناصر الهيدر. القيم
+  دي (rgba الخلفية 0.14، blur(14px) saturate(180%)، rgba الـ border
+  0.16) منسوخة حرفيًا من التصميم المعتمد — أي تغيير بسيط فيها
+  بيحوّل الزجاج لصندوق solid واضح أو يخفيه خالص.
 */
-#page-chat .qc-glass{
-  height: var(--qc-pill-h, 50px);
+#page-chat .glass{
+  height: var(--pill-h);
   background: rgba(255,255,255,0.14);
   backdrop-filter: blur(14px) saturate(180%);
   -webkit-backdrop-filter: blur(14px) saturate(180%);
   border: 1px solid rgba(255,255,255,0.16);
 }
 
-#page-chat .chat-header{ --qc-pill-h: 50px; }
-
 /* دايرة السهم/فتح القائمة الجانبية — أقصى الشمال بصريًا */
-#page-chat .qc-back-arrow{
-  width: var(--qc-pill-h, 50px);
+#page-chat .back-arrow{
+  width: var(--pill-h);
   border-radius: 50%;
   color:#fff;
   display:flex; align-items:center; justify-content:center;
@@ -63,11 +66,11 @@
   padding:0; border:none;
   cursor:pointer;
 }
-#page-chat .qc-back-arrow.menu-toggle-btn{ font-size:15px; }
-#page-chat .qc-back-arrow:active{ background: rgba(255,255,255,0.22); }
+#page-chat .back-arrow.menu-toggle-btn{ font-size:15px; }
+#page-chat .back-arrow:active{ background: rgba(255,255,255,0.22); }
 
 /* الكبسولة الوسطى: الصورة + الاسم + الحالة */
-#page-chat .qc-header-pill{
+#page-chat .header-pill{
   flex:1;
   min-width:0;
   display:flex;
@@ -76,10 +79,10 @@
   border-radius: 999px;
   padding: 0 16px 0 6px;
 }
-#page-chat .qc-header-pill .avatar-wrap,
-#page-chat .qc-header-pill .avatar-ring{ width:38px; height:38px; }
-#page-chat .qc-header-pill .chat-header-info .name{ color:#fff; font-size:14.5px; font-weight:700; }
-#page-chat .qc-header-pill .chat-header-info .status{
+#page-chat .header-pill .avatar-wrap,
+#page-chat .header-pill .avatar-ring{ width:38px; height:38px; }
+#page-chat .header-pill .chat-header-info .name{ color:#fff; font-size:14.5px; font-weight:700; }
+#page-chat .header-pill .chat-header-info .status{
   color: rgba(255,255,255,0.65);
   font-size:10px;
   font-weight:400;
@@ -89,9 +92,9 @@
 }
 
 /* دايرة المكالمة + القائمة (مدمجين في نفس الدايرة) — أقصى اليمين بصريًا */
-#page-chat .qc-menu-circle{
+#page-chat .call-circle{
   position: relative;
-  height: var(--qc-pill-h, 50px);
+  height: var(--pill-h);
   border-radius: 999px;
   padding: 0 16px;
   color:#fff;
@@ -106,7 +109,8 @@
 }
 #page-chat .qc-icon-btn:active{ opacity:0.65; }
 
-/* القائمة المنسدلة (بحث في الرسائل، إلخ) */
+/* القائمة المنسدلة (بحث في الرسائل) — إضافة وظيفية، مفيش ليها مثيل
+   في التصميم المعتمد لأنه ما كانش فيه قائمة تفاعلية أصلاً */
 #page-chat .qc-header-menu{
   display:none;
   flex-direction:column;
@@ -144,23 +148,17 @@
 }
 
 @media (max-width: 360px){
-  #page-chat .qc-header-pill .chat-header-info .name{ font-size:13.5px; }
-  #page-chat .qc-header-pill{ padding: 0 12px 0 5px; gap:7px; }
+  #page-chat .header-pill .chat-header-info .name{ font-size:13.5px; }
+  #page-chat .header-pill{ padding: 0 12px 0 5px; gap:7px; }
   #page-chat .chat-header{ gap:6px; padding-left:8px; padding-right:8px; }
 }
 
-/* دفع الرسائل تحت الهيدر العايم — الرسائل نفسها هتبان شفافة تحت زجاج
-   الهيدر وقت السكرول لفوق (مقصود، بالظبط زي التصميم المعتمد) */
-#page-chat .chat-body{ position: relative; z-index: 1; }
-
 /* ══════════════════════════════════════════════════════════════
-   INPUT BAR v2 — شريط الكتابة السفلي (نفس أسلوب الهيدر تمامًا)
-   ▸ نفس القاعدة: كل سطر هنا لازم يبدأ بـ "#page-chat" أو
-     "#page-chat #chatInputBar" — #chatInputBar عنصر فريد بمعرّف
-     unique أصلاً، لكن الـ #page-chat اتحطت كمان للاتساق ووضوح
-     النية، ولإن الكلاسات المستخدمة هنا (.plus-btn / .input-pill /
-     .emoji-btn / .mic-btn / .send-btn / .inp) مشتركة حرفيًا مع
-     هيدر AI Chat (#aiChatInputBar) — بالظبط نفس خطورة هيدر الشات.
+   INPUT BAR v2 — نفس أسامي الكلاسات الحرفية (.input-bar / .bar-main)
+   ▸ الكلاسات الوظيفية (plus-btn / input-pill / emoji-btn / mic-btn /
+     send-btn / inp) فضلت بالاسم — مشتركة حرفيًا مع هيدر AI Chat
+     (#aiChatInputBar)، فكل سطر هنا لازم يبدأ بـ "#page-chat" أو
+     "#page-chat #chatInputBar".
    ══════════════════════════════════════════════════════════════ */
 #page-chat #chatInputBar{
   position: absolute;
@@ -172,18 +170,17 @@
   -webkit-backdrop-filter: none;
   padding: 0 14px calc(env(safe-area-inset-bottom,0px) + 16px);
   z-index: 20;
-  --qc-pill-h: 50px;
+  --pill-h: 50px;
 }
 
 /*
-  ⚠️ لون الخلفية rgba(20,24,34,0.55) ودرجة الـ blur هنا مطابقين
-  حرفيًا لـ .bar-main في التصميم المعتمد (مختلفين عمدًا عن .qc-glass
-  بتاعة الهيدر — أغمق شوية). الصندوق ده واحد بس بيحتوي كل حاجة
-  (إرفاق + إيموجي + كتابة + مايك/إرسال) — مفيش عناصر منفصلة برّه.
+  ⚠️ .bar-main — لون الخلفية rgba(20,24,34,0.55) ودرجة الـ
+  blur(14px) saturate(160%) منسوخين حرفيًا من التصميم المعتمد
+  (مختلفين عمدًا عن .glass بتاعة الهيدر — أغمق شوية).
 */
-#page-chat #chatInputBar .qc-bar-main{
+#page-chat #chatInputBar .bar-main{
   flex: 1;
-  height: var(--qc-pill-h, 50px);
+  height: var(--pill-h);
   border-radius: 999px;
   padding: 0 5px 0 16px;
   display: flex;
@@ -198,13 +195,13 @@
 }
 
 /* .input-pill بتختفي كصندوق بصريًا (display:contents) — بقى بس فيه
-   الكتابة + الإيموجي دلوقتي (بعد نقل المايك/الإرسال لصندوق ثابت) */
-#page-chat #chatInputBar .qc-bar-main .input-pill{
+   الكتابة + الإيموجي (بعد نقل المايك/الإرسال لصندوق ثابت أدناه) */
+#page-chat #chatInputBar .bar-main .input-pill{
   display: contents;
 }
 
-/* زر الإرفاق (+) — أيقونة شفافة بدون أي خلفية دايرة، زي .clip-icon بالظبط.
-   أقصى الشمال بصريًا (آخر عنصر) */
+/* زر الإرفاق (+) — أيقونة شفافة بدون أي خلفية دايرة، زي .clip-icon
+   بالتصميم المعتمد بالظبط. أقصى الشمال بصريًا (آخر عنصر) */
 #page-chat #chatInputBar #chatImgBtn{
   width: auto; height: auto;
   background: none;
@@ -233,12 +230,12 @@
 #page-chat #chatInputBar .emoji-btn svg{ width:19px; height:19px; }
 
 /*
-  ⚠️ صندوق التبديل الثابت (مايك ↔ إرسال) — أقصى اليمين بصريًا
-  (أول عنصر)، بالظبط زي مكان الكاميرا في التصميم المعتمد. حجم
-  ثابت 40×40 عشان لما الجافاسكريبت الموجود فعليًا يبدّل
-  display بين #chatVoiceBtn و#chatSendBtn، شكل الصندوق ككل
-  ميتحركش أو يتغير حجمه — العنصرين بياخدوا نفس المكان المحجوز
-  بالظبط مهما اتبدلوا.
+  ⚠️ صندوق التبديل الثابت (مايك ↔ إرسال) — أقصى اليمين بصريًا (أول
+  عنصر)، بالظبط زي مكان .cam-btn-inline في التصميم المعتمد. حجم
+  ثابت 40×40: التصميم المعتمد عنده عنصر واحد بس بيتغير شكله (نفس
+  المكان)، وإحنا عندنا فعليًا عنصرين حقيقيين منفصلين (#chatVoiceBtn/
+  #chatSendBtn) بيتبدلوا بجافاسكريبت موجود فعليًا — الصندوق الثابت
+  ده هو أدق تمثيل لنفس فكرة "نفس المكان مهما اتبدل الشكل".
 */
 #page-chat #chatInputBar .qc-swap-slot{
   width: 40px; height: 40px;
@@ -254,7 +251,8 @@
 }
 #page-chat #chatInputBar .mic-btn svg{ width:19px; height:19px; }
 
-/* زر الإرسال — دايرة زرقاء صريحة (accent-blue)، بنفس حجم .cam-btn-inline بالظبط (40px) */
+/* زر الإرسال — دايرة زرقاء صريحة (accent-blue #29b6f6)، بنفس حجم
+   .cam-btn-inline بالتصميم المعتمد بالظبط (40px) */
 #page-chat #chatInputBar .send-btn{
   width: 40px; height: 40px;
   border-radius: 50%;
