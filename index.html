@@ -468,8 +468,8 @@ if ("serviceWorker" in navigator) {
     <!-- Header -->
     <div class="chat-header">
 
-      <!-- يمين (RTL): دايرة زجاجية واحدة فيها التلات نقط + زر المكالمة — call-circle+glass بنفس اسم الكلاس الأصلي بالحرف -->
-      <div class="call-circle glass" id="qcHeaderMenuAnchor">
+      <!-- يمين (RTL): دايرة زجاجية واحدة فيها التلات نقط + زر المكالمة -->
+      <div class="qc-glass qc-menu-circle" id="qcHeaderMenuAnchor">
         <button type="button" class="qc-icon-btn" title="القائمة" onclick="event.stopPropagation(); _qcToggleHeaderMenu();">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="12" cy="5" r="1.4" fill="currentColor" stroke="none"/><circle cx="12" cy="19" r="1.4" fill="currentColor" stroke="none"/></svg>
         </button>
@@ -485,10 +485,8 @@ if ("serviceWorker" in navigator) {
         </div>
       </div>
 
-      <!-- الوسط: الصورة + الاسم + الحالة — header-pill+glass بنفس اسم الكلاس الأصلي بالحرف.
-           avatar-ring/chat-header-info/name/status/dot فضلوا زي ما هم (وظيفيين حقيقيين —
-           عليهم Online/Offline + مؤشر التسجيل الصوتي + كل منطق الحضور) -->
-      <div class="header-pill glass">
+      <!-- الوسط: الصورة + الاسم + الحالة -->
+      <div class="qc-glass qc-header-pill">
         <div class="avatar-wrap">
           <div class="avatar-ring" id="chatTopAvatar"><i class="fa-solid fa-graduation-cap"></i></div>
         </div>
@@ -501,12 +499,12 @@ if ("serviceWorker" in navigator) {
         </div>
       </div>
 
-      <!-- شمال: رجوع (موبايل) / فتح القائمة الجانبية (ديسكتوب) — back-arrow+glass بنفس اسم الكلاس الأصلي بالحرف -->
-      <button class="back-arrow glass chat-back-btn" onclick="closeChatPage()" title="رجوع">
+      <!-- شمال: رجوع (موبايل) / فتح القائمة الجانبية (ديسكتوب) — واحد منهم بس ظاهر حسب الشاشة -->
+      <button class="qc-glass qc-back-arrow chat-back-btn" onclick="closeChatPage()" title="رجوع">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 6l-6 6 6 6"/></svg>
       </button>
 
-      <button class="back-arrow glass menu-toggle-btn" id="menuToggleBtn" onclick="openSidebar()" style="display:none;">
+      <button class="qc-glass qc-back-arrow menu-toggle-btn" id="menuToggleBtn" onclick="openSidebar()" style="display:none;">
         <i class="fa-solid fa-bars"></i>
       </button>
 
@@ -565,9 +563,9 @@ if ("serviceWorker" in navigator) {
     <!-- Mention Dropdown -->
     <div id="mentionDropdown" style="display:none;"></div>
 
-    <div class="chat-input chat-input-bar input-bar" id="chatInputBar">
+    <div class="chat-input chat-input-bar" id="chatInputBar">
 
-      <div class="bar-main">
+      <div class="qc-bar-main">
 
         <div class="qc-swap-slot">
           <button class="send-btn" id="chatSendBtn" title="إرسال" style="display:none;">
