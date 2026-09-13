@@ -565,23 +565,29 @@ if ("serviceWorker" in navigator) {
 
     <div class="chat-input chat-input-bar" id="chatInputBar">
 
-      <button class="plus-btn" id="chatImgBtn" title="إرفاق ملف (اضغط مطولاً للاستطلاع)">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-      </button>
+      <div class="qc-bar-main">
 
-      <div class="input-pill">
-        <button class="emoji-btn" id="chatEmojiBtn" title="إيموجي">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M8.5 14.5s1.5 2 3.5 2 3.5-2 3.5-2"/><circle cx="9" cy="9.5" r="1" fill="currentColor" stroke="none"/><circle cx="15" cy="9.5" r="1" fill="currentColor" stroke="none"/></svg>
+        <div class="qc-swap-slot">
+          <button class="send-btn" id="chatSendBtn" title="إرسال" style="display:none;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="transform:scaleX(-1)"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg>
+          </button>
+          <button class="mic-btn" id="chatVoiceBtn" title="تسجيل صوتي">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a3 3 0 00-3 3v6a3 3 0 006 0V5a3 3 0 00-3-3z"/><path d="M19 10v1a7 7 0 01-14 0v-1"/><line x1="12" y1="18" x2="12" y2="22"/></svg>
+          </button>
+        </div>
+
+        <div class="input-pill">
+          <input class="inp" type="text" id="chatInput" placeholder="اكتب رسالة..." autocomplete="off" maxlength="2000">
+          <button class="emoji-btn" id="chatEmojiBtn" title="إيموجي">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M8.5 14.5s1.5 2 3.5 2 3.5-2 3.5-2"/><circle cx="9" cy="9.5" r="1" fill="currentColor" stroke="none"/><circle cx="15" cy="9.5" r="1" fill="currentColor" stroke="none"/></svg>
+          </button>
+        </div>
+
+        <button class="plus-btn" id="chatImgBtn" title="إرفاق ملف (اضغط مطولاً للاستطلاع)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         </button>
-        <input class="inp" type="text" id="chatInput" placeholder="اكتب رسالة..." autocomplete="off" maxlength="2000">
-        <button class="mic-btn" id="chatVoiceBtn" title="تسجيل صوتي">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a3 3 0 00-3 3v6a3 3 0 006 0V5a3 3 0 00-3-3z"/><path d="M19 10v1a7 7 0 01-14 0v-1"/><line x1="12" y1="18" x2="12" y2="22"/></svg>
-        </button>
+
       </div>
-
-      <button class="send-btn" id="chatSendBtn" title="إرسال" style="display:none;">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="transform:scaleX(-1)"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg>
-      </button>
 
     </div>
 
