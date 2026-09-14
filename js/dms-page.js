@@ -238,6 +238,7 @@ window._dmsOpenChat = function(id, name, photo) {
     if (typeof window._openAiChat === "function") window._openAiChat();
     return;
   }
+  if (window.NEWCHAT_UI_ONLY) { showPage("page-chat"); return; }
   window.selectChat(id, name, photo);
 };
 
