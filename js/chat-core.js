@@ -342,6 +342,22 @@ window.ensurePrivateChatDoc = ensurePrivateChatDoc;
     _mediaRecorder = null;
   };
 
+  window.pauseVoiceRecording = function() {
+    if (!_isRecording || !_mediaRecorder || _mediaRecorder.state !== "recording") return;
+    try { _mediaRecorder.pause(); } catch(e) {}
+    _stopTimer();
+  };
+
+  window.resumeVoiceRecording = function() {
+    if (!_isRecording || !_mediaRecorder || _mediaRecorder.state !== "paused") return;
+    try { _mediaRecorder.resume(); } catch(e) {}
+    _recTimer = setInterval(function() {
+      _recSeconds++;
+      if (timerEl) timerEl.textContent = _fmtTime(_recSeconds);
+      if (_recSeconds >= 180) stopAndSendVoice();
+    }, 1000);
+  };
+
   if (voiceBtn) {
     voiceBtn.addEventListener("click", function() {
       if (_isRecording) {
