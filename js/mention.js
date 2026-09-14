@@ -195,4 +195,6 @@ function _initMention() {
   });
 }
 
-_initMention();
+// 🔒 قفل مؤقت خاص بالمرحلة 2 فقط — يمنع تفعيل نظام المنشن تلقائيًا حاليًا.
+// للعودة لتفعيله في المرحلة 3: احذف الشرط وسيب `_initMention();` فقط.
+if (!window.NEWCHAT_PHASE2_LOCK) _initMention();

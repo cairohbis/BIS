@@ -10,6 +10,9 @@ const _DT_REACTION  = "❤️";   // الـ Reaction الافتراضي
 const _DT_DELAY     = 300;     // ms — نافذة الضغطتين
 
 function _initDoubleTapReaction(container) {
+  // 🔒 قفل مؤقت خاص بالمرحلة 2 فقط — يمنع تفعيل الـ double-tap reactions تلقائيًا حاليًا.
+  // للعودة لتفعيلها في المرحلة 3: احذف هذا السطر فقط.
+  if (window.NEWCHAT_PHASE2_LOCK) return;
   if (!container || container._dtDelegated) return;
   container._dtDelegated = true;
 
