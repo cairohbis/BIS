@@ -38,9 +38,17 @@
     }
   });
 
-  // الزر ده أصلًا عليه listener قديم بينادي sendChatMsg() (بيرجع فورًا لو النص فاضي)
-  // الإضافة دي مستقلة تمامًا: لو الحقل فاضي، افتح الكاميرا بدل ما محدش يعمل حاجة
+  // الزر ده أصلًا عليه listener قديم بينادي sendChatMsg()، واللي بيمسح
+  // input.value بشكل متزامن (chat-send.js:27) قبل أي await — يعني وقت
+  // ما دورنا في نفس click event يجي، الحقل يبقى بقى فاضي أصلاً حتى لو
+  // كان فيه نص وقت الضغط. الحل: نلتقط حالة الحقل وقت الضغط نفسه
+  // (pointerdown/touchstart بيسبقوا click دايمًا) بدل ما نقرأها في click.
+  let hadTextAtPress = false;
+  function _captureState() { hadTextAtPress = !!input.value.trim(); }
+  sendBtn.addEventListener("pointerdown", _captureState);
+  sendBtn.addEventListener("touchstart", _captureState, { passive: true });
+
   sendBtn.addEventListener("click", function () {
-    if (!input.value.trim()) camInput.click();
+    if (!hadTextAtPress) camInput.click();
   });
 })();
