@@ -41,22 +41,18 @@ async function startChatListener(chatId) {
   _loadingMore = false;
   _activeChatId = chatId;
 
-  // ── تجهيز المحادثة الخاصة ─────────────────
-  if (chatId !== "public") {
-    try {
-      await ensurePrivateChatDoc(chatId);
-    } catch(e) {
-      if (_activeChatId !== chatId) return;
-      const container = document.getElementById("chatMessages");
-      container.innerHTML = `<div class="empty-state" style="margin:auto;color:var(--danger);">
-        <i class="fa-solid fa-triangle-exclamation"></i> فشل تحميل المحادثة (${e.code || e.message})
-        <br><small style="color:var(--muted);">تأكد من تحديث Firestore Rules</small>
-      </div>`;
-      return;
-    }
-    if (_activeChatId !== chatId) return;
-    _markMessagesSeenAsync(chatId);
-  }
+  // ✅ إصلاح: الغرف (room:xxx) ليست محادثة خاصة — لا يجب أن تمر إطلاقًا
+  // على ensurePrivateChatDoc (كانت تُعامَل كـ DM بالخطأ سابقًا)
+  const isPrivateChat = chatId !== "public" && !chatId.startsWith("room:");
+
+  // ✅ إصلاح: تجهيز المحادثة الخاصة يبدأ الآن ويعمل بالتوازي مع تحميل
+  // الرسائل، بدل انتظاره (await) قبل البدء في جلبها — وهو ما كان يفرض
+  // رحلة شبكة إضافية كاملة قبل رحلة شبكة الرسائل نفسها ويؤخر ظهورها.
+  // وظيفة ensurePrivateChatDoc نفسها لم تتغيّر إطلاقًا.
+  let _ensureErr = null;
+  const _ensureP = isPrivateChat
+    ? ensurePrivateChatDoc(chatId).catch(e => { _ensureErr = e || {}; })
+    : Promise.resolve();
 
   updateChatBannedState();
 
@@ -80,6 +76,24 @@ async function startChatListener(chatId) {
   }
 
   if (_activeChatId !== chatId) return;
+
+  // ✅ إذا فشل تجهيز المحادثة الخاصة (ensurePrivateChatDoc)، نعرض رسالة
+  // الخطأ الآن بدل الرسائل — بنفس شكل الخطأ القديم بالضبط، لكن بعد
+  // محاولة تحميل الرسائل وليس قبلها.
+  if (isPrivateChat && _ensureErr) {
+    container.innerHTML = `<div class="empty-state" style="margin:auto;color:var(--danger);">
+      <i class="fa-solid fa-triangle-exclamation"></i> فشل تحميل المحادثة (${_ensureErr.code || _ensureErr.message || ""})
+      <br><small style="color:var(--muted);">تأكد من تحديث Firestore Rules</small>
+    </div>`;
+    return;
+  }
+
+  if (isPrivateChat) {
+    _ensureP.then(() => {
+      if (_activeChatId !== chatId || _ensureErr) return;
+      _markMessagesSeenAsync(chatId);
+    });
+  }
 
   container.innerHTML = "";
 
@@ -135,7 +149,8 @@ async function startChatListener(chatId) {
         if (empty) empty.remove();
         appendChatMsg(el, ch.doc.id, ch.doc.data(), prevDate, nd => { prevDate = nd; }, prevSenderUid, nu => { prevSenderUid = nu; });
 
-        if (chatId !== "public" && ch.doc.data().uid !== currentUser.uid) {
+        // ✅ نفس إصلاح الغرف: لا تُعامَل كـ DM هنا أيضًا
+        if (isPrivateChat && ch.doc.data().uid !== currentUser.uid) {
           _markOneMsgSeen(chatId, ch.doc.id);
         }
         requestAnimationFrame(() => { el.scrollTop = el.scrollHeight; });
