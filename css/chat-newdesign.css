@@ -341,3 +341,52 @@
   cursor:pointer;
 }
 
+/* ── واجهة التسجيل الصوتي الجديدة (فوق نظام chat-core.js القديم) ── */
+.newchat-shell .nc-rec-bar{
+  position:absolute;
+  bottom:0; left:0; right:0;
+  display:none;
+  align-items:center;
+  justify-content:space-between;
+  padding: 0 14px 16px;
+  z-index:20;
+  height: 50px;
+  box-sizing:content-box;
+}
+.newchat-shell .nc-rec-left{
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.newchat-shell .nc-rec-right{
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.newchat-shell .nc-rec-dot{
+  width:9px; height:9px; border-radius:50%;
+  background:#ff5a5f; flex-shrink:0;
+  animation: nc-rec-blink 1.1s infinite;
+}
+@keyframes nc-rec-blink{ 0%,100%{opacity:1;} 50%{opacity:.25;} }
+.newchat-shell .nc-rec-timer{
+  color:#fff; font-size:13.5px; font-weight:700; min-width:34px;
+}
+.newchat-shell .nc-rec-btn{
+  width:38px; height:38px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  border:1px solid rgba(255,255,255,0.14);
+  background: rgba(20,24,34,0.55);
+  backdrop-filter: blur(14px) saturate(160%);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+  color:#fff; flex-shrink:0; cursor:pointer;
+}
+.newchat-shell .nc-rec-send{
+  background: var(--accent-blue);
+  border:none;
+}
+.newchat-shell .nc-rec-pause.is-resume{
+  background: var(--accent-blue);
+  border:none;
+}
+
