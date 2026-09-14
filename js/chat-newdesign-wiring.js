@@ -135,20 +135,25 @@
     micIcon.addEventListener("click", function () {
       const oldVoiceBtn = document.getElementById("chatVoiceBtn");
       if (!oldVoiceBtn) return;
-      oldVoiceBtn.click(); // يبدأ التسجيل الفعلي داخل chat-core.js
-      setTimeout(function () {
-        if (oldVoiceBtn.classList.contains("recording")) showRecBar();
-      }, 50);
+      oldVoiceBtn.click(); // يبدأ/يوقف التسجيل الفعلي داخل chat-core.js؛
+      // الواجهة الجديدة تتبع class "recording" على الزرار القديم عبر
+      // MutationObserver واحد بالأسفل — بدون أي تخمين توقيت
     });
   }
 
-  /* لو التسجيل وقف من غير زراير الواجهة الجديدة (مثلاً auto-stop بعد 3 دقايق) */
+  /* مصدر الحقيقة الوحيد لظهور/اختفاء الواجهة الجديدة: class "recording"
+     على #chatVoiceBtn نفسه (هو ده اللي chat-core.js بيضيفه/بيشيله فعليًا
+     عند بداية/نهاية التسجيل الحقيقي — نفس الـ class المستخدم في
+     css/style.css#chatVoiceBtn.recording). ملاحظة observer واحد بيغطي
+     الحالتين (ظهور عند الإضافة، اختفاء عند الإزالة أيًا كان مصدرها:
+     إرسال، إلغاء، أو auto-stop بعد 3 دقايق) */
   const oldVoiceBtnEl = document.getElementById("chatVoiceBtn");
   if (oldVoiceBtnEl) {
     new MutationObserver(function () {
-      if (!oldVoiceBtnEl.classList.contains("recording") && recBarEl && recBarEl.style.display === "flex") {
-        hideRecBar();
-      }
+      const isRecordingNow = oldVoiceBtnEl.classList.contains("recording");
+      const barVisible = !!recBarEl && recBarEl.style.display === "flex";
+      if (isRecordingNow && !barVisible) showRecBar();
+      else if (!isRecordingNow && barVisible) hideRecBar();
     }).observe(oldVoiceBtnEl, { attributes: true, attributeFilter: ["class"] });
   }
 })();
