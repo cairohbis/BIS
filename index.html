@@ -67,6 +67,349 @@ if ("serviceWorker" in navigator) {
 <link rel="stylesheet" href="css/chat-header.css">
 <link rel="stylesheet" href="css/chat-bubbles.css">
 <link rel="stylesheet" href="css/dms-page.css">
+<style id="newchat-ui-style">
+/* ══════════════════════════════════════════════════════════════
+   NEW CHAT UI — تصميم الشات الجديد (مرحلة 1: واجهة فقط، بدون Firebase)
+   ▸ كل القواعد هنا معمول لها scope تحت .newchat-shell عمدًا لمنع
+     أي تعارض مع css القديم (chat-header.css / style.css / chat-bubbles.css)
+   ▸ .chat-header اتغيرت لـ .nc-header لأن القاعدة القديمة
+     "#page-chat .chat-header{...}" أعلى تخصيصًا من أي scope بالكلاس،
+     فإعادة التسمية كانت الحل الوحيد الصحيح (مش تعديل تصميمي)
+   ▸ :root الأصلية اتحولت لـ .newchat-shell عشان منتغيرش
+     المتغيرات العامة بتاعة باقي الموقع (--bg وغيره)
+   ▸ اتشالت 3 قواعد كانت global بالكامل في النسخة المستقلة:
+     * { } / html,body{ } / body{ }  — دول كانوا مخصصين لصفحة
+     preview مستقلة، مش مناسبين للدمج جوه موقع قائم
+   ══════════════════════════════════════════════════════════════ */
+
+.newchat-shell{
+  --bg: #1b202c;
+  --bg-pattern-color: rgba(255,255,255,0.035);
+  --incoming-bubble: #2b3242;
+  --outgoing-bubble: #5b6ef5;
+  --outgoing-bubble-2: #6f80f8;
+  --call-cancelled: #7c4dff;
+  --call-cancelled-2: #8f5cff;
+  --accent-blue: #29b6f6;
+  --text-white: #ffffff;
+  --text-dim: rgba(255,255,255,0.55);
+  --green-arrow: #37d67a;
+  --red-arrow: #ff6a5f;
+  --pill-bg: rgba(0,0,0,0.35);
+
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
+  font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
+}
+
+.newchat-shell, .newchat-shell *{ box-sizing:border-box; margin:0; padding:0; }
+
+.newchat-shell .phone{
+  width: 100%;
+  max-width: 430px;
+  height: 100%;
+  background: var(--bg);
+  overflow: hidden;
+  position: relative;
+  display:flex;
+  flex-direction:column;
+  box-shadow: 0 0 40px rgba(0,0,0,0.4);
+  background-image:
+    radial-gradient(circle at 15% 12%, var(--bg-pattern-color) 1px, transparent 1px),
+    radial-gradient(circle at 70% 25%, var(--bg-pattern-color) 1.5px, transparent 1.5px),
+    radial-gradient(circle at 40% 45%, var(--bg-pattern-color) 1px, transparent 1px),
+    radial-gradient(circle at 85% 60%, var(--bg-pattern-color) 1.5px, transparent 1.5px),
+    radial-gradient(circle at 25% 70%, var(--bg-pattern-color) 1px, transparent 1px),
+    radial-gradient(circle at 60% 85%, var(--bg-pattern-color) 1.5px, transparent 1.5px),
+    radial-gradient(circle at 10% 90%, var(--bg-pattern-color) 1px, transparent 1px),
+    radial-gradient(circle at 90% 10%, var(--bg-pattern-color) 1px, transparent 1px);
+  background-size: 340px 340px;
+}
+
+.newchat-shell .nc-header{
+  position:absolute;
+  top:0; left:0; right:0;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding: 14px 10px 0;
+  z-index:20;
+  --pill-h: 50px;
+}
+
+.newchat-shell .glass{
+  height: var(--pill-h);
+  background: rgba(255,255,255,0.14);
+  backdrop-filter: blur(14px) saturate(180%);
+  -webkit-backdrop-filter: blur(14px) saturate(180%);
+  border: 1px solid rgba(255,255,255,0.16);
+}
+
+.newchat-shell .back-arrow{
+  width: var(--pill-h);
+  border-radius: 50%;
+  color:#fff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-shrink:0;
+}
+.newchat-shell .back-arrow svg{ width:18px; height:18px; }
+
+.newchat-shell .header-pill{
+  flex:1;
+  display:flex;
+  align-items:center;
+  gap:9px;
+  border-radius: 999px;
+  padding: 0 16px 0 6px;
+  min-width:0;
+}
+
+.newchat-shell .avatar{
+  width:38px;
+  height:38px;
+  border-radius:50%;
+  background: linear-gradient(135deg,#caa79a,#a9756a);
+  flex-shrink:0;
+  background-size:cover;
+  background-position:center;
+}
+
+.newchat-shell .header-info{
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  gap:1px;
+  min-width:0;
+}
+
+.newchat-shell .header-name{
+  color:#fff;
+  font-size:14.5px;
+  font-weight:700;
+}
+
+.newchat-shell .header-status{
+  color: rgba(255,255,255,0.65);
+  font-size:10px;
+  font-weight:400;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.newchat-shell .call-circle{
+  height: var(--pill-h);
+  border-radius: 999px;
+  padding: 0 16px;
+  color:#fff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:12px;
+  flex-shrink:0;
+}
+.newchat-shell .call-circle svg{ width:18px; height:18px; }
+
+.newchat-shell .messages{
+  flex:1;
+  overflow-y:auto;
+  padding: 80px 12px 90px;
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  position:relative;
+  z-index:1;
+}
+
+.newchat-shell .date-sep{
+  align-self:center;
+  background: var(--pill-bg);
+  color: var(--text-white);
+  font-size:12px;
+  padding:5px 14px;
+  border-radius:14px;
+  margin: 4px 0 10px;
+}
+
+.newchat-shell .row{
+  display:flex;
+  width:100%;
+  margin-bottom:2px;
+}
+.newchat-shell .row.in{ justify-content:flex-start; }
+.newchat-shell .row.out{ justify-content:flex-end; }
+
+.newchat-shell .call-bubble{
+  max-width: 78%;
+  border-radius: 18px;
+  padding: 12px 14px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  background: var(--incoming-bubble);
+}
+.newchat-shell .call-bubble.cancelled{
+  background: linear-gradient(135deg, var(--call-cancelled), var(--call-cancelled-2));
+}
+.newchat-shell .call-icon{
+  color:#5aa9ff;
+  flex-shrink:0;
+}
+.newchat-shell .call-bubble.cancelled .call-icon{ color:#fff; }
+.newchat-shell .call-text{
+  flex:1;
+  text-align:right;
+}
+.newchat-shell .call-title{
+  color:var(--text-white);
+  font-size:14.5px;
+  font-weight:600;
+  margin-bottom:2px;
+}
+.newchat-shell .call-meta{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  font-size:12px;
+  color: var(--text-dim);
+}
+.newchat-shell .call-bubble.cancelled .call-meta{ color: rgba(255,255,255,0.85); }
+.newchat-shell .dir-arrow-green{ color: var(--green-arrow); }
+.newchat-shell .dir-arrow-red{ color: var(--red-arrow); }
+
+.newchat-shell .bubble{
+  max-width: 75%;
+  padding: 8px 12px 7px;
+  border-radius: 18px;
+  font-size: 15px;
+  color: var(--text-white);
+  display:flex;
+  flex-direction:column;
+  gap:3px;
+  line-height:1.35;
+}
+.newchat-shell .bubble.in{ background: var(--incoming-bubble); }
+.newchat-shell .bubble.out{ background: linear-gradient(135deg, var(--outgoing-bubble), var(--outgoing-bubble-2)); }
+
+.newchat-shell .bubble-meta{
+  align-self:flex-end;
+  display:flex;
+  align-items:center;
+  gap:4px;
+  font-size:11px;
+  color: rgba(255,255,255,0.65);
+  margin-top:1px;
+}
+.newchat-shell .ticks{ color: rgba(255,255,255,0.9); }
+
+.newchat-shell .bubble.reply{
+  position:relative;
+  padding-right:14px;
+}
+.newchat-shell .reply-quote{
+  border-right: 3px solid #cfd6ff;
+  padding-right:8px;
+  margin-bottom:4px;
+}
+.newchat-shell .reply-quote-name{
+  font-size:12.5px;
+  font-weight:700;
+  color:#e4e9ff;
+}
+.newchat-shell .reply-quote-text{
+  font-size:12.5px;
+  color: rgba(255,255,255,0.7);
+}
+
+.newchat-shell .input-bar{
+  position:absolute;
+  bottom:0; left:0; right:0;
+  display:flex;
+  align-items:center;
+  padding: 0 14px 16px;
+  z-index:20;
+  --pill-h: 50px;
+}
+
+.newchat-shell .bar-main{
+  flex:1;
+  height: var(--pill-h);
+  border-radius: 999px;
+  padding: 0 5px 0 16px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  min-width:0;
+  background: rgba(20,24,34,0.55);
+  backdrop-filter: blur(14px) saturate(160%);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+.newchat-shell .mic-icon{
+  color: rgba(255,255,255,0.7);
+  display:flex;
+  align-items:center;
+  flex-shrink:0;
+}
+
+.newchat-shell .placeholder-text{
+  flex:1;
+  min-width:0;
+  background:transparent;
+  border:none;
+  outline:none;
+  color: #fff;
+  font-size:14.5px;
+  font-family: inherit;
+  text-align:right;
+  padding:0;
+}
+.newchat-shell .placeholder-text::placeholder{
+  color: rgba(255,255,255,0.45);
+}
+
+.newchat-shell .clip-icon{
+  color: rgba(255,255,255,0.6);
+  display:flex;
+  align-items:center;
+  flex-shrink:0;
+}
+
+.newchat-shell .emoji-icon{
+  color: rgba(255,255,255,0.75);
+  display:none;
+  align-items:center;
+  flex-shrink:0;
+}
+
+.newchat-shell .bar-main.typing .clip-icon,
+.newchat-shell .bar-main.typing .mic-icon{
+  display:none;
+}
+.newchat-shell .bar-main.typing .emoji-icon{
+  display:flex;
+}
+
+.newchat-shell .cam-btn-inline{
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--accent-blue);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:#fff;
+  flex-shrink:0;
+}
+
+</style>
 <link rel="stylesheet" href="css/bubble-color.css">
 <link rel="stylesheet" href="css/bubble-blur.css">
 <link rel="stylesheet" href="css/theme-toggle.css">
@@ -462,6 +805,13 @@ if ("serviceWorker" in navigator) {
   <!-- Floating Request Popup (global — shown on any page) -->
 
 
+  <!-- ══════════════════════════════════════════
+       OLD CHAT UI — معطّلة مؤقتًا عبر display:none (مرحلة 1: واجهة
+       جديدة فقط، بدون Firebase). لم يُحذف أي شيء من الملف.
+       الرجوع: احذف id="oldChatMainLegacy" ونمط display:none،
+       أو احذف حاوية newchat-shell تحتها بالكامل.
+  ══════════════════════════════════════════ -->
+  <div id="oldChatMainLegacy" style="display:none">
   <!-- Main Chat -->
   <div class="chat-main">
     <!-- Header -->
@@ -578,6 +928,46 @@ if ("serviceWorker" in navigator) {
       </div>
       <button id="voiceRecCancelBtn" style="background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);color:#fca5a5;border-radius:10px;padding:7px 14px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;" onclick="cancelVoiceRecording()"><i class="fa-solid fa-xmark"></i> إلغاء</button>
       <button id="voiceRecSendBtn" style="background:var(--gold);border:none;color:#060d1a;border-radius:10px;padding:7px 14px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;" onclick="stopAndSendVoice()"><i class="fa-solid fa-paper-plane"></i> إرسال</button>
+    </div>
+  </div>
+  </div>
+  <!-- ══════════════════════════════════════════
+       NEW CHAT UI — التصميم الجديد (مرحلة 1: واجهة فقط، بدون Firebase)
+  ══════════════════════════════════════════ -->
+  <div class="newchat-shell">
+    <div class="phone">
+
+      <div class="nc-header">
+        <div class="call-circle glass">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1.4" fill="#fff" stroke="none"/><circle cx="12" cy="5" r="1.4" fill="#fff" stroke="none"/><circle cx="12" cy="19" r="1.4" fill="#fff" stroke="none"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+        </div>
+        <div class="header-pill glass">
+          <div class="avatar"></div>
+          <div class="header-info">
+            <div class="header-name">لور</div>
+            <div class="header-status">آخر ظهور 23:39 الساعة 02 سبتمبر</div>
+          </div>
+        </div>
+        <div class="back-arrow glass">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+        </div>
+      </div>
+
+      <div class="messages"></div>
+
+      <div class="input-bar">
+        <div class="bar-main">
+          <div class="cam-btn-inline" id="sendBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="17" height="17"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></div>
+          <div class="clip-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg></div>
+          <input type="text" class="placeholder-text" placeholder="الرسالة">
+          <div class="mic-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="19" height="19"><path d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v1a7 7 0 0 1-14 0v-1"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg></div>
+          <div class="emoji-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><circle cx="12" cy="12" r="9.5"/><path d="M8.5 14.5s1.2 1.7 3.5 1.7 3.5-1.7 3.5-1.7"/><circle cx="9" cy="9.5" r="0.6" fill="currentColor"/><circle cx="15" cy="9.5" r="0.6" fill="currentColor"/></svg>
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
 </div>
@@ -2798,7 +3188,17 @@ document.getElementById("adminBackBtn").addEventListener("click", () => {
 /* ══════════════════════════════════════════
    CHAT PAGE OPEN / CLOSE
 ══════════════════════════════════════════ */
+/* ══════════════════════════════════════════
+   NEWCHAT_UI_ONLY — مرحلة 1 فقط (واجهة جديدة بدون Firebase)
+   لما تبقى true: فتح الشات (عام أو خاص) بيوقف عند showPage
+   بس، وميدخلش لمنطق selectChat/Firebase القديم إطلاقًا.
+   للرجوع للسلوك القديم بالكامل: خليها false.
+   ممنوع نلمس selectChat() أو chat-listener.js في هذه المرحلة.
+══════════════════════════════════════════ */
+window.NEWCHAT_UI_ONLY = true;
+
 window.openChatPage = function() {
+  if (window.NEWCHAT_UI_ONLY) { showPage("page-chat"); return; }
   // ✅ AVM: في وضع المشاهدة — أعد عرض واجهة المستخدم المشاهَد
   if (_avm.active) {
     showPage("page-chat");
@@ -3560,7 +3960,7 @@ async function buildDmList() {
       </div>
     </div>
   `;
-  document.getElementById("dm-public").onclick = () => selectChat("public");
+  document.getElementById("dm-public").onclick = () => { if (window.NEWCHAT_UI_ONLY) { showPage("page-chat"); return; } selectChat("public"); };
 
   // Subscribe to last public message for live preview
   const pubQ = query(collection(db, "messages"), orderBy("createdAt","desc"), limit(1));
@@ -3650,6 +4050,7 @@ window.buildDmList = buildDmList;
 // بدون Request System — الغرفة تُنشأ تلقائياً
 // ══════════════════════════════════════════
 window.openDirectChat = async function(toUid, toUser) {
+  if (window.NEWCHAT_UI_ONLY) { showPage("page-chat"); return; }
   if (!currentUser?.uid) { toast("يجب تسجيل الدخول أولاً", "error"); return; }
   if (!toUid)            { toast("مستخدم غير صالح", "error"); return; }
   if (toUid === currentUser.uid) { toast("لا يمكنك مراسلة نفسك", "warn"); return; }
@@ -3766,7 +4167,7 @@ function _updateDmItemUI(uid) {
       </div>
     </div>
   `;
-  el.onclick = () => selectChat(uid, u.name, u.photo);
+  el.onclick = () => { if (window.NEWCHAT_UI_ONLY) { showPage("page-chat"); return; } selectChat(uid, u.name, u.photo); };
   el.dataset.roomId = roomId;
   // Online indicator
   if (isOnline) el.classList.add("is-online");
@@ -3852,7 +4253,7 @@ async function _rebuildDmItems(peerIds) {
         </div>
       </div>
     `;
-    div.onclick = () => selectChat(uid, u.name, u.photo);
+    div.onclick = () => { if (window.NEWCHAT_UI_ONLY) { showPage("page-chat"); return; } selectChat(uid, u.name, u.photo); };
     list.appendChild(div);
 
     // تحديث فوري من الكاش إن وُجد
@@ -6294,7 +6695,7 @@ function renderRoomsList() {
     </div>
     ${_currentChatId === "public" ? `<div class="room-online-badge">مباشر</div>` : ""}
   `;
-  pubDiv.onclick = () => selectChat("public");
+  pubDiv.onclick = () => { if (window.NEWCHAT_UI_ONLY) { showPage("page-chat"); return; } selectChat("public"); };
   el.appendChild(pubDiv);
 
   if (!_allRooms.length) {
@@ -6352,7 +6753,7 @@ function renderRoomsList() {
           );
 
           toast("تم حذف الغرفة");
-          if (_currentChatId === `room:${room.id}`) selectChat("public");
+          if (_currentChatId === `room:${room.id}` && !window.NEWCHAT_UI_ONLY) selectChat("public");
         } catch(e) { toast("فشل الحذف", "error"); }
       };
       div.appendChild(delBtn);
@@ -8822,6 +9223,68 @@ try { window._listenPinnedMsg?.(); } catch(e) {}
 <script src="js/mascot-settings-adapter.js" defer></script>
 <script src="js/mascot-grades-adapter.js" defer></script>
 <script src="js/mascot-underdev-adapter.js" defer></script>
+<script id="newchat-ui-script">
+/* ══════════════════════════════════════════════════════════════
+   NEW CHAT UI — سكريبت واجهة الشات الجديد (مرحلة 1: واجهة فقط)
+   ▸ الاستعلامات الأربعة الأصلية كانت document.querySelector بدون
+     نطاق محدد؛ اتحصرت هنا جوه .newchat-shell فقط (تعديل دفاعي،
+     صفر تغيير في السلوك أو الشكل)
+   ▸ ممنوع هذا الملف يلمس Firebase أو selectChat() أو
+     chat-listener.js — مرحلة 1 واجهة فقط
+   ══════════════════════════════════════════════════════════════ */
+
+(function(){
+  const shell = document.querySelector('.newchat-shell');
+  if (!shell) return;
+
+  const input   = shell.querySelector('.placeholder-text');
+  const messages= shell.querySelector('.messages');
+  const barMain = shell.querySelector('.bar-main');
+  const sendBtn = shell.querySelector('#sendBtn');
+
+  const cameraSvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="17" height="17"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>';
+  const sendSvg = '<svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M3 20l18-8L3 4v6l12 2-12 2z"/></svg>';
+
+  function updateBarState(){
+    const hasText = input.value.trim().length > 0;
+    barMain.classList.toggle('typing', hasText);
+    sendBtn.innerHTML = hasText ? sendSvg : cameraSvg;
+  }
+
+  function sendMessage(){
+    const text = input.value.trim();
+    if(!text) return;
+    const now = new Date();
+    const time = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+
+    const row = document.createElement('div');
+    row.className = 'row out';
+    row.innerHTML = `
+      <div class="bubble out">
+        <div></div>
+        <div class="bubble-meta"><span>${time}</span><span class="ticks"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><path d="M2 12l4 4L14 8"/><path d="M9 12l4 4L21 8"/></svg></span></div>
+      </div>`;
+    row.querySelector('.bubble.out div').textContent = text;
+
+    messages.appendChild(row);
+    input.value = '';
+    updateBarState();
+    messages.scrollTop = messages.scrollHeight;
+  }
+
+  input.addEventListener('input', updateBarState);
+  input.addEventListener('keydown', function(e){
+    if(e.key === 'Enter'){
+      e.preventDefault();
+      sendMessage();
+    }
+  });
+
+  window.sendMessage = sendMessage;
+  window.updateBarState = updateBarState;
+})();
+
+</script>
 <script type="module" src="js/quick-notifications.js"></script>
 
 </body>
