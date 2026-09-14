@@ -4386,22 +4386,15 @@ document.getElementById("chatInput").addEventListener("input", _onTypingInput);
    CHAT — SEND / VOICE BUTTON TOGGLE
 ══════════════════════════════════════════ */
 (function() {
-  const voiceBtn = document.getElementById("chatVoiceBtn");
-  const sendBtn  = document.getElementById("chatSendBtn");
-  const input    = document.getElementById("chatInput");
+  const input = document.getElementById("chatInput");
 
+  // زر الكاميرا/الإرسال (chatSendBtn) بيتحكم في شكله سكريبت التصميم
+  // الجديد (newchat-ui-script → updateBarState) اللي بيبدّل الأيقونة
+  // جوه نفس الزر. الدالة دي بقت بس بتعمل refresh للأيقونة بعد الإرسال،
+  // مش بتخفي/تظهر الزر نفسه (ده كان هو سبب اختفاء زر الكاميرا).
   function _updateBtnVisibility() {
-    const hasText = input.value.length > 0;
-    if (hasText) {
-      voiceBtn.style.display = "none";
-      sendBtn.style.display  = "";
-    } else {
-      sendBtn.style.display  = "none";
-      voiceBtn.style.display = "";
-    }
+    if (typeof window.updateBarState === "function") window.updateBarState();
   }
-
-  input.addEventListener("input", _updateBtnVisibility);
 
   // Patch sendChatMsg to reset after send
   const _origSend = window.sendChatMsg;
