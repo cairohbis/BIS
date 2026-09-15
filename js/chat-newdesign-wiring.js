@@ -163,8 +163,8 @@
    ▸ البحث: نفس نظام js/chat-search.js بالحرف (toggleChatSearch/
      onChatSearch/...) — العنصر #chatSearchBar بينتقل لمكانه في
      التصميم الجديد (نفس id، نفس onclick attributes، بدون نسخ)
-   ▸ المظهر: نفس openSettingsModal()/switchSettingsTab('appearance')
-     الموجودين أصلًا في js/settings-modal.js — صفر تكرار
+   ▸ المظهر: window.openAppearancePage() من js/appearance-page.js —
+     صفحة عرض جديدة، لكنها بتستعير نفس عناصر التحكم القديمة بالحرف
    ══════════════════════════════════════════════════════════════ */
 (function () {
   const shell = document.querySelector(".newchat-shell");
@@ -231,7 +231,6 @@
 
   menu.querySelector("#ncMenuAppearance").addEventListener("click", function () {
     closeMenu();
-    if (typeof window.openSettingsModal === "function") window.openSettingsModal();
-    if (typeof window.switchSettingsTab === "function") window.switchSettingsTab("appearance");
+    if (typeof window.openAppearancePage === "function") window.openAppearancePage();
   });
 })();
