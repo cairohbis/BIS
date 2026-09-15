@@ -226,6 +226,24 @@
   border: 1px solid rgba(255,255,255,0.08);
 }
 
+/* ── Reply bar (compose) — تصميم جديد: يظهر فوق شريط الإدخال بالكامل،
+   بدل ما يشارك نفس الصف مع bar-main ويقلّص عرضه للنصف ── */
+.newchat-shell #replyBar{
+  position: absolute;
+  left: 14px; right: 14px;
+  bottom: 100%;
+  margin-bottom: 8px;
+  border-radius: 14px;
+  padding: 8px 14px;
+  border-top: none;
+  border-bottom: none;
+  background: rgba(20,24,34,0.65);
+  backdrop-filter: blur(14px) saturate(160%);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+  border: 1px solid rgba(255,255,255,0.08);
+}
+.newchat-shell #replyBar.show{ display:flex; }
+
 .newchat-shell .mic-icon{
   color: rgba(255,255,255,0.7);
   display:flex;
