@@ -6,13 +6,27 @@
      window.hideMsgCtxMenu (من js/chat-ctxmenu.js) — كلها عبر window.*
    ══════════════════════════════════════════════════════════════ */
 
+// خاص/غرفة/عام — بنفس منطق isPrivateChat المستخدَم في chat-core.js
+function _isPrivateDMChat() {
+  const id = window._currentChatId;
+  return !!(id && id !== "public" && !id.startsWith("room:"));
+}
+window._isPrivateDMChat = _isPrivateDMChat;
+
 function setReply(data) {
   _replyData = data;
   const bar  = document.getElementById("replyBar");
   const name = document.getElementById("replyBarName");
   const text = document.getElementById("replyBarText");
   if (!bar) return;
-  name.textContent = data.name || "مستخدم";
+  // في الشات الخاص: بدون اسم (الغرف/العام: يظهر الاسم كالمعتاد)
+  if (_isPrivateDMChat()) {
+    name.textContent = "";
+    name.style.display = "none";
+  } else {
+    name.style.display = "";
+    name.textContent = data.name || "مستخدم";
+  }
   if (data.image)      text.textContent = "📷 صورة";
   else if (data.audio) text.textContent = "🎤 تسجيل صوتي";
   else if (data.pdf)   text.textContent = "📄 " + (data.fileName || "PDF");
@@ -45,8 +59,10 @@ function _buildReplyPreviewHTML(reply) {
   else if (reply.pdf)   content = `<span class="reply-preview-text">📄 ${esc(reply.fileName||"PDF")}</span>`;
   else if (reply.file)  content = `<span class="reply-preview-text">📎 ${esc(reply.fileName||"ملف")}</span>`;
   else                  content = `<span class="reply-preview-text">${esc((reply.text||"").slice(0,80))}</span>`;
+  // في الشات الخاص: بدون اسم فوق محتوى الرد (الغرف/العام: يظهر الاسم كالمعتاد)
+  const nameHTML = _isPrivateDMChat() ? "" : `<div class="reply-preview-name">${esc(reply.name||"مستخدم")}</div>`;
   return `<div class="reply-preview" onclick="jumpToMsg('${esc(reply.docId||"")}')">
-    <div class="reply-preview-name">${esc(reply.name||"مستخدم")}</div>
+    ${nameHTML}
     ${content}
   </div>`;
 }
