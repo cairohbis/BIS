@@ -105,12 +105,17 @@
 .msg-row .swipe-reply-icon { left: calc(100% + 8px); right: auto; }
 .swipe-reply-icon svg { width: 14px; height: 14px; fill: var(--gold); }
 
-/* ── Permanent Reply Button ── */
+/* ── Permanent Reply Button ──
+   ⚠️ اتخفى بصريًا فقط (display:none) بطلب من الأونر — العنصر نفسه لسه
+   بيتبني في DOM من appendChatMsg() (js/chat-core.js) زي ما هو تمامًا،
+   ومنطق setReply() فاضل شغال 100%. الرد فضل شغال عن طريق الضغط المطول
+   (#ctxReplyBtn) أو السحب (.swipe-reply-icon) — مفيش أي تعديل عليهم. */
 .msg-reply-btn{
+  display:none;
   width:26px; height:26px; border-radius:50%; flex-shrink:0;
   background: rgba(255,255,255,0.06);
   border:none;
-  display:flex; align-items:center; justify-content:center;
+  align-items:center; justify-content:center;
   color: var(--muted); opacity:0.75; cursor:pointer;
   margin-bottom: 0;
 }
