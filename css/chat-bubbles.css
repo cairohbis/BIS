@@ -24,7 +24,7 @@
   will-change: transform;
 }
 .bubble.other{
-  background: var(--other-bubble-color, rgba(255,255,255,0.055));
+  background: var(--other-bubble-color, #2b3242);
   border: 1px solid rgba(255,255,255,0.08);
   backdrop-filter: blur(var(--user-bubble-blur, 8px));
   -webkit-backdrop-filter: blur(var(--user-bubble-blur, 8px));
@@ -32,7 +32,7 @@
   border-bottom-left-radius: 6px;
 }
 .bubble.me{
-  background: var(--user-bubble-color, #1c3454);
+  background: var(--user-bubble-color, linear-gradient(135deg, #5b6ef5, #6f80f8));
   border: 1px solid rgba(201,169,110,.3);
   backdrop-filter: blur(var(--user-bubble-blur, 20px)) saturate(180%);
   -webkit-backdrop-filter: blur(var(--user-bubble-blur, 20px)) saturate(180%);

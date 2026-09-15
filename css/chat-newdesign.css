@@ -15,16 +15,9 @@
 .newchat-shell{
   --bg: #1b202c;
   --bg-pattern-color: rgba(255,255,255,0.035);
-  --incoming-bubble: #2b3242;
-  --outgoing-bubble: #5b6ef5;
-  --outgoing-bubble-2: #6f80f8;
-  --call-cancelled: #7c4dff;
-  --call-cancelled-2: #8f5cff;
   --accent-blue: #29b6f6;
   --text-white: #ffffff;
   --text-dim: rgba(255,255,255,0.55);
-  --green-arrow: #37d67a;
-  --red-arrow: #ff6a5f;
   --pill-bg: rgba(0,0,0,0.35);
 
   width: 100%;
@@ -57,15 +50,6 @@
     radial-gradient(circle at 10% 90%, var(--bg-pattern-color) 1px, transparent 1px),
     radial-gradient(circle at 90% 10%, var(--bg-pattern-color) 1px, transparent 1px);
   background-size: 340px 340px;
-}
-
-/* خلفية الأونر المخصّصة (chat-backgrounds.js) — بتتفعّل بكلاس has-bg
-   وقت ما فيه صورة مرفوعة؛ بتلغي مقاس نمط النقاط الافتراضي (340px 340px)
-   عشان الصورة تتغطي صح بدل ما تتكرر بمقاس صغير */
-.newchat-shell .phone.has-bg{
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
 }
 
 .newchat-shell .nc-header{
@@ -175,52 +159,6 @@
   margin: 4px 0 10px;
 }
 
-.newchat-shell .row{
-  display:flex;
-  width:100%;
-  margin-bottom:2px;
-}
-.newchat-shell .row.in{ justify-content:flex-start; }
-.newchat-shell .row.out{ justify-content:flex-end; }
-
-.newchat-shell .call-bubble{
-  max-width: 78%;
-  border-radius: 18px;
-  padding: 12px 14px;
-  display:flex;
-  align-items:center;
-  gap:10px;
-  background: var(--incoming-bubble);
-}
-.newchat-shell .call-bubble.cancelled{
-  background: linear-gradient(135deg, var(--call-cancelled), var(--call-cancelled-2));
-}
-.newchat-shell .call-icon{
-  color:#5aa9ff;
-  flex-shrink:0;
-}
-.newchat-shell .call-bubble.cancelled .call-icon{ color:#fff; }
-.newchat-shell .call-text{
-  flex:1;
-  text-align:right;
-}
-.newchat-shell .call-title{
-  color:var(--text-white);
-  font-size:14.5px;
-  font-weight:600;
-  margin-bottom:2px;
-}
-.newchat-shell .call-meta{
-  display:flex;
-  align-items:center;
-  gap:6px;
-  font-size:12px;
-  color: var(--text-dim);
-}
-.newchat-shell .call-bubble.cancelled .call-meta{ color: rgba(255,255,255,0.85); }
-.newchat-shell .dir-arrow-green{ color: var(--green-arrow); }
-.newchat-shell .dir-arrow-red{ color: var(--red-arrow); }
-
 .newchat-shell .bubble{
   max-width: 75%;
   padding: 8px 12px 7px;
@@ -232,9 +170,6 @@
   gap:3px;
   line-height:1.35;
 }
-.newchat-shell .bubble.in{ background: var(--incoming-bubble); }
-.newchat-shell .bubble.out{ background: linear-gradient(135deg, var(--outgoing-bubble), var(--outgoing-bubble-2)); }
-
 .newchat-shell .bubble-meta{
   align-self:flex-end;
   display:flex;
