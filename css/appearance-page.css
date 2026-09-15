@@ -1,0 +1,119 @@
+/* ══════════════════════════════════════════════════════════════
+   APPEARANCE PAGE — صفحة "المظهر" المستقلة (مدخل من ⋮ فقط)
+   ▸ شكل عرض جديد بالكامل — الوظائف والقيم والحفظ كلها من النظام
+     القديم في js/settings-modal.js + js/bubble-color.js +
+     js/other-bubble-color.js + js/bubble-blur.js (بدون أي تكرار)
+   ▸ عناصر التحكم الحقيقية (input/select/toggle) بتتنقل هي نفسها
+     (نفس الـ id) من قسم الإعدادات القديم لجوه الكروت دي وقت الفتح،
+     وترجع تاني وقت القفل — عشان القديم يفضل شغال زي ما هو
+   ══════════════════════════════════════════════════════════════ */
+
+.newchat-shell .nc-ap-page{
+  position:absolute;
+  inset:0;
+  z-index:45;
+  display:none;
+  flex-direction:column;
+  background: var(--bg, #0c1528);
+  background-image:
+    radial-gradient(circle at 15% 12%, var(--bg-pattern-color) 1px, transparent 1px),
+    radial-gradient(circle at 70% 25%, var(--bg-pattern-color) 1.5px, transparent 1.5px),
+    radial-gradient(circle at 40% 45%, var(--bg-pattern-color) 1px, transparent 1px),
+    radial-gradient(circle at 85% 60%, var(--bg-pattern-color) 1.5px, transparent 1.5px);
+  background-size: 340px 340px;
+}
+.newchat-shell .nc-ap-page.open{ display:flex; }
+
+.newchat-shell .nc-ap-header{
+  flex-shrink:0;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding: calc(env(safe-area-inset-top,0px) + 14px) 16px 14px;
+  background: rgba(255,255,255,0.04);
+  backdrop-filter: blur(14px) saturate(160%);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.newchat-shell .nc-ap-back{
+  width:36px; height:36px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  background: rgba(255,255,255,0.08);
+  border:1px solid rgba(255,255,255,0.1);
+  color:#fff; flex-shrink:0; cursor:pointer;
+}
+.newchat-shell .nc-ap-back svg{ width:17px; height:17px; }
+.newchat-shell .nc-ap-title{
+  color:#fff;
+  font-size:16.5px;
+  font-weight:800;
+}
+
+.newchat-shell .nc-ap-body{
+  flex:1;
+  overflow-y:auto;
+  padding: 16px 14px 40px;
+}
+
+.newchat-shell .nc-ap-card{
+  background: rgba(255,255,255,0.045);
+  border: 1px solid rgba(255,255,255,0.09);
+  border-radius: 16px;
+  margin-bottom: 12px;
+  overflow: hidden;
+  transition: border-color .2s;
+}
+.newchat-shell .nc-ap-card.open{
+  border-color: rgba(255,255,255,0.18);
+}
+
+.newchat-shell .nc-ap-card-head{
+  width:100%;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding: 13px 14px;
+  background:transparent;
+  border:none;
+  cursor:pointer;
+  text-align:right;
+}
+
+.newchat-shell .nc-ap-card-icon{
+  width:38px; height:38px; border-radius:12px; flex-shrink:0;
+  display:flex; align-items:center; justify-content:center;
+  background: var(--ic-bg, rgba(90,169,255,0.16));
+  color: var(--ic, #5aa9ff);
+}
+.newchat-shell .nc-ap-card-icon svg{ width:19px; height:19px; }
+
+.newchat-shell .nc-ap-card-title{
+  flex:1;
+  color:#fff;
+  font-size:14.5px;
+  font-weight:700;
+}
+
+.newchat-shell .nc-ap-chevron{
+  width:15px; height:15px; flex-shrink:0;
+  color: rgba(255,255,255,0.55);
+  transition: transform .22s ease;
+}
+.newchat-shell .nc-ap-card.open .nc-ap-chevron{ transform: rotate(180deg); }
+
+.newchat-shell .nc-ap-card-body{
+  max-height:0;
+  overflow:hidden;
+  transition: max-height .25s ease;
+}
+.newchat-shell .nc-ap-card.open .nc-ap-card-body{ max-height:600px; }
+
+.newchat-shell .nc-ap-card-body-inner{
+  padding: 2px 14px 16px;
+}
+
+/* العناصر القديمة المنقولة بتحتفظ بستايلها الأصلي (smod-row/smod-icon..)
+   عشان مفيش تكرار كود — بس نلغي عنوان القسم الداخلي المكرر (لو موجود)
+   لأن كل كارت أصلًا عنده عنوانه في الهيدر بتاعه */
+.newchat-shell .nc-ap-card-body-inner .smod-sec-label{ display:none; }
+.newchat-shell .nc-ap-card-body-inner .smod-row{ border-bottom:none; padding: 10px 0; }
