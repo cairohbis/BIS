@@ -113,7 +113,6 @@
   display:flex; align-items:center; justify-content:center;
   color: var(--muted); opacity:0.75; cursor:pointer;
   margin-bottom: 0;
-  display: none;
 }
 .msg-reply-btn:active { transform: scale(.9); }
 .msg-reply-btn svg { pointer-events: none; }
