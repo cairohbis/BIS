@@ -157,3 +157,81 @@
     }).observe(oldVoiceBtnEl, { attributes: true, attributeFilter: ["class"] });
   }
 })();
+
+/* ══════════════════════════════════════════════════════════════
+   قائمة الثلاث نقاط (⋮) — البحث + المظهر
+   ▸ البحث: نفس نظام js/chat-search.js بالحرف (toggleChatSearch/
+     onChatSearch/...) — العنصر #chatSearchBar بينتقل لمكانه في
+     التصميم الجديد (نفس id، نفس onclick attributes، بدون نسخ)
+   ▸ المظهر: نفس openSettingsModal()/switchSettingsTab('appearance')
+     الموجودين أصلًا في js/settings-modal.js — صفر تكرار
+   ══════════════════════════════════════════════════════════════ */
+(function () {
+  const shell = document.querySelector(".newchat-shell");
+  if (!shell) return;
+
+  const menuBtn = document.getElementById("chatMenuBtn");
+  const phone   = shell.querySelector(".phone");
+  if (!menuBtn || !phone) return;
+
+  /* نقل بار البحث القديم بالكامل (نفس العنصر) لمكانه الصحيح داخل
+     التصميم الجديد — كان جوه #oldChatMainLegacy (display:none) فمكانش
+     ظاهر أبدًا حتى لو اتفتح، رغم إن نظام البحث نفسه شغال على
+     #chatMessages الحقيقي أصلًا */
+  const searchBar = document.getElementById("chatSearchBar");
+  if (searchBar && searchBar.parentElement !== phone) {
+    phone.appendChild(searchBar);
+  }
+
+  /* القائمة المنسدلة */
+  const menu = document.createElement("div");
+  menu.className = "nc-menu";
+  menu.innerHTML =
+    '<button type="button" class="nc-menu-item" id="ncMenuSearch">' +
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>' +
+      "<span>البحث</span>" +
+    "</button>" +
+    '<button type="button" class="nc-menu-item" id="ncMenuAppearance">' +
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>' +
+      "<span>المظهر</span>" +
+    "</button>";
+  phone.appendChild(menu);
+
+  function positionMenu() {
+    const btnRect   = menuBtn.getBoundingClientRect();
+    const phoneRect = phone.getBoundingClientRect();
+    menu.style.top   = (btnRect.bottom - phoneRect.top + 8) + "px";
+    menu.style.left  = (btnRect.left - phoneRect.left) + "px";
+  }
+
+  function openMenu() {
+    positionMenu();
+    menu.classList.add("open");
+  }
+  function closeMenu() {
+    menu.classList.remove("open");
+  }
+
+  menuBtn.addEventListener("click", function (e) {
+    e.stopPropagation();
+    if (menu.classList.contains("open")) closeMenu();
+    else openMenu();
+  });
+
+  document.addEventListener("click", function (e) {
+    if (!menu.classList.contains("open")) return;
+    if (e.target === menuBtn || menu.contains(e.target)) return;
+    closeMenu();
+  });
+
+  menu.querySelector("#ncMenuSearch").addEventListener("click", function () {
+    closeMenu();
+    if (typeof window.toggleChatSearch === "function") window.toggleChatSearch();
+  });
+
+  menu.querySelector("#ncMenuAppearance").addEventListener("click", function () {
+    closeMenu();
+    if (typeof window.openSettingsModal === "function") window.openSettingsModal();
+    if (typeof window.switchSettingsTab === "function") window.switchSettingsTab("appearance");
+  });
+})();
