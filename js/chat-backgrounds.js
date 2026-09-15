@@ -15,9 +15,13 @@ import { doc, onSnapshot, getDoc, setDoc } from "https://www.gstatic.com/firebas
 let _currentBgType = "public";
 const _bgSettingsRef = () => doc(window.db, "appSettings", "chatBackgrounds");
 
-// Apply background to chat-main element
+// Apply background to the visible chat container
+// ⚠️ كانت بتستهدف ".chat-main" (الواجهة القديمة المخفية display:none داخل
+// #oldChatMainLegacy)، فكانت الخلفية بتتطبّق فعليًا لكن على عنصر غير ظاهر
+// للمستخدم أبدًا. اتغيّر الاستهداف لـ ".newchat-shell .phone" وهو العنصر
+// الظاهر فعليًا في التصميم الجديد. باقي منطق الحفظ/الكاش/Firestore زي ما هو.
 function _applyChatBg(type, url) {
-  const el = document.querySelector(".chat-main");
+  const el = document.querySelector(".newchat-shell .phone");
   if (!el) return;
   const currentType = window._currentChatId === "public" ? "public"
     : window._currentChatId?.startsWith("room:") ? "rooms" : "private";
