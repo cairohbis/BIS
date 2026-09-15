@@ -4096,11 +4096,17 @@ function _updateChatHeaderPresence(chatId) {
     if (statusText) statusText.textContent = chatId === "public" ? "مباشر — الجميع" : "غرفة عامة";
     avatarRing?.classList.remove("online", "offline");
     statusWrap?.classList.remove("online");
+    window._stopDmHeaderPresenceRefresh?.(); // ← إيقاف مؤقّت "آخر ظهور" الخاص بالـ DM السابق (لو كان شغّال)
     return;
   }
 
-  // خاص (DM) — نفس القيمة النصية القديمة "خاص"، بدون تغيير
-  if (statusText) statusText.textContent = "خاص";
+  // خاص (DM) — النص الحقيقي "متصل" / "آخر ظهور ..." بدل "خاص" الثابت (js/chat-presence-text.js)
+  window._headerTypingNow = false;
+  if (statusText) {
+    if (typeof window._renderDmHeaderPresence === "function") window._renderDmHeaderPresence(chatId);
+    else statusText.textContent = "خاص"; // fallback دفاعي لو الملف الخارجي لم يتحمّل
+  }
+  window._startDmHeaderPresenceRefresh?.(chatId);
 
   // إعادة استخدام نفس الكاش والدالة المستخدمين فعليًا في _updateDmItemUI
   const cached = _userCache[chatId];
@@ -4182,10 +4188,13 @@ function _startTypingListener(chatId) {
     );
     const statusEl = document.getElementById("chatTopOnline");
     if (!statusEl) return;
+    window._headerTypingNow = someone; // ← يمنع المؤقّت الدوري (js/chat-presence-text.js) من الكتابة فوق "يكتب الآن..."
     if (someone) {
       statusEl.innerHTML = '<span style="color:var(--gold);animation:pulse 1s infinite;">يكتب الآن...</span>';
+    } else if (typeof window._renderDmHeaderPresence === "function") {
+      window._renderDmHeaderPresence(_typingChatId); // ← الحالة الحقيقية: "متصل" أو "آخر ظهور ..."
     } else {
-      statusEl.textContent = "خاص";
+      statusEl.textContent = "خاص"; // fallback دفاعي لو الملف الخارجي لم يتحمّل
     }
   }, () => {});
 }
@@ -8051,6 +8060,7 @@ try { window._listenPinnedMsg?.(); } catch(e) {}
 <script type="module" src="js/mention.js"></script>
 <script type="module" src="js/dms-page.js"></script>
 <script type="module" src="js/dm-extras.js"></script>
+<script src="js/chat-presence-text.js"></script>
 <script type="module" src="js/attendance.js"></script>
 <script src="js/ai-config.js"></script>
 <script src="js/bubble-color.js" defer></script>
