@@ -7,8 +7,9 @@
    ⚠️ سطرا "تفعيل" الاستماع (selectChat hook + _listenChatBg الأولي)
    فضلوا عمداً في index.html نفسه (مش هنا) بسبب حساسية توقيت التنفيذ،
    بالضبط زي ما اتعمل مع pin-message.js.
-   🐛 ملاحظة: `if (!isAdmin && !isOwner)` تحت من غير قوسين استدعاء —
-   ده Bug موجود في الكود الأصلي قبل النقل، اتنقل بالحرف بدون تصليح.
+   ✅ سطرا isAdmin/isOwner تحت اتصلّحوا (كانوا بياخدوا مرجع الدالة بدل
+   نتيجة تنفيذها فيبقى الفحص دايمًا truthy ويتجاوز أي حد الصلاحية —
+   شوف التعليق فوق uploadChatBg/removeChatBg بالتفصيل).
 ══════════════════════════════════════════ */
 import { doc, onSnapshot, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
@@ -72,8 +73,13 @@ window.selectBgTab = selectBgTab;
 
 // Admin: upload background
 async function uploadChatBg() {
-  const isAdmin = window.isAdmin;
-  const isOwner = window.isOwner;
+  // 🐛→✅ كانت "window.isAdmin" و"window.isOwner" (مرجع الدالة نفسه، مش
+  // نتيجة تنفيذها) — وأي مرجع دالة في JS دايمًا truthy، فكان الشرط تحت
+  // ماينفّذش أبدًا مهما كان المستخدم مش أدمن ولا أونر. اتصلّحت بإضافة
+  // الاستدعاء الفعلي "?.()" (زي باقي استخدامات isAdmin()/isOwner() في
+  // index.html) عشان فحص الصلاحية يشتغل فعليًا.
+  const isAdmin = window.isAdmin?.();
+  const isOwner = window.isOwner?.();
   const toast = window.toast;
   if (!isAdmin && !isOwner) { toast("غير مصرح","error"); return; }
   const file = document.getElementById("chatBgFileInput")?.files[0];
@@ -99,8 +105,9 @@ window.uploadChatBg = uploadChatBg;
 
 // Admin: remove background
 async function removeChatBg() {
-  const isAdmin = window.isAdmin;
-  const isOwner = window.isOwner;
+  // 🐛→✅ نفس تصحيح uploadChatBg أعلاه: استدعاء فعلي للدالة بدل مرجعها
+  const isAdmin = window.isAdmin?.();
+  const isOwner = window.isOwner?.();
   const toast = window.toast;
   if (!isAdmin && !isOwner) { toast("غير مصرح","error"); return; }
   try {
