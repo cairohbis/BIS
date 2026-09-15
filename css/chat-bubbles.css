@@ -24,7 +24,7 @@
   will-change: transform;
 }
 .bubble.other{
-  background: var(--other-bubble-color, #2b3242);
+  background: color-mix(in srgb, var(--other-bubble-color, #2b3242) var(--user-bubble-glass, 100%), transparent);
   border: 1px solid rgba(255,255,255,0.08);
   backdrop-filter: blur(var(--user-bubble-blur, 8px));
   -webkit-backdrop-filter: blur(var(--user-bubble-blur, 8px));
@@ -32,7 +32,7 @@
   border-bottom-left-radius: 6px;
 }
 .bubble.me{
-  background: var(--user-bubble-color, linear-gradient(135deg, #5b6ef5, #6f80f8));
+  background: color-mix(in srgb, var(--user-bubble-color, #6577f6) var(--user-bubble-glass, 100%), transparent);
   border: 1px solid rgba(201,169,110,.3);
   backdrop-filter: blur(var(--user-bubble-blur, 20px)) saturate(180%);
   -webkit-backdrop-filter: blur(var(--user-bubble-blur, 20px)) saturate(180%);
@@ -273,8 +273,8 @@
 .bubble.other .bubble-text { color: var(--other-bubble-text, #f2f2f4); }
 
 /* ── الأصل: كانت أسطر فردية محشورة في قائمة html.theme-light مشتركة، سطر 6153-6170 تقريبًا ── */
-html.theme-light .bubble.other { background: var(--other-bubble-color, var(--chat-other)); color: var(--other-bubble-text, var(--chat-other-text)); }
-html.theme-light .bubble.me { background: var(--user-bubble-color, #ffffff); border: 1px solid rgba(0,0,0,.08); box-shadow: 0 4px 14px rgba(0,0,0,.08); color: var(--user-bubble-text, #0d1f3c); }
+html.theme-light .bubble.other { background: color-mix(in srgb, var(--other-bubble-color, var(--chat-other)) var(--user-bubble-glass, 100%), transparent); color: var(--other-bubble-text, var(--chat-other-text)); }
+html.theme-light .bubble.me { background: color-mix(in srgb, var(--user-bubble-color, #ffffff) var(--user-bubble-glass, 100%), transparent); border: 1px solid rgba(0,0,0,.08); box-shadow: 0 4px 14px rgba(0,0,0,.08); color: var(--user-bubble-text, #0d1f3c); }
 html.theme-light .bubble.other .bubble-text { color: var(--other-bubble-text, var(--chat-other-text)); }
 html.theme-light .bubble.me .bubble-text { color: var(--user-bubble-text, #0d1f3c); }
 html.theme-light .bubble.me .bubble-time-in { color: var(--user-bubble-text, rgba(13,31,60,.65)); }
