@@ -68,6 +68,7 @@ if ("serviceWorker" in navigator) {
 <link rel="stylesheet" href="css/chat-bubbles.css">
 <link rel="stylesheet" href="css/dms-page.css">
 <link rel="stylesheet" href="css/chat-newdesign.css">
+<link rel="stylesheet" href="css/appearance-page.css">
 <link rel="stylesheet" href="css/bubble-color.css">
 <link rel="stylesheet" href="css/bubble-blur.css">
 <link rel="stylesheet" href="css/theme-toggle.css">
@@ -8190,7 +8191,7 @@ try { window._listenPinnedMsg?.(); } catch(e) {}
         </div>
 
         <div class="smod-sec-label" style="margin-top:4px"><i class="fa-solid fa-font"></i> حجم الخط</div>
-        <div class="smod-row">
+        <div class="smod-row" id="apFontSizeRow">
           <div class="smod-icon" style="background:rgba(201,169,110,.12)"><i class="fa-solid fa-text-height" style="color:var(--gold)"></i></div>
           <div class="smod-info">
             <div class="smod-label">حجم خط الشات</div>
@@ -8205,7 +8206,7 @@ try { window._listenPinnedMsg?.(); } catch(e) {}
         </div>
 
         <div class="smod-sec-label" style="margin-top:4px"><i class="fa-solid fa-bold"></i> سُمك الخط</div>
-        <div class="smod-row" style="align-items:flex-start;">
+        <div class="smod-row" id="apFontWeightRow" style="align-items:flex-start;">
           <div class="smod-icon" style="background:rgba(201,169,110,.12)"><i class="fa-solid fa-bold" style="color:var(--gold)"></i></div>
           <div class="smod-info" style="width:100%;">
             <div class="smod-label">سُمك خط الدردشة</div>
@@ -8940,6 +8941,7 @@ try { window._listenPinnedMsg?.(); } catch(e) {}
 </script>
 <script type="module" src="js/chat-newdesign-wiring.js"></script>
 <script type="module" src="js/chat-newdesign-camera.js"></script>
+<script type="module" src="js/appearance-page.js"></script>
 <script type="module" src="js/quick-notifications.js"></script>
 
 </body>
