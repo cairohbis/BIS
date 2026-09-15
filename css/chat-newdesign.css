@@ -59,6 +59,15 @@
   background-size: 340px 340px;
 }
 
+/* خلفية الأونر المخصّصة (chat-backgrounds.js) — بتتفعّل بكلاس has-bg
+   وقت ما فيه صورة مرفوعة؛ بتلغي مقاس نمط النقاط الافتراضي (340px 340px)
+   عشان الصورة تتغطي صح بدل ما تتكرر بمقاس صغير */
+.newchat-shell .phone.has-bg{
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
 .newchat-shell .nc-header{
   position:absolute;
   top:0; left:0; right:0;
