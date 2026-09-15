@@ -13,6 +13,13 @@
   const MAX_BLUR = 20;   // ضبابية زجاجية حقيقية (Frosted Glass)
   const DEFAULT_SLIDER = 60; // موضع افتراضي للسلايدر (يقابل تقريباً القيم الحالية 8-20px)
 
+  // نسبة عتامة الفقاعة (تُمزج مع transparent عبر color-mix في CSS) — بدون
+  // ده كان الـ backdrop-filter بيتطبّق على خلفية معتمة 100% فمكانش بيظهر
+  // أي فرق بصري أبداً مهما اتحرك السلايدر. القيمتين دول بيتحسبوا من نفس
+  // رقم السلايدر المخزّن، فمفيش أي حقل جديد في Firestore.
+  const MIN_GLASS = 20;  // % — عتامة عند الحد الأدنى (شفاف جداً)
+  const MAX_GLASS = 65;  // % — عتامة عند الحد الأقصى (ضبابية زجاجية واضحة)
+
   let _value = null; // null = لا يوجد تخصيص، يرجع لقيم كل فقاعة الافتراضية
 
   function _sliderToBlurPx(sliderVal) {
@@ -20,13 +27,21 @@
     return MIN_BLUR + (v / 100) * (MAX_BLUR - MIN_BLUR);
   }
 
+  function _sliderToGlassPct(sliderVal) {
+    const v = Math.max(0, Math.min(100, Number(sliderVal) || 0));
+    return MIN_GLASS + (v / 100) * (MAX_GLASS - MIN_GLASS);
+  }
+
   function _apply(sliderVal) {
     if (sliderVal === null || sliderVal === undefined) {
       document.documentElement.style.removeProperty("--user-bubble-blur");
+      document.documentElement.style.removeProperty("--user-bubble-glass");
       return;
     }
-    const px = _sliderToBlurPx(sliderVal);
+    const px  = _sliderToBlurPx(sliderVal);
+    const pct = _sliderToGlassPct(sliderVal);
     document.documentElement.style.setProperty("--user-bubble-blur", `${px.toFixed(1)}px`);
+    document.documentElement.style.setProperty("--user-bubble-glass", `${pct.toFixed(0)}%`);
   }
 
   async function _load(uid) {
