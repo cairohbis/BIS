@@ -466,6 +466,7 @@ function _dmsAttachFoldEffect(panelEl, itemSelector) {
 
   function update() {
     const panelRect = panelEl.getBoundingClientRect();
+    if (panelRect.width === 0 && panelRect.height === 0) return; // القائمة مخفية حاليًا (display:none) — لا تحسب ولا تلمس أي عنصر
     const items = panelEl.querySelectorAll(itemSelector);
     items.forEach(item => {
       const r = item.getBoundingClientRect();
