@@ -201,7 +201,10 @@
     const btnRect   = menuBtn.getBoundingClientRect();
     const phoneRect = phone.getBoundingClientRect();
     menu.style.top   = (btnRect.bottom - phoneRect.top + 8) + "px";
-    menu.style.left  = (btnRect.left - phoneRect.left) + "px";
+    // الزرار قريب من أقصى يمين الهيدر (RTL) — نثبّت حافة القائمة اليمنى
+    // على حافة الزرار اليمنى بدل اليسرى، عشان متطلعش برّه حدود الشاشة
+    menu.style.left  = "auto";
+    menu.style.right = (phoneRect.right - btnRect.right) + "px";
   }
 
   function openMenu() {
