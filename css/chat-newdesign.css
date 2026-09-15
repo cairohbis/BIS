@@ -390,3 +390,47 @@
   border:none;
 }
 
+/* ── قائمة الثلاث نقاط (⋮) في الهيدر ── */
+.newchat-shell #chatMenuBtn{ cursor:pointer; }
+.newchat-shell .nc-menu{
+  position:absolute;
+  display:none;
+  flex-direction:column;
+  min-width:170px;
+  padding:6px;
+  border-radius:14px;
+  background: rgba(20,24,34,0.85);
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  border:1px solid rgba(255,255,255,0.12);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+  z-index: 30;
+}
+.newchat-shell .nc-menu.open{ display:flex; }
+.newchat-shell .nc-menu-item{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:10px 12px;
+  border-radius:9px;
+  color:#fff;
+  font-size:13.5px;
+  font-weight:600;
+  cursor:pointer;
+  background:transparent;
+  border:none;
+  text-align:right;
+}
+.newchat-shell .nc-menu-item:active{ background: rgba(255,255,255,0.08); }
+.newchat-shell .nc-menu-item svg{ width:16px; height:16px; flex-shrink:0; }
+
+/* بار البحث القديم (chat-header.css) — نفس العنصر بالحرف، بس مركّب هنا
+   فوق الرسائل بدل ما يكون تحت هيدر قديم مخفي بالكامل */
+.newchat-shell #chatSearchBar{
+  position:absolute;
+  top: calc(env(safe-area-inset-top,0px) + 68px);
+  left:0; right:0;
+  z-index:15;
+  border-radius: 0 0 16px 16px;
+}
+
