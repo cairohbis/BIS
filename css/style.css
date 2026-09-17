@@ -389,6 +389,29 @@ body {
 .forum-card-icon--grades     { background: linear-gradient(160deg, #ffe173, #f0b90b); }
 .forum-card-icon--military,
 .forum-card-icon--logo { background: transparent; box-shadow: none; width: auto; height: auto; border-radius: 0; }
+
+/* توهج خفيف بلون الكارت — نفس نمط "انت ليه هنا؟"، مطبّق على باقي كروت المنتدى */
+.forum-section-card:has(.forum-card-icon--news)::after,
+.forum-section-card:has(.forum-card-icon--lectures)::after,
+.forum-section-card:has(.forum-card-icon--exams)::after,
+.forum-section-card:has(.forum-card-icon--sections)::after,
+.forum-section-card:has(.forum-card-icon--attendance)::after,
+.forum-section-card:has(.forum-card-icon--grades)::after,
+.forum-section-card:has(.forum-card-icon--logo)::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  pointer-events: none;
+}
+.forum-section-card:has(.forum-card-icon--news)::after       { background: radial-gradient(120% 120% at 20% 0%, rgba(245,129,31,.16), transparent 60%); }
+.forum-section-card:has(.forum-card-icon--lectures)::after   { background: radial-gradient(120% 120% at 20% 0%, rgba(31,127,224,.16), transparent 60%); }
+.forum-section-card:has(.forum-card-icon--exams)::after      { background: radial-gradient(120% 120% at 20% 0%, rgba(224,41,63,.16), transparent 60%); }
+.forum-section-card:has(.forum-card-icon--sections)::after   { background: radial-gradient(120% 120% at 20% 0%, rgba(138,79,224,.16), transparent 60%); }
+.forum-section-card:has(.forum-card-icon--attendance)::after { background: radial-gradient(120% 120% at 20% 0%, rgba(31,168,91,.16), transparent 60%); }
+.forum-section-card:has(.forum-card-icon--grades)::after     { background: radial-gradient(120% 120% at 20% 0%, rgba(240,185,11,.16), transparent 60%); }
+.forum-section-card:has(.forum-card-icon--logo)::after       { background: radial-gradient(120% 120% at 20% 0%, rgba(59,130,246,.16), transparent 60%); }
+
 .forum-card-title { font-size: 13px; font-weight: 800; color: var(--text); }
 .forum-card-sub   { font-size: 11px; color: var(--muted); line-height: 1.35; }
 .forum-card-portal { border-color: rgba(96,165,250,.15); }
