@@ -67,6 +67,11 @@ function _showCtxAt(x, y, docId, data) {
 
   if (ncHeader && headerPill && actionRow) {
     headerPill.insertBefore(actionRow, closeBtn || null);
+    const hRect = ncHeader.getBoundingClientRect();
+    document.body.appendChild(headerPill); // برة #page-chat تمامًا (z-index:200 بس) عشان تقدر تتعدى الأوفرلاي
+    headerPill.style.top   = (hRect.top + 14) + "px";
+    headerPill.style.left  = (hRect.left + 10) + "px";
+    headerPill.style.right = Math.max(0, window.innerWidth - hRect.right + 10) + "px";
     ncHeader.classList.add("ctx-mode");
     headerPill.classList.add("show");
   }
