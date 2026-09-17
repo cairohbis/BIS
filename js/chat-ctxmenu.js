@@ -8,9 +8,7 @@
 
 function _showCtxAt(x, y, docId, data) {
   _ctxDocId = docId; _ctxData = data;
-  const menu = document.getElementById("msgCtxMenu");
   const overlay = document.getElementById("msgCtxOverlay");
-  if (!menu) return;
   const isMe = data.uid === currentUser?.uid;
   const delBtn = document.getElementById("ctxDeleteBtn");
   if (delBtn) delBtn.style.display = (isMe || isAdmin()) ? "" : "none";
@@ -57,21 +55,32 @@ function _showCtxAt(x, y, docId, data) {
     btn.classList.toggle("my-pick", Array.isArray(voters) && voters.includes(myUid));
   });
   if (overlay) overlay.style.display = "block";
-  const vw = window.innerWidth, vh = window.innerHeight;
-  let cx = x || vw / 2, cy = y || vh / 2;
-  menu.classList.remove("show");
-  menu.style.opacity = "";
-  requestAnimationFrame(() => {
-    const mw = menu.offsetWidth || 220, mh = menu.offsetHeight || 160;
-    if (cx + mw > vw - 10) cx = vw - mw - 10;
-    if (cy + mh > vh - 10) cy = vh - mh - 10;
-    if (cx < 8) cx = 8; if (cy < 8) cy = 8;
-    menu.style.left = cx + "px"; menu.style.top = cy + "px";
-    menu.style.opacity = "";
-    menu.classList.add("show");
-    window._ctxJustOpened = true;
-    setTimeout(() => { window._ctxJustOpened = false; }, 350);
-  });
+
+  // ── الهيدر العادي يختفي وتظهر بدله قائمة أوامر بنفس تصميم الـ glass pill،
+  //    وصف الإيموجي ينزل تحت الرسالة نفسها من غير أي بطاقة/خلفية ──
+  const ncHeader   = document.querySelector(".nc-header");
+  const headerPill = document.getElementById("ctxHeaderPill");
+  const closeBtn   = document.getElementById("ctxHeaderCloseBtn");
+  const actionRow  = document.querySelector(".ctx-action-row");
+  const reactBar   = document.getElementById("ctxReactionBar");
+  const msgsWrap   = document.querySelector(".newchat-shell .messages");
+  const targetRow  = document.getElementById(`msg-${docId}`);
+
+  if (ncHeader && headerPill && actionRow) {
+    headerPill.insertBefore(actionRow, closeBtn || null);
+    ncHeader.classList.add("ctx-mode");
+    headerPill.classList.add("show");
+  }
+  if (msgsWrap) msgsWrap.classList.add("ctx-active");
+  document.querySelectorAll(".msg-row.ctx-target").forEach(el => el.classList.remove("ctx-target"));
+  if (targetRow && reactBar) {
+    reactBar.classList.add("emoji-picker-inline");
+    targetRow.appendChild(reactBar);
+    targetRow.classList.add("ctx-target");
+  }
+
+  window._ctxJustOpened = true;
+  setTimeout(() => { window._ctxJustOpened = false; }, 350);
 }
 window._showCtxAt = _showCtxAt;
 
@@ -84,10 +93,22 @@ function showMsgCtxMenu(e, docId, data) {
 window.showMsgCtxMenu = showMsgCtxMenu;
 
 function hideMsgCtxMenu() {
-  const menu = document.getElementById("msgCtxMenu");
   const overlay = document.getElementById("msgCtxOverlay");
-  if (menu) menu.classList.remove("show");
   if (overlay) overlay.style.display = "none";
+
+  const ncHeader   = document.querySelector(".nc-header");
+  const headerPill = document.getElementById("ctxHeaderPill");
+  const msgsWrap   = document.querySelector(".newchat-shell .messages");
+  const ctxMenu    = document.getElementById("msgCtxMenu");
+  const reactBar   = document.getElementById("ctxReactionBar");
+  if (ncHeader) ncHeader.classList.remove("ctx-mode");
+  if (headerPill) headerPill.classList.remove("show");
+  if (msgsWrap) msgsWrap.classList.remove("ctx-active");
+  document.querySelectorAll(".msg-row.ctx-target").forEach(el => el.classList.remove("ctx-target"));
+  if (reactBar && ctxMenu) {
+    reactBar.classList.remove("emoji-picker-inline");
+    ctxMenu.insertBefore(reactBar, ctxMenu.firstChild);
+  }
 }
 window.hideMsgCtxMenu = hideMsgCtxMenu;
 
