@@ -81,6 +81,7 @@ if ("serviceWorker" in navigator) {
 <link rel="stylesheet" href="css/mascot-login-adapter.css">
 <link rel="stylesheet" href="css/mascot-underdev-adapter.css">
 <link rel="stylesheet" href="css/quick-notifications.css">
+<link rel="stylesheet" href="css/qr-share.css">
 
 <!-- ══ Critical inline CSS — يُطبَّق فورًا بدون انتظار أي ملف خارجي، لعرض خلفية محايدة بدل الفراغ الأبيض/الفلاش قبل تحميل باقي الصفحة ══ -->
 <style>
@@ -266,6 +267,11 @@ if ("serviceWorker" in navigator) {
         <div class="forum-card-icon forum-card-icon--whyhere"><i class="fa-solid fa-compass"></i></div>
         <div class="forum-card-title">لماذا أنت هنا؟</div>
         <div class="forum-card-sub">تعرف على بريق وعلى الموقع في دقيقة</div>
+      </div>
+      <div class="forum-section-card" onclick="window.QrShareModule && window.QrShareModule.open()">
+        <div class="forum-card-icon forum-card-icon--qrshare"><i class="fa-solid fa-qrcode"></i></div>
+        <div class="forum-card-title">مشاركة الموقع / QR</div>
+        <div class="forum-card-sub">شارك رابط الدخول بكود QR</div>
       </div>
       <div class="forum-section-card" onclick="window.MilitaryModule && window.MilitaryModule.open()">
         <div class="forum-card-icon forum-card-icon--military"><img src="images/military-icon.png" alt="الخدمة العسكرية"></div>
@@ -8963,6 +8969,7 @@ try { window._listenPinnedMsg?.(); } catch(e) {}
 <script type="module" src="js/appearance-page.js"></script>
 <script type="module" src="js/quick-notifications.js"></script>
 <script src="js/why-here-forum.js"></script>
+<script src="js/qr-share.js"></script>
 
 </body>
 </html>
