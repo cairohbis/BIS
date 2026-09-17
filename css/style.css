@@ -373,9 +373,23 @@ body {
 }
 .forum-section-card:active { transform: scale(.95); transition: transform .1s; }
 .forum-card-icon {
-  font-size: 22px; color: var(--gold);
-  display: flex; align-items: center;
+  font-size: 19px; color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  width: 42px; height: 42px; border-radius: 13px;
+  background: linear-gradient(160deg, #d9b36a, #a97a2c);
+  box-shadow: 0 4px 10px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.35), inset 0 -6px 10px rgba(0,0,0,.15);
+  flex-shrink: 0;
 }
+/* Per-section accent gradients — each icon's color matches the meaning of its card */
+.forum-card-icon--news       { background: linear-gradient(160deg, #ffb454, #f5811f); }
+.forum-card-icon--lectures   { background: linear-gradient(160deg, #5ec8ff, #1f7fe0); }
+.forum-card-icon--exams      { background: linear-gradient(160deg, #ff7b7b, #e0293f); }
+.forum-card-icon--sections   { background: linear-gradient(160deg, #c298ff, #8a4fe0); }
+.forum-card-icon--attendance { background: linear-gradient(160deg, #6ee89a, #1fa85b); }
+.forum-card-icon--grades     { background: linear-gradient(160deg, #ffe173, #f0b90b); }
+.forum-card-icon--whyhere    { background: linear-gradient(160deg, #5ee6d0, #1a9e8f); }
+.forum-card-icon--military,
+.forum-card-icon--logo { background: transparent; box-shadow: none; width: auto; height: auto; border-radius: 0; }
 .forum-card-title { font-size: 13px; font-weight: 800; color: var(--text); }
 .forum-card-sub   { font-size: 11px; color: var(--muted); line-height: 1.35; }
 .forum-card-portal { border-color: rgba(96,165,250,.15); }
