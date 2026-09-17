@@ -135,6 +135,52 @@
     }, 1800);
   }
 
+  // حقن كارت "شارك الموقع" جوه شبكة المنتدى — بدل ما يتكتب الماركب
+  // في index.html، بيتحط هنا وقت التحميل قبل كارت "البوابة الرسمية"
+  function _injectForumCard() {
+    var grid = document.getElementById("forum-landing");
+    if (!grid || document.getElementById("qrShareForumCard")) return;
+    var portal = grid.querySelector(".forum-card-portal");
+    var card = document.createElement("div");
+    card.id = "qrShareForumCard";
+    card.className = "forum-section-card";
+    card.setAttribute("onclick", "window.QrShareModule && window.QrShareModule.open()");
+    card.innerHTML =
+      '<div class="forum-card-icon forum-card-icon--qrshare">' +
+        '<svg viewBox="0 0 21 21" width="16" height="16" xmlns="http://www.w3.org/2000/svg"><g fill="#10141f">' +
+        '<rect x="0" y="0" width="7" height="1"/><rect x="8" y="0" width="2" height="1"/><rect x="11" y="0" width="1" height="1"/><rect x="14" y="0" width="7" height="1"/>' +
+        '<rect x="0" y="1" width="1" height="1"/><rect x="6" y="1" width="1" height="1"/><rect x="8" y="1" width="5" height="1"/><rect x="14" y="1" width="1" height="1"/><rect x="20" y="1" width="1" height="1"/>' +
+        '<rect x="0" y="2" width="1" height="1"/><rect x="2" y="2" width="3" height="1"/><rect x="6" y="2" width="1" height="1"/><rect x="8" y="2" width="3" height="1"/><rect x="12" y="2" width="1" height="1"/><rect x="14" y="2" width="1" height="1"/><rect x="16" y="2" width="3" height="1"/><rect x="20" y="2" width="1" height="1"/>' +
+        '<rect x="0" y="3" width="1" height="1"/><rect x="2" y="3" width="3" height="1"/><rect x="6" y="3" width="1" height="1"/><rect x="8" y="3" width="1" height="1"/><rect x="12" y="3" width="1" height="1"/><rect x="14" y="3" width="1" height="1"/><rect x="16" y="3" width="3" height="1"/><rect x="20" y="3" width="1" height="1"/>' +
+        '<rect x="0" y="4" width="1" height="1"/><rect x="2" y="4" width="3" height="1"/><rect x="6" y="4" width="1" height="1"/><rect x="9" y="4" width="1" height="1"/><rect x="11" y="4" width="2" height="1"/><rect x="14" y="4" width="1" height="1"/><rect x="16" y="4" width="3" height="1"/><rect x="20" y="4" width="1" height="1"/>' +
+        '<rect x="0" y="5" width="1" height="1"/><rect x="6" y="5" width="1" height="1"/><rect x="8" y="5" width="2" height="1"/><rect x="11" y="5" width="1" height="1"/><rect x="14" y="5" width="1" height="1"/><rect x="20" y="5" width="1" height="1"/>' +
+        '<rect x="0" y="6" width="7" height="1"/><rect x="8" y="6" width="1" height="1"/><rect x="10" y="6" width="1" height="1"/><rect x="12" y="6" width="1" height="1"/><rect x="14" y="6" width="7" height="1"/>' +
+        '<rect x="9" y="7" width="1" height="1"/><rect x="11" y="7" width="2" height="1"/>' +
+        '<rect x="0" y="8" width="1" height="1"/><rect x="2" y="8" width="2" height="1"/><rect x="5" y="8" width="3" height="1"/><rect x="10" y="8" width="1" height="1"/><rect x="15" y="8" width="1" height="1"/><rect x="17" y="8" width="2" height="1"/><rect x="20" y="8" width="1" height="1"/>' +
+        '<rect x="0" y="9" width="2" height="1"/><rect x="7" y="9" width="1" height="1"/><rect x="11" y="9" width="1" height="1"/><rect x="14" y="9" width="1" height="1"/><rect x="16" y="9" width="1" height="1"/>' +
+        '<rect x="0" y="10" width="2" height="1"/><rect x="3" y="10" width="6" height="1"/><rect x="10" y="10" width="3" height="1"/><rect x="14" y="10" width="2" height="1"/><rect x="20" y="10" width="1" height="1"/>' +
+        '<rect x="0" y="11" width="2" height="1"/><rect x="4" y="11" width="2" height="1"/><rect x="7" y="11" width="3" height="1"/><rect x="11" y="11" width="4" height="1"/><rect x="18" y="11" width="1" height="1"/>' +
+        '<rect x="0" y="12" width="1" height="1"/><rect x="5" y="12" width="4" height="1"/><rect x="10" y="12" width="11" height="1"/>' +
+        '<rect x="10" y="13" width="5" height="1"/><rect x="17" y="13" width="4" height="1"/>' +
+        '<rect x="0" y="14" width="7" height="1"/><rect x="8" y="14" width="2" height="1"/><rect x="11" y="14" width="2" height="1"/><rect x="15" y="14" width="1" height="1"/><rect x="17" y="14" width="1" height="1"/>' +
+        '<rect x="0" y="15" width="1" height="1"/><rect x="6" y="15" width="1" height="1"/><rect x="9" y="15" width="3" height="1"/><rect x="15" y="15" width="2" height="1"/>' +
+        '<rect x="0" y="16" width="1" height="1"/><rect x="2" y="16" width="3" height="1"/><rect x="6" y="16" width="1" height="1"/><rect x="10" y="16" width="7" height="1"/><rect x="19" y="16" width="1" height="1"/>' +
+        '<rect x="0" y="17" width="1" height="1"/><rect x="2" y="17" width="3" height="1"/><rect x="6" y="17" width="1" height="1"/><rect x="10" y="17" width="5" height="1"/><rect x="18" y="17" width="1" height="1"/>' +
+        '<rect x="0" y="18" width="1" height="1"/><rect x="2" y="18" width="3" height="1"/><rect x="6" y="18" width="1" height="1"/><rect x="8" y="18" width="1" height="1"/><rect x="13" y="18" width="2" height="1"/><rect x="16" y="18" width="1" height="1"/><rect x="19" y="18" width="2" height="1"/>' +
+        '<rect x="0" y="19" width="1" height="1"/><rect x="6" y="19" width="1" height="1"/><rect x="10" y="19" width="3" height="1"/><rect x="15" y="19" width="1" height="1"/><rect x="19" y="19" width="1" height="1"/>' +
+        '<rect x="0" y="20" width="7" height="1"/><rect x="8" y="20" width="2" height="1"/><rect x="14" y="20" width="1" height="1"/><rect x="17" y="20" width="4" height="1"/>' +
+        '</g></svg>' +
+      '</div>' +
+      '<div class="forum-card-title">شارك الموقع</div>' +
+      '<div class="forum-card-sub">مشاركة رابط الدخول عبر QR أو نسخ الرابط</div>';
+    if (portal) grid.insertBefore(card, portal); else grid.appendChild(card);
+  }
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", _injectForumCard);
+  } else {
+    _injectForumCard();
+  }
+
   window.QrShareModule.open = open;
   window.QrShareModule.close = close;
 })();
