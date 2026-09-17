@@ -1,0 +1,95 @@
+/* ============================================================
+   QR SHARE — مشاركة رابط الموقع عبر QR — ستايل خاص بالإضافة فقط
+   ملف مستقل بالكامل، لا يعدّل أي كلاس أو ستايل في أي ملف تاني.
+   الألوان والمقاسات هنا بتستخدم متغيرات الموقع الأصلية (:root في
+   style.css) ونفس نمط الـ bottom-sheet المستخدم فعليًا في نظام
+   الإبلاغ (.rpt-backdrop / .rpt-card)، عشان التصميم يطابق الموقع.
+   ============================================================ */
+
+/* أيقونة الكارت في شبكة المنتدى — أبيض/أسود بشكل QR، بنفس مقاس
+   ومكان .forum-card-icon الأساسي (22x22, radius 7px) بدون تعديل فيه */
+.forum-card-icon--qrshare {
+  background: #ffffff;
+  border: 1px solid var(--border);
+}
+.forum-card-icon--qrshare i { color: #0d1120; }
+
+/* الخلفية + الـ bottom sheet — نفس نمط .rpt-backdrop / .rpt-card بالظبط */
+.qrshare-backdrop {
+  position: fixed; inset: 0; z-index: 9500;
+  background: rgba(0,0,0,.55);
+  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  display: flex; align-items: flex-end; justify-content: center;
+  opacity: 0; pointer-events: none;
+  transition: opacity .22s ease;
+  padding: 0 0 env(safe-area-inset-bottom, 0px);
+}
+.qrshare-backdrop.show { opacity: 1; pointer-events: all; }
+
+.qrshare-card {
+  width: 100%; max-width: 480px;
+  background: rgba(12,21,40,0.97);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(255,255,255,.13);
+  border-radius: 28px 28px 0 0;
+  padding: 20px 20px 32px;
+  display: flex; flex-direction: column; gap: 14px;
+  box-shadow: 0 -12px 48px rgba(0,0,0,.6), 0 1px 0 rgba(255,255,255,.07) inset;
+  transform: translateY(100%);
+  transition: transform .3s cubic-bezier(.34,1.2,.64,1);
+  position: relative; overflow: hidden;
+  align-items: center; text-align: center;
+}
+.qrshare-backdrop.show .qrshare-card { transform: translateY(0); }
+.qrshare-card::before {
+  content: '';
+  position: absolute; top: 0; left: 30%; right: 30%; height: 4px;
+  border-radius: 0 0 4px 4px;
+  background: rgba(255,255,255,.18);
+}
+
+/* الهيدر — نفس نمط .rpt-header بألوان محايدة/ذهبية بدل الأحمر */
+.qrshare-header {
+  display: flex; align-items: center; gap: 12px;
+  width: 100%; text-align: right;
+}
+.qrshare-header-icon {
+  width: 40px; height: 40px; border-radius: 12px; flex-shrink: 0;
+  background: rgba(201,169,110,.12); border: 1px solid rgba(201,169,110,.25);
+  color: var(--goldL); font-size: 16px;
+  display: flex; align-items: center; justify-content: center;
+}
+.qrshare-header-texts { flex: 1; }
+.qrshare-title { font-size: 16px; font-weight: 800; color: var(--text); }
+.qrshare-sub   { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.qrshare-close-btn {
+  width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;
+  background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.1);
+  color: var(--muted); font-size: 14px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: all .15s;
+}
+.qrshare-close-btn:hover { background: rgba(255,255,255,.14); color: var(--text); }
+
+/* صندوق الـQR — لازم خلفية بيضاء عشان يفضل قابل للمسح، ده الاستثناء الوحيد */
+.qrshare-canvas-wrap {
+  background: #fff;
+  border-radius: 14px;
+  padding: 14px;
+  display: inline-block;
+}
+.qrshare-canvas-wrap canvas { display: block; }
+
+.qrshare-link {
+  font-size: 12px;
+  color: var(--muted);
+  direction: ltr;
+  word-break: break-all;
+  white-space: pre-line;
+  padding: 0 4px;
+}
+
+/* زر النسخ بيستخدم كلاس .btn الأساسي في الموقع كما هو — بدون أي إعادة تعريف
+   لألوانه، عشان يبقى مطابق 100% لباقي الأزرار الأساسية في الموقع */
+.qrshare-card .btn.copied { background: var(--success); }
