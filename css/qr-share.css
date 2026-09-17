@@ -6,13 +6,15 @@
    الإبلاغ (.rpt-backdrop / .rpt-card)، عشان التصميم يطابق الموقع.
    ============================================================ */
 
-/* أيقونة الكارت في شبكة المنتدى — أبيض/أسود بشكل QR، بنفس مقاس
-   ومكان .forum-card-icon الأساسي (22x22, radius 7px) بدون تعديل فيه */
+/* أيقونة الكارت في شبكة المنتدى — نفس مقاس ومكان .forum-card-icon
+   الأساسي (22x22, radius 7px) بدون تعديل فيه، بس بخلفية بيضاء متدرجة
+   وظل غاطس/بارز (embossed) يدّي إحساس إن الأيقونة طالعة فوق، زي باقي
+   أيقونات المنتدى بالظبط */
 .forum-card-icon--qrshare {
-  background: #ffffff;
-  border: 1px solid var(--border);
+  background: linear-gradient(160deg, #ffffff, #d9dce3);
+  box-shadow: 0 3px 8px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.9), inset 0 -3px 4px rgba(0,0,0,.12);
 }
-.forum-card-icon--qrshare i { color: #0d1120; }
+.forum-card-icon--qrshare svg { display: block; }
 
 /* الخلفية + الـ bottom sheet — نفس نمط .rpt-backdrop / .rpt-card بالظبط */
 .qrshare-backdrop {
