@@ -3725,14 +3725,18 @@ window.buildDmList = buildDmList;
 // openDirectChat — فتح محادثة مباشرة مع أي مستخدم
 // بدون Request System — الغرفة تُنشأ تلقائياً
 // ══════════════════════════════════════════
+let _dcReqToken = 0;
 window.openDirectChat = async function(toUid, toUser) {
   if (window.NEWCHAT_UI_ONLY) { showPage("page-chat"); return; }
   if (!currentUser?.uid) { toast("يجب تسجيل الدخول أولاً", "error"); return; }
   if (!toUid)            { toast("مستخدم غير صالح", "error"); return; }
   if (toUid === currentUser.uid) { toast("لا يمكنك مراسلة نفسك", "warn"); return; }
 
+  const myToken = ++_dcReqToken;
+
   // تحميل بيانات المستخدم إن لزم
   if (!toUser?.name) toUser = await _getUser(toUid);
+  if (myToken !== _dcReqToken) return;
 
   // 1. إنشاء الغرفة في Firestore (إذا لم تكن موجودة)
   try {
@@ -3742,6 +3746,7 @@ window.openDirectChat = async function(toUid, toUser) {
     toast(`فشل إنشاء المحادثة (${e.code || "unknown"})`, "error");
     return;
   }
+  if (myToken !== _dcReqToken) return;
 
   // 2. تحديث الـ cache المحلي
   if (!_userCache[toUid]) _userCache[toUid] = { data: toUser, ts: Date.now() };
@@ -3754,6 +3759,7 @@ window.openDirectChat = async function(toUid, toUser) {
   if (!document.getElementById(`dm-${toUid}`)) {
     await _rebuildDmItems(Object.keys(_acceptedPeers));
   }
+  if (myToken !== _dcReqToken) return;
 
   // 4. فتح المحادثة
   selectChat(toUid, toUser.name, toUser.photo);
@@ -7234,9 +7240,9 @@ document.getElementById("ucmSendMsg")?.addEventListener("click", () => {
   const data = _ucmUserData;
   _hideUserContextMenu();
   if (!uid) return;
-  // إذا كان الشات غير مفتوح نفتحه
+  // إذا كان الشات غير مفتوح نفتحه (بدون تشغيل الشات العام)
   if (!document.getElementById("page-chat")?.classList.contains("active")) {
-    openChatPage?.();
+    showPage("page-chat");
   }
   openDirectChat(uid, data);
 });
@@ -7605,7 +7611,7 @@ function _renderProfileViewModal(uid, userData) {
   document.getElementById("pvmMsgBtn")?.addEventListener("click", () => {
     document.getElementById("profileViewModal").classList.remove("show");
     if (!document.getElementById("page-chat")?.classList.contains("active")) {
-      openChatPage?.();
+      showPage("page-chat");
     }
     openDirectChat(uid, d);
   });
