@@ -2358,7 +2358,7 @@ html.theme-light .lib-detail-count { color: #6b83a3; }
 #ctxReactionBar.emoji-picker-inline .reaction-btn{
   width: auto; height: auto;
   background: none; border: none;
-  font-size: 25px;
+  font-size: 16px;
 }
 #ctxReactionBar.emoji-picker-inline .reaction-btn:hover{ background: none; transform: scale(1.2); }
 #ctxReactionBar.emoji-picker-inline .reaction-btn.my-pick{
