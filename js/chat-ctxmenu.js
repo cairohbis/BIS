@@ -57,13 +57,12 @@ function _showCtxAt(x, y, docId, data) {
   if (overlay) overlay.style.display = "block";
 
   // ── الهيدر العادي يختفي وتظهر بدله قائمة أوامر بنفس تصميم الـ glass pill،
-  //    وصف الإيموجي ينزل تحت الرسالة نفسها من غير أي بطاقة/خلفية ──
+  //    وصف الإيموجي بيظهر مثبّت (fixed) تحت الرسالة نفسها من غير أي بطاقة/خلفية ──
   const ncHeader   = document.querySelector(".nc-header");
   const headerPill = document.getElementById("ctxHeaderPill");
   const closeBtn   = document.getElementById("ctxHeaderCloseBtn");
   const actionRow  = document.querySelector(".ctx-action-row");
   const reactBar   = document.getElementById("ctxReactionBar");
-  const msgsWrap   = document.querySelector(".newchat-shell .messages");
   const targetRow  = document.getElementById(`msg-${docId}`);
 
   if (ncHeader && headerPill && actionRow) {
@@ -71,12 +70,24 @@ function _showCtxAt(x, y, docId, data) {
     ncHeader.classList.add("ctx-mode");
     headerPill.classList.add("show");
   }
-  if (msgsWrap) msgsWrap.classList.add("ctx-active");
-  document.querySelectorAll(".msg-row.ctx-target").forEach(el => el.classList.remove("ctx-target"));
   if (targetRow && reactBar) {
+    const rect  = targetRow.getBoundingClientRect();
+    const isMe  = targetRow.classList.contains("me");
+    document.body.appendChild(reactBar); // خارج قائمة الرسائل تمامًا، عشان ما نرفعش طبقتها كلها فوق الأوفرلاي
     reactBar.classList.add("emoji-picker-inline");
-    targetRow.appendChild(reactBar);
-    targetRow.classList.add("ctx-target");
+    const setSide = () => {
+      if (isMe) { reactBar.style.right = Math.max(10, window.innerWidth - rect.right) + "px"; reactBar.style.left = "auto"; }
+      else      { reactBar.style.left  = Math.max(10, rect.left) + "px"; reactBar.style.right = "auto"; }
+    };
+    setSide();
+    reactBar.style.top = (rect.bottom + 6) + "px";
+    reactBar.classList.add("show");
+    requestAnimationFrame(() => {
+      const barH = reactBar.offsetHeight || 40;
+      if (rect.bottom + 6 + barH > window.innerHeight - 70) {
+        reactBar.style.top = Math.max(60, rect.top - barH - 6) + "px";
+      }
+    });
   }
 
   window._ctxJustOpened = true;
@@ -98,17 +109,10 @@ function hideMsgCtxMenu() {
 
   const ncHeader   = document.querySelector(".nc-header");
   const headerPill = document.getElementById("ctxHeaderPill");
-  const msgsWrap   = document.querySelector(".newchat-shell .messages");
-  const ctxMenu    = document.getElementById("msgCtxMenu");
   const reactBar   = document.getElementById("ctxReactionBar");
   if (ncHeader) ncHeader.classList.remove("ctx-mode");
   if (headerPill) headerPill.classList.remove("show");
-  if (msgsWrap) msgsWrap.classList.remove("ctx-active");
-  document.querySelectorAll(".msg-row.ctx-target").forEach(el => el.classList.remove("ctx-target"));
-  if (reactBar && ctxMenu) {
-    reactBar.classList.remove("emoji-picker-inline");
-    ctxMenu.insertBefore(reactBar, ctxMenu.firstChild);
-  }
+  if (reactBar) reactBar.classList.remove("show");
 }
 window.hideMsgCtxMenu = hideMsgCtxMenu;
 
