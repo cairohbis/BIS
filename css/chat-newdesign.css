@@ -422,10 +422,6 @@
   flex-shrink: 0; cursor: pointer;
 }
 
-/* رفع طبقة منطقة الرسائل والهيدر فوق #msgCtxOverlay الشفاف وقت فتح
-   قائمة الضغط المطوّل، عشان الأزرار تفضل قابلة للضغط فوقه */
-.newchat-shell .messages.ctx-active{ z-index: 10000; }
-
 /* بار البحث القديم (chat-header.css) — نفس العنصر بالحرف، بس مركّب هنا
    فوق الرسائل بدل ما يكون تحت هيدر قديم مخفي بالكامل */
 .newchat-shell #chatSearchBar{
