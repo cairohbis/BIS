@@ -261,7 +261,7 @@ if ("serviceWorker" in navigator) {
         <div class="forum-card-sub">سجلك الأكاديمي ونتائجك الدراسية</div>
       </div>
 
-      <div class="forum-section-card" onclick="openWhyHere()">
+      <div class="forum-section-card" onclick="openForumSection('tab-whyhere','tab-whyhere-content')">
         <div class="forum-card-icon"><i class="fa-solid fa-compass"></i></div>
         <div class="forum-card-title">لماذا أنت هنا؟</div>
         <div class="forum-card-sub">تعرف على بريق وعلى الموقع في دقيقة</div>
@@ -357,6 +357,11 @@ if ("serviceWorker" in navigator) {
       </div>
       <div id="attCalGrid"></div>
       <div id="attDayDetail"></div>
+    </div>
+    <div id="tab-whyhere-content" class="forum-content-area" style="display:none">
+      <button class="forum-back-btn" onclick="closeForumSection('tab-whyhere-content')"><i class="fa-solid fa-arrow-right"></i> رجوع</button>
+      <div class="forum-section-hdr"><i class="fa-solid fa-compass"></i> لماذا أنت هنا؟</div>
+      <iframe src="why-here.html" style="width:100%;height:80vh;border:0;border-radius:16px;display:block" loading="lazy" title="لماذا أنت هنا؟"></iframe>
     </div>
   </div>
 
@@ -2792,7 +2797,7 @@ function goTab(tabId) {
   // When entering forum tab, show landing grid
   if (tabId === "tab-forum") {
     document.getElementById("forum-landing").style.display = "";
-    ["tab-news-content","tab-lectures-content","tab-exams-content","tab-sections-content","tab-attendance-content"]
+    ["tab-news-content","tab-lectures-content","tab-exams-content","tab-sections-content","tab-attendance-content","tab-whyhere-content"]
       .forEach(id => { const el = document.getElementById(id); if (el) el.style.display = "none"; });
   }
   if (_prevTabId && _prevTabId !== tabId) {
@@ -2806,7 +2811,7 @@ window.openForumSection = function(sectionKey, contentId) {
   const _el = document.getElementById(contentId);
   const _alreadyOpen = _el && _el.style.display !== "none";
   document.getElementById("forum-landing").style.display = "none";
-  ["tab-news-content","tab-lectures-content","tab-exams-content","tab-sections-content","tab-attendance-content"]
+  ["tab-news-content","tab-lectures-content","tab-exams-content","tab-sections-content","tab-attendance-content","tab-whyhere-content"]
     .forEach(id => { const el = document.getElementById(id); if (el) el.style.display = "none"; });
   const el = document.getElementById(contentId);
   if (el) el.style.display = "";
@@ -2833,10 +2838,6 @@ window.closeForumSection = function(contentId) {
 // Official portal URL — change this value to update the link
 const PORTAL_URL = "https://chi-eg.net/student_portal/?fbclid=Iwb21leAPq43hjbGNrA-rjRGV4dG4DYWVtAjExAHNydGMGYXBwX2lkDDM1MDY4NTUzMTcyOAABHkpCDRA8xSs7nItW3grqTxplTvYLsx1bYQSIosAjaza3rlBAtxE3395goFLL_aem_NpaEu8Nx7ixJG1fj_aGTdw";
 window.openPortal = function() { window.open(PORTAL_URL, "_blank", "noopener,noreferrer"); };
-
-// "Why are you here?" onboarding experience — separate standalone page, opened in a new tab
-const WHY_HERE_URL = "why-here.html";
-window.openWhyHere = function() { window.open(WHY_HERE_URL, "_blank", "noopener,noreferrer"); };
 
 document.querySelectorAll(".tab").forEach(t =>
   t.addEventListener("click", () => goTab(t.dataset.tab)));
