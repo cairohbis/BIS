@@ -386,6 +386,46 @@
 .newchat-shell .nc-menu-item:active{ background: rgba(255,255,255,0.08); }
 .newchat-shell .nc-menu-item svg{ width:16px; height:16px; flex-shrink:0; }
 
+/* ── قائمة أوامر الرسالة (ضغط مطوّل على مسج) — الهيدر العادي يختفي
+   ويظهر بدلاً منه pill طويل بنفس تصميم .glass فيه أزرار الأوامر ── */
+.newchat-shell .nc-header.ctx-mode{ z-index: 10000; }
+.newchat-shell .nc-header.ctx-mode .call-circle,
+.newchat-shell .nc-header.ctx-mode .header-pill,
+.newchat-shell .nc-header.ctx-mode .back-arrow{
+  opacity: 0;
+  pointer-events: none;
+}
+.newchat-shell .ctx-header-pill{
+  display: none;
+  align-items: center;
+  gap: 6px;
+  position: absolute;
+  left: 10px; right: 10px; top: 14px;
+  height: var(--pill-h);
+  border-radius: 999px;
+  padding: 0 6px 0 14px;
+}
+.newchat-shell .ctx-header-pill.show{ display: flex; }
+.newchat-shell .ctx-header-pill .ctx-action-row{
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+  justify-content: flex-start;
+  padding: 0;
+}
+.newchat-shell .ctx-header-close{
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(255,255,255,0.1);
+  border: none; color: #fff;
+  flex-shrink: 0; cursor: pointer;
+}
+
+/* رفع طبقة منطقة الرسائل والهيدر فوق #msgCtxOverlay الشفاف وقت فتح
+   قائمة الضغط المطوّل، عشان الأزرار تفضل قابلة للضغط فوقه */
+.newchat-shell .messages.ctx-active{ z-index: 10000; }
+
 /* بار البحث القديم (chat-header.css) — نفس العنصر بالحرف، بس مركّب هنا
    فوق الرسائل بدل ما يكون تحت هيدر قديم مخفي بالكامل */
 .newchat-shell #chatSearchBar{

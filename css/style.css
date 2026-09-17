@@ -2340,6 +2340,32 @@ html.theme-light .lib-detail-count { color: #6b83a3; }
   transform: scale(1.12);
 }
 
+/* رفع الرسالة المضغوط عليها ضغط مطوّل فوق #msgCtxOverlay الشفاف
+   عشان صف الإيموجي اللي بينزل تحتها يفضل قابل للضغط */
+.msg-row.ctx-target{ position: relative; z-index: 10000; }
+
+/* صف إيموجي بدون بطاقة/خلفية — بيظهر تحت الرسالة مباشرة عند الضغط المطوّل،
+   بدل شريط الرياكشن التقليدي اللي ليه خلفية/حدود */
+#ctxReactionBar.emoji-picker-inline{
+  background: none;
+  backdrop-filter: none; -webkit-backdrop-filter: none;
+  border: none; box-shadow: none;
+  border-radius: 0;
+  margin: 6px 0 0; padding: 0;
+  gap: 10px;
+  animation: none;
+}
+#ctxReactionBar.emoji-picker-inline .reaction-btn{
+  width: auto; height: auto;
+  background: none; border: none;
+  font-size: 25px;
+}
+#ctxReactionBar.emoji-picker-inline .reaction-btn:hover{ background: none; transform: scale(1.2); }
+#ctxReactionBar.emoji-picker-inline .reaction-btn.my-pick{
+  background: none; border: none; box-shadow: none;
+  transform: scale(1.2);
+}
+
 /* Reactions displayed on bubble */
 .msg-reactions {
   display: flex; flex-wrap: wrap; gap: 4px;
