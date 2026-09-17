@@ -81,7 +81,6 @@ if ("serviceWorker" in navigator) {
 <link rel="stylesheet" href="css/mascot-login-adapter.css">
 <link rel="stylesheet" href="css/mascot-underdev-adapter.css">
 <link rel="stylesheet" href="css/quick-notifications.css">
-<link rel="stylesheet" href="css/qr-share.css">
 
 <!-- ══ Critical inline CSS — يُطبَّق فورًا بدون انتظار أي ملف خارجي، لعرض خلفية محايدة بدل الفراغ الأبيض/الفلاش قبل تحميل باقي الصفحة ══ -->
 <style>
@@ -151,7 +150,7 @@ if ("serviceWorker" in navigator) {
         </button>
       </div>
 
-      <div id="nameRow"><input class="inp" id="loginName" placeholder="الاسم الكامل"></div>
+      <div id="nameRow"><input class="inp" id="loginName" placeholder="الاسم الكامل" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other"></div>
 
       <div id="genderRow" class="gender-row">
         <div class="gender-seg-header">
@@ -268,11 +267,6 @@ if ("serviceWorker" in navigator) {
         <div class="forum-card-title">لماذا أنت هنا؟</div>
         <div class="forum-card-sub">تعرف على بريق وعلى الموقع في دقيقة</div>
       </div>
-      <div class="forum-section-card" onclick="window.QrShareModule && window.QrShareModule.open()">
-        <div class="forum-card-icon forum-card-icon--qrshare"><i class="fa-solid fa-qrcode"></i></div>
-        <div class="forum-card-title">مشاركة الموقع / QR</div>
-        <div class="forum-card-sub">شارك رابط الدخول بكود QR</div>
-      </div>
       <div class="forum-section-card" onclick="window.MilitaryModule && window.MilitaryModule.open()">
         <div class="forum-card-icon forum-card-icon--military"><img src="images/military-icon.png" alt="الخدمة العسكرية"></div>
         <div class="forum-card-title">الخدمة العسكرية</div>
@@ -298,7 +292,7 @@ if ("serviceWorker" in navigator) {
       <div class="lib-toolbar">
         <div class="lib-search-wrap">
           <i class="fa-solid fa-magnifying-glass lib-search-icon"></i>
-          <input class="lib-search-inp" id="libSearchInp" placeholder="بحث في المواد والمحاضرات..." autocomplete="off">
+          <input class="lib-search-inp" id="libSearchInp" placeholder="بحث في المواد والمحاضرات..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other">
           <button class="lib-search-clear" id="libSearchClear" style="display:none" onclick="_libClearSearch()"><i class="fa-solid fa-xmark"></i></button>
         </div>
         <button class="lib-fav-btn" id="libFavBtn" onclick="_libToggleFavView()" title="المفضلة">
@@ -520,7 +514,7 @@ if ("serviceWorker" in navigator) {
 
     <!-- Search Bar -->
     <div id="chatSearchBar">
-      <input id="chatSearchInput" type="text" placeholder="ابحث في الرسائل..." autocomplete="off" oninput="onChatSearch(this.value)" onkeydown="if(event.key==='Enter'){event.shiftKey?chatSearchPrev():chatSearchNext();}if(event.key==='Escape')closeChatSearch();">
+      <input id="chatSearchInput" type="text" placeholder="ابحث في الرسائل..." autocomplete="off" oninput="onChatSearch(this.value)" onkeydown="if(event.key==='Enter'){event.shiftKey?chatSearchPrev():chatSearchNext();}if(event.key==='Escape')closeChatSearch();" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other">
       <div id="chatSearchNav">
         <span id="chatSearchCount">0 / 0</span>
         <button class="srch-nav-btn" id="srchPrevBtn" onclick="chatSearchPrev()" title="السابق"><i class="fa-solid fa-chevron-up"></i></button>
@@ -571,7 +565,7 @@ if ("serviceWorker" in navigator) {
         <button class="emoji-btn" id="chatEmojiBtn" title="إيموجي">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M8.5 14.5s1.5 2 3.5 2 3.5-2 3.5-2"/><circle cx="9" cy="9.5" r="1" fill="currentColor" stroke="none"/><circle cx="15" cy="9.5" r="1" fill="currentColor" stroke="none"/></svg>
         </button>
-        <input class="inp" type="text" placeholder="اكتب رسالة..." autocomplete="off" maxlength="2000">
+        <input class="inp" type="text" placeholder="اكتب رسالة..." autocomplete="off" maxlength="2000" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other">
         <button class="mic-btn" id="chatVoiceBtn" title="تسجيل صوتي">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a3 3 0 00-3 3v6a3 3 0 006 0V5a3 3 0 00-3-3z"/><path d="M19 10v1a7 7 0 01-14 0v-1"/><line x1="12" y1="18" x2="12" y2="22"/></svg>
         </button>
@@ -633,7 +627,7 @@ if ("serviceWorker" in navigator) {
         <div class="bar-main">
           <button type="button" class="cam-btn-inline" id="chatSendBtn" title="إرسال"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="17" height="17"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></button>
           <div class="clip-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg></div>
-          <input type="text" class="placeholder-text" id="chatInput" placeholder="الرسالة">
+          <input type="text" class="placeholder-text" id="chatInput" placeholder="الرسالة" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other">
           <div class="mic-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="19" height="19"><path d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v1a7 7 0 0 1-14 0v-1"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg></div>
           <div class="emoji-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><circle cx="12" cy="12" r="9.5"/><path d="M8.5 14.5s1.2 1.7 3.5 1.7 3.5-1.7 3.5-1.7"/><circle cx="9" cy="9.5" r="0.6" fill="currentColor"/><circle cx="15" cy="9.5" r="0.6" fill="currentColor"/></svg>
@@ -656,14 +650,14 @@ if ("serviceWorker" in navigator) {
     </div>
     <div class="poll-sheet-body">
       <div class="poll-label">السؤال *</div>
-      <input class="poll-inp" id="pollQuestion" placeholder="اكتب سؤال الاستطلاع..." maxlength="200">
+      <input class="poll-inp" id="pollQuestion" placeholder="اكتب سؤال الاستطلاع..." maxlength="200" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other">
       <div class="poll-label">الخيارات (2–6)</div>
       <div class="poll-options-list" id="pollOptionsList">
         <div class="poll-opt-row">
-          <input class="poll-opt-inp" placeholder="الخيار الأول" maxlength="100">
+          <input class="poll-opt-inp" placeholder="الخيار الأول" maxlength="100" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other">
         </div>
         <div class="poll-opt-row">
-          <input class="poll-opt-inp" placeholder="الخيار الثاني" maxlength="100">
+          <input class="poll-opt-inp" placeholder="الخيار الثاني" maxlength="100" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other">
         </div>
       </div>
       <button class="poll-add-opt-btn" id="pollAddOptBtn" onclick="pollAddOption()">
@@ -690,7 +684,7 @@ if ("serviceWorker" in navigator) {
   <!-- Search Bar — always visible, matching reference design -->
   <div class="dms-search-bar" id="dmsSearchBar">
     <i class="fa-solid fa-magnifying-glass"></i>
-    <input type="text" id="dmsSearchInp" placeholder="البحث عن رسائل أو مستخدمين..." autocomplete="off">
+    <input type="text" id="dmsSearchInp" placeholder="البحث عن رسائل أو مستخدمين..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other">
   </div>
 
   <!-- Filter Chips — تظهر فقط في تبويب المحادثات (الغرف بقت مدموجة جوه نفس التبويب) -->
@@ -811,7 +805,7 @@ if ("serviceWorker" in navigator) {
     <div class="chat-input" id="aiChatInputBar">
       <button class="plus-btn" title="إرفاق"><i class="fa-solid fa-plus"></i></button>
       <div class="input-pill">
-        <input class="inp" type="text" id="aiChatInput" placeholder="اسأل المساعد الذكي..." autocomplete="off">
+        <input class="inp" type="text" id="aiChatInput" placeholder="اسأل المساعد الذكي..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other">
         <button class="mic-btn" title="رسالة صوتية"><i class="fa-solid fa-microphone"></i></button>
       </div>
       <button class="send-btn" id="aiSendBtn" title="إرسال" onclick="window._sendToAI?.()">
@@ -847,7 +841,7 @@ if ("serviceWorker" in navigator) {
         </div>
         <div class="owner-collapse-panel">
           <div class="owner-collapse-inner">
-            <input class="inp" id="adminSearchInput" placeholder="بحث باسم أو بريد أو معرف...">
+            <input class="inp" id="adminSearchInput" placeholder="بحث باسم أو بريد أو معرف..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other">
             <div id="adminUsersList"><div class="spinner"></div></div>
           </div>
         </div>
@@ -868,7 +862,7 @@ if ("serviceWorker" in navigator) {
             <div class="panel-sec">
               <div class="panel-sec-title orange"><i class="fa-solid fa-newspaper"></i> نشر خبر</div>
               <div class="label">عنوان الخبر *</div>
-              <input class="inp" id="newsTitle" placeholder="عنوان الخبر">
+              <input class="inp" id="newsTitle" placeholder="عنوان الخبر" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other">
               <div class="label">محتوى الخبر</div>
               <textarea class="inp" id="newsBody" placeholder="تفاصيل الخبر..." rows="3" style="resize:none;line-height:1.5"></textarea>
               <button class="btn btn-orange" id="addNewsBtn"><i class="fa-solid fa-plus"></i> نشر الخبر</button>
@@ -892,7 +886,7 @@ if ("serviceWorker" in navigator) {
             <div class="panel-sec">
               <div class="panel-sec-title"><i class="fa-solid fa-bullhorn"></i> إرسال إخطار سريع</div>
               <div class="label">عنوان الإخطار *</div>
-              <input class="inp" id="adminQnTitleInput" placeholder="مثال: تم تحديد موعد امتحان مهم غداً">
+              <input class="inp" id="adminQnTitleInput" placeholder="مثال: تم تحديد موعد امتحان مهم غداً" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other">
               <div class="label">نص الإخطار</div>
               <textarea class="inp" id="adminQnBodyInput" placeholder="اكتب نص الإخطار هنا..." rows="3" style="resize:none;line-height:1.5"></textarea>
               <button class="btn" id="adminAddQuickNotifBtn" style="margin-top:10px;"><i class="fa-solid fa-paper-plane"></i> نشر الإخطار</button>
@@ -916,9 +910,9 @@ if ("serviceWorker" in navigator) {
             <div class="panel-sec">
               <div class="panel-sec-title orange"><i class="fa-solid fa-book-open"></i> إضافة محاضرة</div>
               <div class="label">اسم المادة *</div>
-              <input class="inp" id="lecSubject" placeholder="مثال: رياضيات، برمجة، شبكات...">
+              <input class="inp" id="lecSubject" placeholder="مثال: رياضيات، برمجة، شبكات..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other">
               <div class="label">عنوان المحاضرة *</div>
-              <input class="inp" id="lecTitle" placeholder="عنوان المحاضرة">
+              <input class="inp" id="lecTitle" placeholder="عنوان المحاضرة" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other">
               <div class="label">نوع المحتوى</div>
               <select class="inp" id="lecType" onchange="_syncLecFields('lec')">
                 <option value="link">رابط (URL)</option>
@@ -927,18 +921,18 @@ if ("serviceWorker" in navigator) {
               </select>
               <div id="lecFieldLink">
                 <div class="label">الرابط *</div>
-                <input class="inp" id="lecUrl" placeholder="https://...">
+                <input class="inp" id="lecUrl" placeholder="https://..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other">
               </div>
               <div id="lecFieldPdf" style="display:none">
                 <div class="label">رابط PDF *</div>
-                <input class="inp" id="lecPdf" placeholder="https://...">
+                <input class="inp" id="lecPdf" placeholder="https://..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other">
               </div>
               <div id="lecFieldText" style="display:none">
                 <div class="label">النص *</div>
                 <textarea class="inp" id="lecText" placeholder="اكتب المحتوى هنا..." rows="3" style="resize:none;line-height:1.5"></textarea>
               </div>
               <div class="label">وصف مختصر (اختياري)</div>
-              <input class="inp" id="lecDesc" placeholder="وصف المحاضرة">
+              <input class="inp" id="lecDesc" placeholder="وصف المحاضرة" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other">
               <button class="btn btn-orange" id="addLecBtn"><i class="fa-solid fa-plus"></i> نشر المحاضرة</button>
             </div>
           </div>
@@ -960,13 +954,13 @@ if ("serviceWorker" in navigator) {
             <div class="panel-sec">
               <div class="panel-sec-title orange"><i class="fa-solid fa-calendar-days"></i> إضافة امتحان</div>
               <div class="label">اسم المادة *</div>
-              <input class="inp" id="examSub"  placeholder="اسم المادة">
+              <input class="inp" id="examSub"  placeholder="اسم المادة" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other">
               <div class="label">التاريخ</div>
-              <input class="inp" id="examDate" placeholder="السبت 15 يونيو">
+              <input class="inp" id="examDate" placeholder="السبت 15 يونيو" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other">
               <div class="label">الوقت</div>
-              <input class="inp" id="examTime" placeholder="10 صباحاً">
+              <input class="inp" id="examTime" placeholder="10 صباحاً" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other">
               <div class="label">القاعة</div>
-              <input class="inp" id="examRoom" placeholder="القاعة (اختياري)">
+              <input class="inp" id="examRoom" placeholder="القاعة (اختياري)" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other">
               <button class="btn btn-orange" id="addExamBtn"><i class="fa-solid fa-plus"></i> إضافة الامتحان</button>
             </div>
           </div>
@@ -988,13 +982,13 @@ if ("serviceWorker" in navigator) {
             <div class="panel-sec">
               <div class="panel-sec-title orange"><i class="fa-solid fa-chalkboard-user"></i> إضافة سكشن</div>
               <div class="label">اسم الدكتور / المساعد *</div>
-              <input class="inp" id="secName"  placeholder="اسم الدكتور">
+              <input class="inp" id="secName"  placeholder="اسم الدكتور" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other">
               <div class="label">اسم المادة</div>
-              <input class="inp" id="secSubj"  placeholder="اسم المادة">
+              <input class="inp" id="secSubj"  placeholder="اسم المادة" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other">
               <div class="label">الوقت</div>
-              <input class="inp" id="secTime"  placeholder="الأحد 10 صباحاً">
+              <input class="inp" id="secTime"  placeholder="الأحد 10 صباحاً" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other">
               <div class="label">القاعة</div>
-              <input class="inp" id="secRoom"  placeholder="القاعة / المكان">
+              <input class="inp" id="secRoom"  placeholder="القاعة / المكان" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other">
               <button class="btn btn-orange" id="addSecBtn"><i class="fa-solid fa-plus"></i> إضافة السكشن</button>
             </div>
           </div>
@@ -1262,7 +1256,7 @@ if ("serviceWorker" in navigator) {
             <div class="panel-sec">
               <div class="panel-sec-title"><i class="fa-solid fa-layer-group"></i> إنشاء غرفة شات جديدة</div>
               <div class="label">اسم الغرفة *</div>
-              <input class="inp" id="oRoomName" placeholder="مثال: Anime Room, VIP Lounge...">
+              <input class="inp" id="oRoomName" placeholder="مثال: Anime Room, VIP Lounge..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other">
               <div class="label">اختر أيقونة الغرفة</div>
               <div class="room-create-grid" id="roomIconGrid">
                 <button class="room-icon-btn sel" data-icon="💬" onclick="selectRoomIcon(this)">💬</button>
@@ -1295,7 +1289,7 @@ if ("serviceWorker" in navigator) {
             <div class="panel-sec">
               <div class="panel-sec-title"><i class="fa-solid fa-newspaper"></i> نشر خبر</div>
               <div class="label">عنوان الخبر *</div>
-              <input class="inp" id="oNewsTitle" placeholder="عنوان الخبر">
+              <input class="inp" id="oNewsTitle" placeholder="عنوان الخبر" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other">
               <div class="label">محتوى الخبر</div>
               <textarea class="inp" id="oNewsBody" placeholder="تفاصيل الخبر..." rows="3" style="resize:none;line-height:1.5"></textarea>
               <button class="btn" id="oAddNewsBtn"><i class="fa-solid fa-plus"></i> نشر الخبر</button>
@@ -1319,7 +1313,7 @@ if ("serviceWorker" in navigator) {
             <div class="panel-sec">
               <div class="panel-sec-title"><i class="fa-solid fa-bullhorn"></i> إرسال إخطار سريع</div>
               <div class="label">عنوان الإخطار *</div>
-              <input class="inp" id="qnTitleInput" placeholder="مثال: تم تحديد موعد امتحان مهم غداً">
+              <input class="inp" id="qnTitleInput" placeholder="مثال: تم تحديد موعد امتحان مهم غداً" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other">
               <div class="label">نص الإخطار</div>
               <textarea class="inp" id="qnBodyInput" placeholder="اكتب نص الإخطار هنا..." rows="3" style="resize:none;line-height:1.5"></textarea>
               <button class="btn" id="oAddQuickNotifBtn" style="margin-top:10px;"><i class="fa-solid fa-paper-plane"></i> نشر الإخطار</button>
@@ -1343,9 +1337,9 @@ if ("serviceWorker" in navigator) {
             <div class="panel-sec">
               <div class="panel-sec-title"><i class="fa-solid fa-book-open"></i> إضافة محاضرة</div>
               <div class="label">اسم المادة *</div>
-              <input class="inp" id="oLecSubject" placeholder="مثال: رياضيات، برمجة، شبكات...">
+              <input class="inp" id="oLecSubject" placeholder="مثال: رياضيات، برمجة، شبكات..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other">
               <div class="label">عنوان *</div>
-              <input class="inp" id="oLecTitle" placeholder="عنوان المحاضرة">
+              <input class="inp" id="oLecTitle" placeholder="عنوان المحاضرة" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other">
               <div class="label">نوع المحتوى</div>
               <select class="inp" id="oLecType" onchange="_syncLecFields('oLec')">
                 <option value="link">رابط (URL)</option>
@@ -1354,18 +1348,18 @@ if ("serviceWorker" in navigator) {
               </select>
               <div id="oLecFieldLink">
                 <div class="label">الرابط *</div>
-                <input class="inp" id="oLecUrl" placeholder="https://...">
+                <input class="inp" id="oLecUrl" placeholder="https://..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other">
               </div>
               <div id="oLecFieldPdf" style="display:none">
                 <div class="label">رابط PDF *</div>
-                <input class="inp" id="oLecPdf" placeholder="https://...">
+                <input class="inp" id="oLecPdf" placeholder="https://..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other">
               </div>
               <div id="oLecFieldText" style="display:none">
                 <div class="label">النص *</div>
                 <textarea class="inp" id="oLecText" placeholder="اكتب المحتوى هنا..." rows="3" style="resize:none;line-height:1.5"></textarea>
               </div>
               <div class="label">وصف (اختياري)</div>
-              <input class="inp" id="oLecDesc"  placeholder="وصف مختصر">
+              <input class="inp" id="oLecDesc"  placeholder="وصف مختصر" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other">
               <button class="btn" id="oAddLecBtn"><i class="fa-solid fa-plus"></i> نشر المحاضرة</button>
             </div>
           </div>
@@ -1387,13 +1381,13 @@ if ("serviceWorker" in navigator) {
             <div class="panel-sec">
               <div class="panel-sec-title"><i class="fa-solid fa-calendar-days"></i> إضافة امتحان</div>
               <div class="label">اسم المادة *</div>
-              <input class="inp" id="oExamSub"  placeholder="اسم المادة">
+              <input class="inp" id="oExamSub"  placeholder="اسم المادة" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other">
               <div class="label">التاريخ</div>
-              <input class="inp" id="oExamDate" placeholder="السبت 15 يونيو">
+              <input class="inp" id="oExamDate" placeholder="السبت 15 يونيو" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other">
               <div class="label">الوقت</div>
-              <input class="inp" id="oExamTime" placeholder="10 صباحاً">
+              <input class="inp" id="oExamTime" placeholder="10 صباحاً" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other">
               <div class="label">القاعة</div>
-              <input class="inp" id="oExamRoom" placeholder="اختياري">
+              <input class="inp" id="oExamRoom" placeholder="اختياري" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other">
               <button class="btn" id="oAddExamBtn"><i class="fa-solid fa-plus"></i> إضافة</button>
             </div>
           </div>
@@ -1415,13 +1409,13 @@ if ("serviceWorker" in navigator) {
             <div class="panel-sec">
               <div class="panel-sec-title"><i class="fa-solid fa-chalkboard-user"></i> إضافة سكشن</div>
               <div class="label">اسم الدكتور *</div>
-              <input class="inp" id="oSecName"  placeholder="اسم الدكتور">
+              <input class="inp" id="oSecName"  placeholder="اسم الدكتور" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other">
               <div class="label">المادة</div>
-              <input class="inp" id="oSecSubj"  placeholder="اسم المادة">
+              <input class="inp" id="oSecSubj"  placeholder="اسم المادة" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other">
               <div class="label">الوقت</div>
-              <input class="inp" id="oSecTime"  placeholder="الأحد 10 صباحاً">
+              <input class="inp" id="oSecTime"  placeholder="الأحد 10 صباحاً" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other">
               <div class="label">القاعة</div>
-              <input class="inp" id="oSecRoom"  placeholder="القاعة">
+              <input class="inp" id="oSecRoom"  placeholder="القاعة" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other">
               <button class="btn" id="oAddSecBtn"><i class="fa-solid fa-plus"></i> إضافة</button>
             </div>
           </div>
@@ -1610,7 +1604,7 @@ if ("serviceWorker" in navigator) {
     <div class="um-search-wrap">
       <div class="um-search-inner">
         <i class="fa-solid fa-magnifying-glass um-search-icon"></i>
-        <input class="um-search-inp" id="ownerSearchInput" placeholder="بحث باسم أو بريد أو معرف...">
+        <input class="um-search-inp" id="ownerSearchInput" placeholder="بحث باسم أو بريد أو معرف..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other">
       </div>
     </div>
     <div class="um-body">
@@ -8566,9 +8560,9 @@ try { window._listenPinnedMsg?.(); } catch(e) {}
             </div>
             <div class="form-group" style="gap:8px;">
               <div class="label">الاسم الكامل</div>
-              <input class="inp" id="editName" placeholder="اسمك الكامل">
+              <input class="inp" id="editName" placeholder="اسمك الكامل" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other">
               <div class="label">نبذة عنك</div>
-              <input class="inp" id="editBio"  placeholder="اكتب نبذة قصيرة...">
+              <input class="inp" id="editBio"  placeholder="اكتب نبذة قصيرة..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other">
               <button class="btn" id="saveProfile" style="margin-top:4px;"><i class="fa-solid fa-floppy-disk"></i> حفظ التعديلات</button>
             </div>
           </div>
@@ -8636,7 +8630,7 @@ try { window._listenPinnedMsg?.(); } catch(e) {}
       <div class="np-search-bar">
         <div class="np-search-wrap">
           <i class="fa-solid fa-magnifying-glass np-search-icon"></i>
-          <input id="npSearchInp" class="np-search-inp" placeholder="بحث في الإشعارات..." oninput="npFilterNotifs(this.value)">
+          <input id="npSearchInp" class="np-search-inp" placeholder="بحث في الإشعارات..." oninput="npFilterNotifs(this.value)" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other">
         </div>
         <button class="np-clear-all-btn" onclick="npClearAll()" title="حذف الكل"><i class="fa-solid fa-trash"></i></button>
       </div>
@@ -8866,7 +8860,7 @@ try { window._listenPinnedMsg?.(); } catch(e) {}
     <h3><i class="fa-solid fa-comments"></i> المحادثات</h3>
     <button class="sidebar-search-icon-btn" id="sidebarSearchIconBtn" onclick="toggleSidebarSearch()" title="بحث"><i class="fa-solid fa-magnifying-glass"></i></button>
     <div class="sidebar-header-search-wrap">
-      <input class="sidebar-header-search-inp" id="sidebarHeaderSearchInp" placeholder="بحث..." autocomplete="off">
+      <input class="sidebar-header-search-inp" id="sidebarHeaderSearchInp" placeholder="بحث..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other">
     </div>
     <button class="sidebar-close-btn" id="sidebarCloseBtn" onclick="closeSidebar()"><i class="fa-solid fa-xmark"></i></button>
   </div>
@@ -8969,7 +8963,6 @@ try { window._listenPinnedMsg?.(); } catch(e) {}
 <script type="module" src="js/appearance-page.js"></script>
 <script type="module" src="js/quick-notifications.js"></script>
 <script src="js/why-here-forum.js"></script>
-<script src="js/qr-share.js"></script>
 
 </body>
 </html>
