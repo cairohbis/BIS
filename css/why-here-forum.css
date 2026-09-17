@@ -1,0 +1,34 @@
+/* ============================================================
+   "لماذا أنت هنا؟" — ستايل خاص بالإضافة فقط
+   ============================================================ */
+
+/* أيقونة الكارت في شبكة المنتدى */
+.forum-card-icon--whyhere {
+  background: linear-gradient(160deg, #5ee6d0, #1a9e8f);
+}
+
+/* الصفحة تفتح Full Screen فوق كل حاجة في الموقع */
+.why-here-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 99990;
+  background: #06080f;
+  padding: 0;
+}
+
+/* زرار الرجوع عايم فوق الصفحة */
+.why-here-back-btn {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 2;
+}
+
+/* الـ iframe نفسه بياخد الشاشة بالكامل */
+.why-here-iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}

@@ -387,7 +387,6 @@ body {
 .forum-card-icon--sections   { background: linear-gradient(160deg, #c298ff, #8a4fe0); }
 .forum-card-icon--attendance { background: linear-gradient(160deg, #6ee89a, #1fa85b); }
 .forum-card-icon--grades     { background: linear-gradient(160deg, #ffe173, #f0b90b); }
-.forum-card-icon--whyhere    { background: linear-gradient(160deg, #5ee6d0, #1a9e8f); }
 .forum-card-icon--military,
 .forum-card-icon--logo { background: transparent; box-shadow: none; width: auto; height: auto; border-radius: 0; }
 .forum-card-title { font-size: 13px; font-weight: 800; color: var(--text); }
