@@ -261,6 +261,11 @@ if ("serviceWorker" in navigator) {
         <div class="forum-card-sub">سجلك الأكاديمي ونتائجك الدراسية</div>
       </div>
 
+      <div class="forum-section-card" onclick="openWhyHere()">
+        <div class="forum-card-icon"><i class="fa-solid fa-compass"></i></div>
+        <div class="forum-card-title">لماذا أنت هنا؟</div>
+        <div class="forum-card-sub">تعرف على بريق وعلى الموقع في دقيقة</div>
+      </div>
       <div class="forum-section-card" onclick="window.MilitaryModule && window.MilitaryModule.open()">
         <div class="forum-card-icon forum-card-icon--military"><img src="images/military-icon.png" alt="الخدمة العسكرية"></div>
         <div class="forum-card-title">الخدمة العسكرية</div>
@@ -2828,6 +2833,10 @@ window.closeForumSection = function(contentId) {
 // Official portal URL — change this value to update the link
 const PORTAL_URL = "https://chi-eg.net/student_portal/?fbclid=Iwb21leAPq43hjbGNrA-rjRGV4dG4DYWVtAjExAHNydGMGYXBwX2lkDDM1MDY4NTUzMTcyOAABHkpCDRA8xSs7nItW3grqTxplTvYLsx1bYQSIosAjaza3rlBAtxE3395goFLL_aem_NpaEu8Nx7ixJG1fj_aGTdw";
 window.openPortal = function() { window.open(PORTAL_URL, "_blank", "noopener,noreferrer"); };
+
+// "Why are you here?" onboarding experience — separate standalone page, opened in a new tab
+const WHY_HERE_URL = "why-here.html";
+window.openWhyHere = function() { window.open(WHY_HERE_URL, "_blank", "noopener,noreferrer"); };
 
 document.querySelectorAll(".tab").forEach(t =>
   t.addEventListener("click", () => goTab(t.dataset.tab)));
