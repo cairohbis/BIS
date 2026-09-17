@@ -66,9 +66,15 @@
     overlay.querySelector("#qrShareCopyBtn").addEventListener("click", _copyLink);
   }
 
-  // رابط الموقع الحالي فعليًا — يُقرأ من جديد كل مرة، مفيش تخزين لرابط ثابت
+  // رابط الموقع الحالي فعليًا — يُقرأ من جديد كل مرة، مفيش تخزين لرابط ثابت.
+  // بيستخدم origin + pathname (مش origin بس) عشان يشتغل صح سواء الموقع
+  // على جذر الدومين أو جوه مجلد فرعي (زي GitHub Pages: user.github.io/BIS-main/)
   function _currentSiteUrl() {
-    return window.location.origin + "/";
+    let path = window.location.pathname;
+    if (!path.endsWith("/")) {
+      path = path.slice(0, path.lastIndexOf("/") + 1); // يشيل "index.html" لو موجودة، يسيب المجلد بس
+    }
+    return window.location.origin + path;
   }
 
   async function open() {
