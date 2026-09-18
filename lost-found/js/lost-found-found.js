@@ -34,7 +34,6 @@
   function render(container) {
     container.innerHTML = `
       <div class="lf-found-stats">
-        <div class="lf-stat"><span class="lf-stat-num">—</span><span class="lf-stat-label">منشورة</span></div>
         <div class="lf-stat"><span class="lf-stat-num">—</span><span class="lf-stat-label">تم العثور عليها</span></div>
       </div>
       <div class="lf-found-list"><div class="lf-loading"><i class="fa-solid fa-spinner fa-spin"></i></div></div>
@@ -45,7 +44,8 @@
   }
 
   /* ─────────────────────────────────────────
-     الإحصائيات — قراءة حقيقية من Firestore، مرة واحدة لكل فتح تاب
+     الإحصائية — رقم "تم العثور عليها" بس، من غير أي عد لمنشورات لسه مفتوحة (published)
+     عشان صفحة الأرشيف تفضل توثيقية 100% لحاجات اتلقت، مفيهاش أي إشارة لحاجات لسه بتتدور عليها
   ───────────────────────────────────────── */
   async function renderStats(statsEl) {
     if (!statsEl) return;
@@ -53,17 +53,11 @@
       const fs = await core.getFS();
       const { db, collection, query, where, getCountFromServer } = fs;
 
-      const totalQ = query(collection(db, "lostFound"), where("status", "in", ["published", "found"]));
       const foundQ = query(collection(db, "lostFound"), where("status", "==", "found"));
-
-      const [totalSnap, foundSnap] = await Promise.all([
-        getCountFromServer(totalQ),
-        getCountFromServer(foundQ),
-      ]);
+      const foundSnap = await getCountFromServer(foundQ);
 
       const nums = statsEl.querySelectorAll(".lf-stat-num");
-      if (nums[0]) nums[0].textContent = totalSnap.data().count;
-      if (nums[1]) nums[1].textContent = foundSnap.data().count;
+      if (nums[0]) nums[0].textContent = foundSnap.data().count;
     } catch (e) {
       console.error("[LostFound:found] فشل تحميل الإحصائيات", e);
       // فشل الإحصائيات لا يمنع عرض الأرشيف نفسه — قسم اختياري
