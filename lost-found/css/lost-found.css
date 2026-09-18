@@ -1,0 +1,253 @@
+/* ══════════════════════════════════════════
+   LOST & FOUND MODULE — راحت فين؟
+   ملف تنسيق واحد لكل الميزة (زي ما هو متفق عليه)
+   بيستخدم متغيرات الموقع العامة (--gold/--bg/--card/--border/--text/--muted)
+   فبيتوافق مع الـ Light Theme تلقائيًا من غير أي كود إضافي، إلا الحواف
+   الشفافة (rgba(255,255,255,..)) اللي بتحتاج نسخة معكوسة زي grades.css بالظبط.
+══════════════════════════════════════════ */
+
+/* ─── كارت "راحت فين؟" في شبكة المنتدى — نفس نمط باقي كروت forum-card-icon
+   لكن مضاف هنا بدل css/style.css عشان مانلمسش ملف موجود ───────────── */
+.forum-card-icon--lostfound { background: linear-gradient(160deg, #5eead4, #0d9488); }
+.forum-section-card:has(.forum-card-icon--lostfound)::after {
+  content: ""; position:absolute; inset:-1px; border-radius:inherit; pointer-events:none;
+  background: radial-gradient(120% 120% at 20% 0%, rgba(13,148,136,.16), transparent 60%);
+}
+
+#lost-found-app-root { display:none; position:fixed; inset:0; z-index:1500; align-items:flex-end; }
+
+.lf-sheet {
+  position:relative; width:100%; max-height:94dvh;
+  background:var(--bg2,#0c1528); border-radius:24px 24px 0 0;
+  border-top:1.5px solid var(--border,#1a2d47);
+  display:flex; flex-direction:column; overflow:hidden;
+  animation:lf-slide-up .28s cubic-bezier(0.34,1.1,0.64,1);
+}
+.lf-handle { width:40px; height:4px; border-radius:2px; background:var(--border,#1a2d47); margin:10px auto 0; flex-shrink:0; }
+
+@keyframes lf-slide-up { from{ transform:translateY(100%);} to{ transform:translateY(0);} }
+@keyframes lf-fade-in  { from{ opacity:0; } to{ opacity:1; } }
+@keyframes lf-spin     { to { transform:rotate(360deg); } }
+
+/* ─── Header ─── */
+.lf-header { display:flex; align-items:center; justify-content:space-between; padding:12px 16px; border-bottom:1px solid var(--border,#1a2d47); flex-shrink:0; }
+.lf-header h2 { margin:0; font-size:16px; font-weight:900; color:var(--gold,#c9a96e); }
+.lf-close-btn { background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.1); border-radius:12px; width:34px; height:34px; color:var(--muted,#5a7499); cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all .18s; }
+.lf-close-btn:hover { background:rgba(255,255,255,.12); color:var(--text,#e8edf5); }
+
+/* ─── Tabs ─── */
+.lf-tabs { display:flex; gap:8px; padding:10px 16px; border-bottom:1px solid var(--border,#1a2d47); flex-shrink:0; overflow-x:auto; }
+.lf-tab { flex-shrink:0; padding:8px 16px; border-radius:20px; border:1.5px solid var(--border,#1a2d47); background:var(--card,#101e33); color:var(--muted,#5a7499); font-family:inherit; font-size:13px; font-weight:700; cursor:pointer; transition:all .18s; white-space:nowrap; }
+.lf-tab:hover { color:var(--text,#e8edf5); }
+.lf-tab.active { background:var(--gold,#c9a96e); color:#060d1a; border-color:transparent; font-weight:800; box-shadow:0 4px 12px rgba(201,169,110,.3); }
+
+/* ─── Toolbar (بحث + نشر) ─── */
+.lf-toolbar { display:flex; gap:10px; padding:10px 16px; flex-shrink:0; }
+.lf-search-wrap { position:relative; flex:1; }
+.lf-search-wrap i { position:absolute; top:50%; right:14px; transform:translateY(-50%); color:var(--muted,#5a7499); font-size:13px; pointer-events:none; }
+.lf-search { width:100%; padding:11px 40px 11px 14px; border-radius:14px; border:1.5px solid var(--border,#1a2d47); background:var(--bg,#060d1a); color:var(--text,#e8edf5); font-family:inherit; font-size:13px; outline:none; box-sizing:border-box; direction:rtl; transition:border-color .2s; }
+.lf-search:focus { border-color:var(--gold,#c9a96e); }
+.lf-new-post-btn { flex-shrink:0; padding:0 16px; border:none; border-radius:14px; background:var(--gold,#c9a96e); color:#060d1a; font-family:inherit; font-size:13px; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:6px; transition:opacity .15s; }
+.lf-new-post-btn:hover { opacity:.88; }
+
+/* ─── Content / Views ─── */
+.lf-content { flex:1; overflow-y:auto; overflow-x:hidden; padding:4px 16px 32px; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; }
+.lf-content::-webkit-scrollbar { width:3px; }
+.lf-content::-webkit-scrollbar-thumb { background:var(--border,#1a2d47); border-radius:3px; }
+.lf-view { display:flex; flex-direction:column; gap:12px; }
+
+/* ─── حالات عامة: تحميل / فاضي / خطأ ─── */
+.lf-loading { display:flex; align-items:center; justify-content:center; padding:50px 20px; font-size:24px; color:var(--gold,#c9a96e); }
+.lf-empty, .lf-error { display:flex; flex-direction:column; align-items:center; gap:10px; padding:40px 20px; text-align:center; color:var(--muted,#5a7499); }
+.lf-empty i, .lf-error i { font-size:26px; color:var(--gold,#c9a96e); }
+.lf-error i { color:var(--danger,#ef4444); }
+.lf-empty p, .lf-error p { margin:0; font-size:13px; font-weight:600; }
+
+/* ─── Badges (نوع/حالة) ─── */
+.lf-badge { display:inline-flex; align-self:flex-start; font-size:11px; font-weight:800; padding:3px 12px; border-radius:20px; border:1px solid; }
+.lf-badge-lost  { background:rgba(239,68,68,.1);  border-color:rgba(239,68,68,.3);  color:var(--danger,#ef4444); }
+.lf-badge-found { background:rgba(34,197,94,.1);  border-color:rgba(34,197,94,.3);  color:var(--success,#22c55e); }
+.lf-badge-done  { width:30px; height:30px; border-radius:50%; align-items:center; justify-content:center; padding:0; font-size:14px; }
+
+.lf-status-chip { display:inline-flex; font-size:10px; font-weight:800; padding:3px 10px; border-radius:20px; }
+.lf-status-pending  { background:rgba(245,158,11,.12); color:var(--warn,#f59e0b); }
+.lf-status-rejected { background:rgba(239,68,68,.12); color:var(--danger,#ef4444); }
+
+/* ─── كارت المنشور (الفيد) ─── */
+.lf-user-badge { display:flex; align-items:center; gap:8px; }
+.lf-avatar, .lf-avatar-fallback { width:30px; height:30px; border-radius:50%; object-fit:cover; flex-shrink:0; }
+.lf-avatar-fallback { background:rgba(255,255,255,.06); display:flex; align-items:center; justify-content:center; color:var(--muted,#5a7499); font-size:13px; }
+.lf-user-name { font-size:13px; font-weight:700; color:var(--text,#e8edf5); }
+
+.lf-feed-list, .lf-found-list, .lf-admin-queue { display:flex; flex-direction:column; gap:12px; }
+
+.lf-post-card {
+  background:rgba(255,255,255,.03); border:1px solid var(--border,#1a2d47); border-radius:16px;
+  padding:14px; display:flex; flex-direction:column; gap:8px; cursor:pointer; transition:background .15s;
+}
+.lf-post-card:hover { background:rgba(255,255,255,.05); }
+.lf-post-header { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+.lf-post-time { font-size:11px; color:var(--muted,#5a7499); font-weight:600; white-space:nowrap; }
+.lf-post-title { margin:0; font-size:14px; font-weight:800; color:var(--text,#e8edf5); }
+.lf-post-desc { margin:0; font-size:12.5px; color:var(--muted,#5a7499); line-height:1.6; }
+.lf-post-location { font-size:12px; color:var(--muted,#5a7499); display:flex; align-items:center; gap:5px; }
+.lf-post-location i { color:var(--gold,#c9a96e); }
+
+.lf-post-image { border-radius:12px; overflow:hidden; max-height:220px; }
+.lf-post-image img { width:100%; height:100%; object-fit:cover; display:block; }
+.lf-post-image--full { max-height:none; }
+
+.lf-post-footer { display:flex; padding-top:6px; border-top:1px solid rgba(255,255,255,.05); }
+.lf-post-comments-btn { background:none; border:none; color:var(--muted,#5a7499); font-family:inherit; font-size:12px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:6px; padding:4px 0; }
+.lf-post-comments-btn:hover { color:var(--text,#e8edf5); }
+
+/* ─── طبقة المودال المشتركة ─── */
+.lf-modal-layer { position:absolute; inset:0; z-index:10; background:rgba(0,0,0,.65); backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px); display:flex; align-items:flex-end; justify-content:center; animation:lf-fade-in .18s ease; }
+.lf-modal-layer[hidden] { display:none; }
+
+.lf-modal {
+  position:relative; width:100%; max-height:90dvh; overflow-y:auto;
+  background:var(--card,#101e33); border-radius:20px 20px 0 0; border-top:1.5px solid var(--border,#1a2d47);
+  padding:18px 16px 28px; display:flex; flex-direction:column; gap:10px;
+  animation:lf-slide-up .24s cubic-bezier(0.34,1.1,0.64,1);
+}
+.lf-modal h3 { margin:0 0 4px; font-size:15px; font-weight:900; color:var(--gold,#c9a96e); }
+.lf-modal-close { position:absolute; top:14px; left:14px; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.1); border-radius:10px; width:30px; height:30px; color:var(--muted,#5a7499); cursor:pointer; display:flex; align-items:center; justify-content:center; }
+
+.lf-mark-found-btn {
+  margin-top:6px; padding:12px; border:none; border-radius:14px;
+  background:linear-gradient(135deg,#1a6b3c,#22c55e); color:#fff;
+  font-family:inherit; font-size:13.5px; font-weight:800; cursor:pointer;
+  display:flex; align-items:center; justify-content:center; gap:8px; transition:opacity .15s;
+}
+.lf-mark-found-btn:hover { opacity:.88; }
+
+/* ─── فورم النشر ─── */
+.lf-form { display:flex; flex-direction:column; gap:10px; margin-top:4px; }
+.lf-type-toggle { display:flex; gap:10px; }
+.lf-type-toggle label { flex:1; display:flex; align-items:center; justify-content:center; gap:6px; padding:10px; border-radius:12px; border:1.5px solid var(--border,#1a2d47); font-size:13px; font-weight:700; color:var(--muted,#5a7499); cursor:pointer; }
+.lf-type-toggle input { accent-color:var(--gold,#c9a96e); }
+
+.lf-input, .lf-textarea {
+  width:100%; padding:12px 14px; border-radius:14px; border:1.5px solid var(--border,#1a2d47);
+  background:var(--bg,#060d1a); color:var(--text,#e8edf5); font-family:inherit; font-size:14px;
+  outline:none; box-sizing:border-box; direction:rtl; transition:border-color .2s,box-shadow .2s;
+}
+.lf-input:focus, .lf-textarea:focus { border-color:var(--gold,#c9a96e); box-shadow:0 0 0 3px rgba(201,169,110,.14); }
+.lf-textarea { min-height:90px; resize:vertical; }
+.lf-input::placeholder, .lf-textarea::placeholder { color:var(--muted,#5a7499); }
+
+.lf-image-picker { display:flex; flex-direction:column; gap:8px; }
+.lf-image-pick-btn { align-self:flex-start; padding:9px 14px; border-radius:12px; border:1.5px dashed var(--border,#1a2d47); background:rgba(255,255,255,.03); color:var(--muted,#5a7499); font-family:inherit; font-size:12.5px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:6px; }
+.lf-image-pick-btn:hover { color:var(--text,#e8edf5); }
+.lf-image-preview-wrap:empty { display:none; }
+.lf-image-preview { max-width:140px; max-height:140px; border-radius:12px; object-fit:cover; display:block; }
+.lf-upload-progress-track { height:6px; border-radius:3px; background:rgba(255,255,255,.07); overflow:hidden; }
+.lf-upload-progress-fill { height:100%; width:0%; background:var(--gold,#c9a96e); transition:width .2s ease; }
+
+.lf-submit-btn {
+  margin-top:4px; padding:14px; border:none; border-radius:16px; background:var(--gold,#c9a96e);
+  color:#060d1a; font-family:inherit; font-size:15px; font-weight:800; cursor:pointer;
+  display:flex; align-items:center; justify-content:center; gap:8px; transition:opacity .15s,transform .15s;
+}
+.lf-submit-btn:hover { opacity:.88; }
+.lf-submit-btn:active { transform:scale(.97); }
+.lf-submit-btn:disabled { opacity:.6; cursor:not-allowed; }
+
+/* ─── طلباتك السابقة (جوه فورم النشر) ─── */
+.lf-my-requests { display:flex; flex-direction:column; gap:8px; padding:12px; margin-bottom:4px; background:rgba(255,255,255,.03); border:1px solid var(--border,#1a2d47); border-radius:14px; }
+.lf-my-requests h4 { margin:0 0 2px; font-size:12px; font-weight:800; color:var(--muted,#5a7499); }
+.lf-my-request-item { display:flex; flex-direction:column; gap:5px; padding:9px 10px; background:rgba(255,255,255,.03); border-radius:10px; }
+.lf-my-request-top { display:flex; align-items:center; gap:8px; }
+.lf-my-request-title { font-size:12.5px; font-weight:700; color:var(--text,#e8edf5); }
+.lf-rejection-reason, .lf-admin-note { margin:0; font-size:11.5px; line-height:1.5; display:flex; align-items:flex-start; gap:5px; }
+.lf-rejection-reason { color:var(--danger,#ef4444); }
+.lf-admin-note { color:var(--blueL,#60a5fa); }
+.lf-edit-request-btn { align-self:flex-start; background:none; border:none; color:var(--gold,#c9a96e); font-family:inherit; font-size:12px; font-weight:800; cursor:pointer; padding:2px 0; text-decoration:underline; }
+
+/* ─── التعليقات ─── */
+.lf-comments { display:flex; flex-direction:column; gap:10px; margin-top:10px; padding-top:10px; border-top:1px solid var(--border,#1a2d47); }
+.lf-comments-list { display:flex; flex-direction:column; gap:10px; }
+.lf-no-comments { margin:0; text-align:center; font-size:12.5px; color:var(--muted,#5a7499); padding:14px 0; }
+
+.lf-comment { display:flex; flex-direction:column; gap:5px; }
+.lf-comment-header { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+.lf-comment-time { font-size:10.5px; color:var(--muted,#5a7499); white-space:nowrap; }
+.lf-comment-text { margin:0; font-size:12.5px; color:var(--text,#e8edf5); line-height:1.6; }
+.lf-comment-actions { display:flex; gap:12px; }
+.lf-reply-btn, .lf-delete-comment-btn { background:none; border:none; font-family:inherit; font-size:11px; font-weight:700; cursor:pointer; color:var(--muted,#5a7499); padding:0; }
+.lf-reply-btn:hover { color:var(--gold,#c9a96e); }
+.lf-delete-comment-btn:hover { color:var(--danger,#ef4444); }
+
+.lf-replies { display:flex; flex-direction:column; gap:10px; margin-top:4px; padding-right:16px; border-right:2px solid var(--border,#1a2d47); }
+
+.lf-comment-form, .lf-reply-inline-form { display:flex; gap:8px; margin-top:6px; }
+.lf-comment-input { flex:1; padding:10px 14px; border-radius:20px; border:1.5px solid var(--border,#1a2d47); background:var(--bg,#060d1a); color:var(--text,#e8edf5); font-family:inherit; font-size:12.5px; outline:none; direction:rtl; }
+.lf-comment-input:focus { border-color:var(--gold,#c9a96e); }
+.lf-comment-send-btn { flex-shrink:0; width:38px; height:38px; border-radius:50%; border:none; background:var(--gold,#c9a96e); color:#060d1a; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+.lf-comment-send-btn:disabled { opacity:.6; cursor:not-allowed; }
+
+/* ─── أرشيف "لقيتها" ─── */
+.lf-found-stats { display:flex; gap:10px; }
+.lf-stat { flex:1; background:rgba(34,197,94,.06); border:1.5px solid rgba(34,197,94,.2); border-radius:16px; padding:14px; display:flex; flex-direction:column; align-items:center; gap:2px; }
+.lf-stat-num { font-size:24px; font-weight:900; color:var(--success,#22c55e); line-height:1; }
+.lf-stat-label { font-size:11px; font-weight:700; color:var(--muted,#5a7499); }
+
+.lf-archive-item { display:flex; align-items:center; gap:12px; padding:12px 14px; background:rgba(255,255,255,.03); border:1px solid var(--border,#1a2d47); border-radius:14px; }
+.lf-archive-item .lf-badge-done { background:rgba(34,197,94,.12); color:var(--success,#22c55e); }
+.lf-archive-info { flex:1; display:flex; flex-direction:column; gap:3px; }
+.lf-archive-title { font-size:13px; font-weight:800; color:var(--text,#e8edf5); }
+.lf-archive-meta { font-size:11px; color:var(--muted,#5a7499); }
+.lf-correct-back-btn { flex-shrink:0; padding:6px 12px; border-radius:10px; border:1px solid var(--border,#1a2d47); background:none; color:var(--muted,#5a7499); font-family:inherit; font-size:11px; font-weight:700; cursor:pointer; }
+.lf-correct-back-btn:hover { color:var(--danger,#ef4444); border-color:rgba(239,68,68,.3); }
+
+/* ─── لوحة الإدارة (تاب المراجعة) ─── */
+.lf-admin-toolbar { display:flex; margin-bottom:2px; }
+.lf-direct-publish-btn { padding:10px 16px; border:none; border-radius:14px; background:var(--gold,#c9a96e); color:#060d1a; font-family:inherit; font-size:13px; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:8px; }
+.lf-direct-publish-btn:hover { opacity:.88; }
+
+.lf-admin-card { background:rgba(255,255,255,.03); border:1px solid var(--border,#1a2d47); border-radius:16px; padding:14px; display:flex; flex-direction:column; gap:8px; }
+.lf-admin-actions { display:flex; gap:8px; margin-top:6px; }
+.lf-admin-actions button { flex:1; padding:9px 6px; border-radius:12px; border:none; font-family:inherit; font-size:12px; font-weight:800; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:5px; }
+.lf-approve-btn { background:rgba(34,197,94,.15); color:var(--success,#22c55e); }
+.lf-approve-btn:hover { background:rgba(34,197,94,.25); }
+.lf-request-edit-btn { background:rgba(59,130,246,.15); color:var(--blueL,#60a5fa); }
+.lf-request-edit-btn:hover { background:rgba(59,130,246,.25); }
+.lf-reject-btn { background:rgba(239,68,68,.15); color:var(--danger,#ef4444); }
+.lf-reject-btn:hover { background:rgba(239,68,68,.25); }
+
+.lf-reason-form { display:flex; flex-direction:column; gap:10px; margin-top:4px; }
+.lf-reason-input { width:100%; min-height:100px; padding:12px 14px; border-radius:14px; border:1.5px solid var(--border,#1a2d47); background:var(--bg,#060d1a); color:var(--text,#e8edf5); font-family:inherit; font-size:13px; outline:none; resize:vertical; box-sizing:border-box; direction:rtl; }
+.lf-reason-input:focus { border-color:var(--gold,#c9a96e); }
+.lf-reason-submit-btn { padding:12px; border:none; border-radius:14px; background:var(--gold,#c9a96e); color:#060d1a; font-family:inherit; font-size:14px; font-weight:800; cursor:pointer; }
+.lf-reason-submit-btn:hover { opacity:.88; }
+.lf-reason-submit-btn:disabled { opacity:.6; cursor:not-allowed; }
+
+/* ══════════════════════════════════════════
+   Light Theme — نفس أسلوب grades.css بالظبط
+   (متغيرات --bg/--card/--text/--border/--muted/--gold بتتبدل تلقائيًا
+   عبر html.theme-light، هنا بس السطوح الشفافة rgba(255,255,255,..)
+   المحتاجة نسخة معكوسة عشان تبان صح على خلفية بيضا)
+══════════════════════════════════════════ */
+html.theme-light .lf-post-card,
+html.theme-light .lf-admin-card,
+html.theme-light .lf-archive-item,
+html.theme-light .lf-my-requests,
+html.theme-light .lf-my-request-item,
+html.theme-light .lf-image-pick-btn { background:rgba(0,0,0,.03); border-color:rgba(0,0,0,.08); }
+
+html.theme-light .lf-post-card:hover { background:rgba(0,0,0,.05); }
+
+html.theme-light .lf-avatar-fallback { background:rgba(0,0,0,.05); }
+
+html.theme-light .lf-tab { background:#fff; }
+
+html.theme-light .lf-search,
+html.theme-light .lf-input,
+html.theme-light .lf-textarea,
+html.theme-light .lf-comment-input,
+html.theme-light .lf-reason-input { background:#fff; }
+
+html.theme-light .lf-post-footer { border-top-color:rgba(0,0,0,.06); }
+html.theme-light .lf-comments { border-top-color:rgba(0,0,0,.08); }
+html.theme-light .lf-upload-progress-track { background:rgba(0,0,0,.08); }
