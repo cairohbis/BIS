@@ -60,6 +60,7 @@ if ("serviceWorker" in navigator) {
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <link rel="stylesheet" href="grades/grades.css">
+<link rel="stylesheet" href="lost-found/css/lost-found.css">
 <link rel="stylesheet" href="css/military.css">
 <link rel="stylesheet" href="css/style.css">
 <link rel="stylesheet" href="css/why-here-forum.css">
@@ -261,6 +262,12 @@ if ("serviceWorker" in navigator) {
         <div class="forum-card-icon forum-card-icon--grades"><i class="fa-solid fa-graduation-cap"></i></div>
         <div class="forum-card-title">درجاتي</div>
         <div class="forum-card-sub">سجلك الأكاديمي ونتائجك الدراسية</div>
+      </div>
+
+      <div class="forum-section-card" onclick="window.LostFoundModule && window.LostFoundModule.open()">
+        <div class="forum-card-icon forum-card-icon--lostfound"><i class="fa-solid fa-magnifying-glass-location"></i></div>
+        <div class="forum-card-title">راحت فين؟</div>
+        <div class="forum-card-sub">مفقودات وموجودات المعهد</div>
       </div>
 
       <div class="forum-section-card" onclick="openForumSection('tab-whyhere','tab-whyhere-content')">
@@ -7769,6 +7776,107 @@ service cloud.firestore {
       allow read, write: if isOwner() || request.auth.uid == uid;
     }
 
+    // ══════════════════════════════════════
+    // LOST & FOUND — راحت فين؟
+    // ══════════════════════════════════════
+    match /lostFound/{postId} {
+
+      allow read: if isSignedIn() && (
+        resource.data.status in ["published", "found"] ||
+        resource.data.createdBy == request.auth.uid ||
+        isAdmin()
+      );
+
+      allow create: if isSignedIn() && (
+        // مستخدم عادي: طلب جديد دايمًا pending
+        (request.resource.data.createdBy == request.auth.uid &&
+         request.resource.data.status == "pending" &&
+         request.resource.data.type in ["lost", "found"] &&
+         request.resource.data.title is string &&
+         request.resource.data.title.size() > 0)
+        ||
+        // الأدمن: نشر مباشر — status == published من الإنشاء مباشرة
+        (isAdmin() &&
+         request.resource.data.createdBy == request.auth.uid &&
+         request.resource.data.status == "published" &&
+         request.resource.data.approvedBy == request.auth.uid &&
+         request.resource.data.approvedAt == request.time &&
+         request.resource.data.type in ["lost", "found"] &&
+         request.resource.data.title is string &&
+         request.resource.data.title.size() > 0)
+      );
+
+      allow update: if isSignedIn() && (
+        // ── الأدمن: كل انتقال مقيّد بحقوله بالظبط ──
+
+        // 1) موافقة: pending → published
+        (isAdmin() &&
+         resource.data.status == "pending" &&
+         request.resource.data.status == "published" &&
+         request.resource.data.approvedBy == request.auth.uid &&
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(["status","approvedBy","approvedAt"])) ||
+
+        // 2) رفض: pending → rejected
+        (isAdmin() &&
+         resource.data.status == "pending" &&
+         request.resource.data.status == "rejected" &&
+         request.resource.data.rejectedBy == request.auth.uid &&
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(["status","rejectedBy","rejectedAt","rejectionReason"])) ||
+
+        // 3) طلب استكمال بيانات: adminNote بس، الحالة تفضل pending
+        (isAdmin() &&
+         resource.data.status == "pending" &&
+         request.resource.data.status == "pending" &&
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(["adminNote"])) ||
+
+        // 4) تصحيح: found → published (تراجع)
+        (isAdmin() &&
+         resource.data.status == "found" &&
+         request.resource.data.status == "published" &&
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(["status","resolvedBy","resolvedAt"])) ||
+
+        // 5) الأدمن يقفل منشور بالنيابة: published → found
+        (isAdmin() &&
+         resource.data.status == "published" &&
+         request.resource.data.status == "found" &&
+         request.resource.data.resolvedBy == request.auth.uid &&
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(["status","resolvedBy","resolvedAt"])) ||
+
+        // ── صاحب المنشور (بدون صلاحية أدمن) ──
+
+        // 6) يعدّل بياناته وهو لسه pending أو rejected (إعادة إرسال) — حقول محددة بالظبط
+        (request.auth.uid == resource.data.createdBy &&
+         resource.data.status in ["pending", "rejected"] &&
+         request.resource.data.status == "pending" &&
+         request.resource.data.createdBy == resource.data.createdBy &&
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(
+           ["type","title","description","location","images",
+            "status","rejectedBy","rejectedAt","rejectionReason","adminNote"]
+         )) ||
+
+        // 7) يقفل منشوره المنشور (لقيتها)
+        (request.auth.uid == resource.data.createdBy &&
+         resource.data.status == "published" &&
+         request.resource.data.status == "found" &&
+         request.resource.data.resolvedBy == request.auth.uid)
+      );
+
+      allow delete: if isAdmin();
+
+      match /comments/{commentId} {
+        allow read: if isSignedIn();
+
+        allow create: if isSignedIn() &&
+          request.resource.data.createdBy == request.auth.uid &&
+          get(/databases/$(database)/documents/lostFound/$(postId)).data.status == "published";
+
+        allow update: if false;
+
+        allow delete: if isAdmin() ||
+          request.auth.uid == resource.data.createdBy;
+      }
+    }
+
     // ── باقي المجموعات ──
     match /{document=**} {
       allow read: if isAdmin();
@@ -8862,6 +8970,13 @@ try { window._listenPinnedMsg?.(); } catch(e) {}
 ══════════════════════════════════════════ -->
 <div id="grades-app-root" aria-label="درجاتي" role="dialog"></div>
 <script src="grades/grades.js" defer></script>
+
+<!-- ══════════════════════════════════════════
+     LOST & FOUND MODULE — راحت فين؟
+     حاوية مستقلة + تحميل نقطة الدخول (Loader)
+══════════════════════════════════════════ -->
+<div id="lost-found-app-root" aria-label="راحت فين؟" role="dialog"></div>
+<script src="lost-found/js/lost-found.js" defer></script>
 
 <div id="military-app-root" aria-label="الخدمة العسكرية" role="dialog"></div>
 <script src="js/military.js" defer></script>
