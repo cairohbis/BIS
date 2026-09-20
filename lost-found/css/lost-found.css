@@ -54,6 +54,7 @@
 .lf-content::-webkit-scrollbar { width:3px; }
 .lf-content::-webkit-scrollbar-thumb { background:var(--border,#1a2d47); border-radius:3px; }
 .lf-view { display:flex; flex-direction:column; gap:12px; }
+.lf-view[hidden] { display:none; }
 
 /* ─── حالات عامة: تحميل / فاضي / خطأ ─── */
 .lf-loading { display:flex; align-items:center; justify-content:center; padding:50px 20px; font-size:24px; color:var(--gold,#c9a96e); }
@@ -120,6 +121,25 @@
   display:flex; align-items:center; justify-content:center; gap:8px; transition:opacity .15s;
 }
 .lf-mark-found-btn:hover { opacity:.88; }
+
+.lf-delete-post-btn {
+  margin-top:2px; padding:11px; border:1.5px solid rgba(239,68,68,.3); border-radius:14px;
+  background:rgba(239,68,68,.08); color:var(--danger,#ef4444);
+  font-family:inherit; font-size:13px; font-weight:800; cursor:pointer;
+  display:flex; align-items:center; justify-content:center; gap:8px; transition:background .15s;
+}
+.lf-delete-post-btn:hover { background:rgba(239,68,68,.16); }
+.lf-archive-item .lf-delete-post-btn { flex-shrink:0; width:34px; height:34px; padding:0; margin-top:0; border-radius:10px; }
+.lf-admin-card .lf-delete-post-btn { margin-top:8px; }
+
+.lf-confirm-text { margin:0; font-size:13px; color:var(--muted,#5a7499); line-height:1.7; }
+.lf-confirm-actions { display:flex; gap:10px; margin-top:6px; }
+.lf-confirm-actions button { flex:1; padding:12px; border-radius:14px; border:none; font-family:inherit; font-size:13.5px; font-weight:800; cursor:pointer; }
+.lf-confirm-cancel-btn { background:rgba(255,255,255,.06); color:var(--text,#e8edf5); }
+.lf-confirm-cancel-btn:hover { background:rgba(255,255,255,.1); }
+.lf-confirm-delete-btn { background:var(--danger,#ef4444); color:#fff; }
+.lf-confirm-delete-btn:hover { opacity:.88; }
+.lf-confirm-delete-btn:disabled { opacity:.6; cursor:not-allowed; }
 
 /* ─── فورم النشر ─── */
 .lf-form { display:flex; flex-direction:column; gap:10px; margin-top:4px; }
@@ -250,3 +270,4 @@ html.theme-light .lf-reason-input { background:#fff; }
 html.theme-light .lf-post-footer { border-top-color:rgba(0,0,0,.06); }
 html.theme-light .lf-comments { border-top-color:rgba(0,0,0,.08); }
 html.theme-light .lf-upload-progress-track { background:rgba(0,0,0,.08); }
+html.theme-light .lf-confirm-cancel-btn { background:rgba(0,0,0,.05); }
