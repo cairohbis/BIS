@@ -1,0 +1,126 @@
+/* ============================================================================
+   Disclaimer Consent — تنبيه رسمي وإخلاء مسؤولية
+   ============================================================================
+   نظام مستقل بالكامل. كل الكلاسات بادئة بـ dc- ولا يلمس أي كلاس موجود.
+   نفس لغة تصميم الإخطار السريع (خلفية ضبابية + نافذة زجاجية).
+   ========================================================================= */
+
+.dc-overlay{
+  position: fixed;
+  inset: 0;
+  z-index: 200000; /* فوق كل النوافذ والإخطارات، وتحت الـ splash فقط */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: calc(16px + env(safe-area-inset-top, 0px)) 16px calc(16px + env(safe-area-inset-bottom, 0px));
+  background: rgba(6, 13, 26, 0.45);
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .25s ease;
+}
+.dc-overlay.show{
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.dc-card{
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 560px;
+  max-height: 88vh;
+  max-height: 88dvh;
+  background: rgba(16, 30, 51, 0.55);
+  backdrop-filter: blur(24px) saturate(170%);
+  -webkit-backdrop-filter: blur(24px) saturate(170%);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 24px;
+  box-shadow: 0 12px 40px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.10);
+  overflow: hidden;
+  transform: translateY(14px) scale(.97);
+  transition: transform .25s ease;
+}
+.dc-overlay.show .dc-card{ transform: translateY(0) scale(1); }
+
+.dc-title{
+  flex: 0 0 auto;
+  padding: 22px 22px 14px;
+  font-size: 19px;
+  font-weight: 700;
+  line-height: 1.4;
+  text-align: center;
+  color: #dfc090;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.dc-body{
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  padding: 16px 22px;
+  outline: none;
+}
+
+.dc-subtitle{
+  margin: 14px 0 4px;
+  font-size: 14.5px;
+  font-weight: 700;
+  color: #ffffff;
+}
+.dc-text{
+  margin: 0 0 12px;
+  font-size: 14.5px;
+  line-height: 1.85;
+  color: #cdd7e6;
+}
+.dc-body > .dc-text:last-child{ margin-bottom: 0; }
+
+.dc-footer{
+  flex: 0 0 auto;
+  padding: 14px 22px calc(18px + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid rgba(255,255,255,0.08);
+  background: rgba(6, 13, 26, 0.25);
+}
+
+.dc-error{
+  margin-bottom: 10px;
+  padding: 9px 12px;
+  border-radius: 12px;
+  font-size: 13px;
+  line-height: 1.6;
+  text-align: center;
+  color: #fecaca;
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+}
+
+.dc-agree-btn{
+  display: block;
+  width: 100%;
+  padding: 12px 14px;
+  border: none;
+  border-radius: 14px;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  background: #c9a96e;
+  color: #1a1408;
+  box-shadow: 0 4px 14px rgba(201,169,110,.35);
+  transition: transform .15s ease, opacity .15s ease;
+}
+.dc-agree-btn:active{ transform: scale(.98); }
+.dc-agree-btn:disabled{ opacity: .6; cursor: default; }
+
+@media (max-width: 480px){
+  .dc-card{ border-radius: 20px; }
+  .dc-title{ padding: 18px 16px 12px; font-size: 17.5px; }
+  .dc-body{ padding: 14px 16px; }
+  .dc-footer{ padding: 12px 16px calc(16px + env(safe-area-inset-bottom, 0px)); }
+  .dc-text, .dc-subtitle{ font-size: 14px; }
+}
