@@ -138,6 +138,10 @@
               <i class="fa-solid fa-xmark"></i> رفض
             </button>
           </div>` : ""}
+
+        <button type="button" class="lf-delete-post-btn" data-post-id="${post.id}" data-created-by="${core.escapeHtml(post.createdBy)}" data-status="${post.status}">
+          <i class="fa-solid fa-trash"></i> حذف نهائي
+        </button>
       </article>
     `;
   }
@@ -151,6 +155,14 @@
     });
     listEl.querySelectorAll(".lf-request-edit-btn").forEach((btn) => {
       btn.addEventListener("click", () => openReasonModal(btn.dataset.postId, "requestEdit"));
+    });
+    listEl.querySelectorAll(".lf-delete-post-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const id = btn.dataset.postId;
+        const createdBy = btn.dataset.createdBy;
+        const status = btn.dataset.status;
+        if (window.__LF.post) window.__LF.post.confirmDeletePost(id, createdBy, status);
+      });
     });
   }
 

@@ -123,6 +123,14 @@
       listEl.querySelectorAll(".lf-correct-back-btn").forEach((btn) => {
         btn.addEventListener("click", () => correctBack(btn.dataset.postId));
       });
+      // الحذف من الأرشيف للأدمن/الأونر بس (صاحب المنشور ممنوع يحذف حاجة اتلقت — الـ Rule بتتأكد كمان)
+      listEl.querySelectorAll(".lf-delete-post-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const id = btn.dataset.postId;
+          const createdBy = btn.dataset.createdBy;
+          if (window.__LF.post) window.__LF.post.confirmDeletePost(id, createdBy, "found");
+        });
+      });
     }
   }
 
@@ -135,7 +143,11 @@
           <span class="lf-archive-title">${core.escapeHtml(post.title)}</span>
           <span class="lf-archive-meta">${typeLabel} · تم العثور عليها ${core.formatRelativeTime(post.resolvedAt)}</span>
         </div>
-        ${core.state.isAdmin ? `<button type="button" class="lf-correct-back-btn" data-post-id="${post.id}" title="تراجع عن الحالة">تراجع</button>` : ""}
+        ${core.state.isAdmin ? `
+          <button type="button" class="lf-correct-back-btn" data-post-id="${post.id}" title="تراجع عن الحالة">تراجع</button>
+          <button type="button" class="lf-delete-post-btn" data-post-id="${post.id}" data-created-by="${core.escapeHtml(post.createdBy)}" title="حذف نهائي" aria-label="حذف">
+            <i class="fa-solid fa-trash"></i>
+          </button>` : ""}
       </div>
     `;
   }

@@ -313,5 +313,56 @@
     core.closeModal();
   }
 
-  window.__LF.post = { openCreateForm, closeForm };
+  /* ─────────────────────────────────────────
+     حذف منشور — الأدمن من أي حالة، صاحب المنشور من أي حالة ما عدا found
+     (مطابق تمامًا لـ Firestore Rule: isAdmin() || (uid==createdBy && status != "found"))
+     تحقق فعلي هنا قبل الكتابة، لكن الـ Rules هي الحماية النهائية دايمًا
+  ───────────────────────────────────────── */
+  function confirmDeletePost(postId, createdBy, status) {
+    const currentUser = window.currentUser;
+    const isOwner = currentUser && currentUser.uid === createdBy;
+    const allowed = core.state.isAdmin || (isOwner && status !== "found");
+
+    if (!allowed) {
+      window.toast?.("غير مسموح لك بهذا الإجراء", "warn");
+      return;
+    }
+
+    core.openModal(`
+      <div class="lf-modal lf-confirm-delete">
+        <button class="lf-modal-close" type="button" aria-label="إغلاق">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+        <h3>حذف المنشور</h3>
+        <p class="lf-confirm-text">هتحذف المنشور نهائيًا ومش هيرجع تاني. متأكد؟</p>
+        <div class="lf-confirm-actions">
+          <button type="button" class="lf-confirm-cancel-btn">إلغاء</button>
+          <button type="button" class="lf-confirm-delete-btn">حذف نهائي</button>
+        </div>
+      </div>
+    `);
+
+    const layer = core.state.root.querySelector(".lf-modal-layer");
+    layer.querySelector(".lf-modal-close")?.addEventListener("click", () => core.closeModal());
+    layer.querySelector(".lf-confirm-cancel-btn")?.addEventListener("click", () => core.closeModal());
+    layer.querySelector(".lf-confirm-delete-btn")?.addEventListener("click", async (e) => {
+      e.currentTarget.disabled = true;
+      await deletePost(postId);
+    });
+  }
+
+  async function deletePost(postId) {
+    try {
+      const fs = await core.getFS();
+      const { db, doc, deleteDoc } = fs;
+      await deleteDoc(doc(db, "lostFound", postId));
+      window.toast?.("تم حذف المنشور ✓");
+      core.closeModal();
+    } catch (e) {
+      console.error("[LostFound:post] فشل حذف المنشور", e);
+      window.toast?.("تعذر حذف المنشور", "error");
+    }
+  }
+
+  window.__LF.post = { openCreateForm, closeForm, confirmDeletePost };
 })();

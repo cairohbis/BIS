@@ -210,6 +210,11 @@
             <i class="fa-solid fa-circle-check"></i> لقيتها
           </button>` : ""}
 
+        ${canMarkFound ? `
+          <button class="lf-delete-post-btn" type="button" data-post-id="${post.id}" data-created-by="${core.escapeHtml(post.createdBy)}">
+            <i class="fa-solid fa-trash"></i> حذف المنشور
+          </button>` : ""}
+
         <div class="lf-comments-mount" data-post-id="${post.id}"></div>
       </div>
     `);
@@ -223,6 +228,12 @@
       // والـ Firestore Rules هي خط الدفاع النهائي بغض النظر عن حالة الزرار هنا.
       const id = e.currentTarget.dataset.postId;
       if (window.__LF.found) window.__LF.found.markAsFound(id);
+    });
+
+    layer.querySelector(".lf-delete-post-btn")?.addEventListener("click", (e) => {
+      const id = e.currentTarget.dataset.postId;
+      const createdBy = e.currentTarget.dataset.createdBy;
+      if (window.__LF.post) window.__LF.post.confirmDeletePost(id, createdBy, "published");
     });
 
     const commentsMount = layer.querySelector(".lf-comments-mount");
