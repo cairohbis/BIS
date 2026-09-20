@@ -133,6 +133,12 @@ import {
     if (!uid) return; // لسه المستخدم مش عامل تسجيل دخول
     var d = docSnap.data();
     if (d.active === false) return;
+    var _uca = window._currentUserData && window._currentUserData.createdAt;
+    var userMs = _uca && _uca.toMillis ? _uca.toMillis()
+      : (window.currentUser.metadata && window.currentUser.metadata.creationTime
+          ? new Date(window.currentUser.metadata.creationTime).getTime() : 0);
+    var notifMs = d.createdAt && d.createdAt.toMillis ? d.createdAt.toMillis() : 0;
+    if (userMs && notifMs && notifMs < userMs) return;
     var dismissed = await _isDismissed(uid, docSnap.id);
     if (dismissed) return;
     _enqueue({ id: docSnap.id, title: d.title, body: d.body, mascotImage: d.mascotImage });
