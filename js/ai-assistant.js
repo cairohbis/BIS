@@ -187,6 +187,10 @@ async function askGeminiWithRetry(text) {
   }
 }
 
+// تنبيه: المساعد الذكي متوقف مؤقتًا — أي رسالة تظهر لها رسالة "تحت التطوير".
+// لإعادة التفعيل: غيّر القيمة التالية إلى false.
+const AI_TEMP_DISABLED = true;
+
 // ══ الإرسال ══
 window._sendToAI = function () {
   if (aiSending) return;
@@ -205,9 +209,9 @@ window._sendToAI = function () {
   if (inp) inp.value = "";
 
   // المساعد موقوف لحد ما يتحط مفتاح API حقيقي في js/ai-config.js
-  if (!window._aiConfig?.isConfigured) {
+  if (AI_TEMP_DISABLED || !window._aiConfig?.isConfigured) {
     setTimeout(() => {
-      const reply = "المساعد الذكي لسه مش مفعّل حاليًا — هيشتغل تلقائيًا بمجرد إضافة مفتاح API في ملف الإعدادات الخاص بيه.";
+      const reply = "هاي، معاك بريق. حاليًا المساعد الذكي تحت التطوير.";
       _aiMessages.push({ who: "in", text: reply, ts: Date.now() });
       _aiLastMsg = reply; _aiLastTime = { toMillis: () => Date.now() };
       _renderAiMessages();
@@ -239,7 +243,7 @@ window._sendToAI = function () {
       } else if (msg.includes("status 503")) {
         errText = "⚠️ في ضغط عالي على المساعد الذكي دلوقتي، جرب تاني بعد شوية.";
       } else {
-        errText = "⚠️ " + (msg || "خطأ غير معروف");
+        errText = "هاي، معاك بريق. حاليًا المساعد الذكي تحت التطوير.";
       }
       _aiMessages.push({ who: "in", text: errText, ts: Date.now() });
       _aiLastMsg = errText; _aiLastTime = { toMillis: () => Date.now() };
