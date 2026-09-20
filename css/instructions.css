@@ -1,0 +1,150 @@
+/* ══════════════════════════════════════════
+   INSTRUCTIONS MODULE — تعليمات
+   (نفس الهوية الزجاجية لكروت المنتدى + نفس نمط military.css)
+══════════════════════════════════════════ */
+
+/* ─── كارت المنتدى (نفس أسلوب باقي الكروت: أيقونة متدرجة + توهج جانبي) ─── */
+.forum-card-icon--instructions { background: linear-gradient(160deg, #7dd3fc, #4f46e5); }
+.forum-section-card:has(.forum-card-icon--instructions)::after {
+  content: ''; position: absolute; inset: -1px; border-radius: inherit; pointer-events: none;
+  background: radial-gradient(120% 120% at 20% 0%, rgba(79,70,229,.18), transparent 60%);
+}
+.forum-section-card:has(.forum-card-icon--instructions):hover {
+  border-color: rgba(125,211,252,.35);
+  box-shadow: 0 10px 28px rgba(79,70,229,.16), inset 0 1px 0 rgba(255,255,255,.12);
+}
+
+/* ─── الحاوية ─── */
+#instructions-app-root { display:none; position:fixed; inset:0; z-index:1500; align-items:flex-end; }
+#instructions-app-root.instructions-open { display:flex; }
+
+.ins-overlay { position:absolute; inset:0; background:rgba(0,0,0,.6); backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px); animation:ins-fade-in .22s ease; }
+
+.ins-sheet {
+  position:relative; z-index:1; width:100%; height:94dvh; max-height:94dvh;
+  background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02)), var(--bg2,#0c1528);
+  backdrop-filter:blur(18px); -webkit-backdrop-filter:blur(18px);
+  border-radius:24px 24px 0 0; border-top:1.5px solid rgba(255,255,255,.14);
+  box-shadow:0 -12px 40px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.12);
+  display:flex; flex-direction:column; overflow:hidden;
+  animation:ins-slide-up .28s cubic-bezier(0.34,1.1,0.64,1);
+}
+.ins-sheet::before {
+  content:''; position:absolute; top:0; left:15%; right:15%; height:1px; pointer-events:none;
+  background:linear-gradient(90deg, transparent, rgba(255,255,255,.35), transparent);
+}
+
+/* ─── Header ─── */
+.ins-header { display:flex; align-items:center; gap:10px; padding:14px 16px 12px; border-bottom:1px solid rgba(255,255,255,.08); flex-shrink:0; }
+.ins-back-btn { background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.1); border-radius:12px; color:var(--muted,#5a7499); font-family:inherit; font-size:13px; font-weight:700; padding:8px 14px; cursor:pointer; display:inline-flex; align-items:center; gap:7px; transition:all .18s; }
+.ins-back-btn:hover { background:rgba(255,255,255,.12); color:var(--text,#e8edf5); }
+.ins-title { font-size:16px; font-weight:900; color:var(--gold,#c9a96e); display:flex; align-items:center; gap:8px; flex:1; }
+.ins-add-btn { background:var(--gold,#c9a96e); border:none; border-radius:12px; color:#060d1a; width:38px; height:38px; display:flex; align-items:center; justify-content:center; font-size:15px; cursor:pointer; transition:all .18s; }
+.ins-add-btn:hover { opacity:.88; }
+.ins-add-btn:active { transform:scale(.94); }
+
+/* ─── Body ─── */
+.ins-body { flex:1; overflow-y:auto; overflow-x:hidden; padding:14px 16px 40px; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; }
+.ins-body::-webkit-scrollbar { width:3px; }
+.ins-body::-webkit-scrollbar-thumb { background:var(--border,#1a2d47); border-radius:3px; }
+.ins-hint { font-size:12px; color:var(--muted,#5a7499); margin-bottom:12px; }
+
+/* ─── شبكة المميزات (بطاقات زجاجية بنفس أسلوب كروت المنتدى) ─── */
+.ins-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.ins-tile {
+  position:relative; overflow:hidden; cursor:pointer;
+  display:flex; flex-direction:column; align-items:center; text-align:center; gap:8px;
+  padding:16px 10px 12px; border-radius:18px;
+  background:rgba(255,255,255,.045); border:1px solid rgba(255,255,255,.10);
+  backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
+  box-shadow:0 4px 16px rgba(0,0,0,.08), inset 0 1px 0 rgba(255,255,255,.07);
+  transition:all .22s cubic-bezier(.34,1.1,.64,1);
+}
+.ins-tile::before { content:''; position:absolute; top:0; left:15%; right:15%; height:1px; background:linear-gradient(90deg, transparent, rgba(255,255,255,.18), transparent); pointer-events:none; }
+.ins-tile:hover { transform:translateY(-2px); border-color:rgba(201,169,110,.30); background:rgba(255,255,255,.065); }
+.ins-tile:active { transform:scale(.96); transition:transform .1s; }
+.ins-tile-title { font-size:13px; font-weight:800; color:var(--text,#e8edf5); }
+.ins-tile-sub { font-size:11px; color:var(--muted,#5a7499); }
+.ins-tile.ins-orphan { opacity:.7; }
+
+/* تكبير أيقونة الميزة المنسوخة من كارت المنتدى (بدون تغيير الأصل) */
+.ins-tile-icon { display:flex; align-items:center; justify-content:center; }
+.ins-tile-icon .forum-card-icon { width:46px; height:46px; font-size:21px; border-radius:14px; }
+.ins-tile-icon .forum-card-icon svg { width:24px !important; height:24px !important; }
+.ins-tile-icon .forum-card-icon img { width:46px; height:46px; object-fit:contain; display:block; }
+.ins-hero-icon .forum-card-icon { width:58px; height:58px; font-size:26px; border-radius:17px; }
+.ins-hero-icon .forum-card-icon svg { width:30px !important; height:30px !important; }
+.ins-hero-icon .forum-card-icon img { width:58px; height:58px; }
+
+.ins-tile-actions { position:absolute; top:8px; inset-inline-start:8px; display:flex; gap:5px; }
+.ins-mini-btn { width:30px; height:30px; border-radius:9px; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.1); color:var(--text,#e8edf5); display:flex; align-items:center; justify-content:center; font-size:12px; cursor:pointer; transition:all .18s; }
+.ins-mini-btn:hover { background:rgba(255,255,255,.12); }
+.ins-mini-btn.ins-danger { color:#ef4444; border-color:rgba(239,68,68,.25); }
+.ins-mini-btn.ins-danger:hover { background:rgba(239,68,68,.12); }
+.ins-mini-btn:disabled { opacity:.3; cursor:not-allowed; }
+
+/* ─── صفحة القراءة ─── */
+.ins-read { display:flex; flex-direction:column; gap:14px; max-width:640px; margin:0 auto; }
+.ins-read-hero { display:flex; align-items:center; gap:14px; padding:16px; border-radius:20px; background:rgba(255,255,255,.045); border:1px solid rgba(255,255,255,.10); box-shadow:inset 0 1px 0 rgba(255,255,255,.07); }
+.ins-read-name { font-size:19px; font-weight:900; color:var(--text,#e8edf5); }
+.ins-r-h { margin:8px 0 0; font-size:16px; font-weight:900; color:var(--gold,#c9a96e); padding-inline-start:12px; border-inline-start:3px solid var(--gold,#c9a96e); line-height:1.5; }
+.ins-r-p { margin:0; font-size:14px; line-height:1.95; color:var(--text,#e8edf5); white-space:pre-wrap; word-break:break-word; }
+.ins-r-fig { margin:0; padding:6px; border-radius:18px; background:rgba(255,255,255,.045); border:1px solid rgba(255,255,255,.10); box-shadow:0 6px 20px rgba(0,0,0,.18); }
+.ins-r-fig img { width:100%; height:auto; display:block; border-radius:13px; cursor:zoom-in; }
+
+/* ─── المحرر ─── */
+.ins-editor { display:flex; flex-direction:column; gap:14px; }
+.ins-step-label { display:flex; align-items:center; gap:8px; font-size:14px; font-weight:800; color:var(--text,#e8edf5); }
+.ins-step-num { width:22px; height:22px; border-radius:50%; background:var(--gold,#c9a96e); color:#060d1a; font-size:12px; font-weight:900; display:flex; align-items:center; justify-content:center; }
+.ins-pick { padding:12px 8px 10px; }
+.ins-pick .ins-tile-icon .forum-card-icon { width:38px; height:38px; font-size:17px; border-radius:12px; }
+.ins-pick .ins-tile-icon .forum-card-icon svg { width:20px !important; height:20px !important; }
+.ins-pick .ins-tile-icon .forum-card-icon img { width:38px; height:38px; }
+.ins-pick.selected { border-color:var(--gold,#c9a96e); background:rgba(201,169,110,.10); box-shadow:0 0 0 1px var(--gold,#c9a96e), 0 8px 22px rgba(201,169,110,.15); }
+.ins-has-badge { position:absolute; top:7px; inset-inline-start:7px; width:20px; height:20px; border-radius:50%; background:#22c55e; color:#fff; font-size:10px; display:flex; align-items:center; justify-content:center; }
+
+.ins-block { border:1px solid rgba(255,255,255,.10); border-radius:16px; padding:10px; background:rgba(255,255,255,.03); display:flex; flex-direction:column; gap:8px; margin-bottom:10px; }
+.ins-block-head { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+.ins-block-type { font-size:12px; font-weight:800; color:var(--gold,#c9a96e); display:inline-flex; align-items:center; gap:6px; }
+.ins-block-tools { display:flex; gap:5px; }
+.ins-blocks-empty { text-align:center; font-size:12px; color:var(--muted,#5a7499); padding:18px 10px; border:1.5px dashed var(--border,#1a2d47); border-radius:14px; }
+.ins-prev-img { width:100%; max-height:260px; object-fit:contain; border-radius:12px; background:rgba(0,0,0,.25); }
+
+.ins-input { width:100%; padding:11px 12px; border-radius:12px; border:1px solid var(--border,#1a2d47); background:rgba(255,255,255,.04); color:var(--text,#e8edf5); font-family:inherit; font-size:13px; box-sizing:border-box; }
+.ins-input:focus { outline:none; border-color:var(--gold,#c9a96e); }
+.ins-textarea { resize:none; min-height:90px; line-height:1.8; overflow:hidden; }
+
+.ins-add-bar { display:flex; gap:8px; flex-wrap:wrap; }
+.ins-add-chip { flex:1; min-width:90px; padding:11px 10px; border-radius:14px; background:rgba(201,169,110,.10); border:1px solid rgba(201,169,110,.25); color:var(--gold,#c9a96e); font-family:inherit; font-size:13px; font-weight:800; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:7px; transition:all .18s; }
+.ins-add-chip:hover { background:rgba(201,169,110,.18); }
+.ins-file-hidden { display:none; }
+.ins-progress { position:relative; align-items:center; height:22px; border-radius:11px; background:rgba(255,255,255,.08); overflow:hidden; }
+.ins-progress-bar { position:absolute; inset:0 auto 0 0; width:0%; background:var(--gold,#c9a96e); opacity:.55; transition:width .2s ease; }
+.ins-progress span { position:relative; width:100%; text-align:center; font-size:11px; font-weight:700; color:var(--text,#e8edf5); }
+
+.ins-actions { display:flex; gap:10px; margin-top:4px; }
+.ins-btn-primary { flex:1; padding:13px; border:none; border-radius:14px; background:var(--gold,#c9a96e); color:#060d1a; font-family:inherit; font-size:14px; font-weight:800; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:8px; transition:all .18s; }
+.ins-btn-primary:hover { opacity:.88; }
+.ins-btn-primary:disabled { opacity:.55; cursor:not-allowed; }
+.ins-btn-cancel { padding:13px 18px; border-radius:14px; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.1); color:var(--muted,#5a7499); font-family:inherit; font-size:14px; font-weight:700; cursor:pointer; transition:all .18s; }
+.ins-btn-cancel:hover { background:rgba(255,255,255,.12); }
+
+/* ─── Empty / Loading ─── */
+.ins-empty { display:flex; flex-direction:column; align-items:center; gap:10px; padding:50px 20px; text-align:center; }
+.ins-empty-icon { width:64px; height:64px; border-radius:20px; background:rgba(201,169,110,.1); border:1.5px solid rgba(201,169,110,.2); display:flex; align-items:center; justify-content:center; font-size:26px; color:var(--gold,#c9a96e); }
+.ins-empty-title { font-size:16px; font-weight:800; color:var(--text,#e8edf5); }
+.ins-empty-sub { font-size:13px; color:var(--muted,#5a7499); }
+.ins-loading { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; padding:60px 20px; font-size:13px; color:var(--muted,#5a7499); font-weight:600; }
+.ins-spinner { width:36px; height:36px; border:3px solid rgba(201,169,110,.2); border-top-color:var(--gold,#c9a96e); border-radius:50%; animation:ins-spin .7s linear infinite; }
+
+/* ─── الوضع الفاتح ─── */
+html.theme-light .ins-tile,
+html.theme-light .ins-read-hero,
+html.theme-light .ins-r-fig,
+html.theme-light .ins-block { background:rgba(255,255,255,.7); border-color:rgba(0,0,0,.08); }
+
+@media (max-width:360px) { .ins-grid { grid-template-columns:1fr; } }
+
+@keyframes ins-fade-in  { from { opacity:0; } to { opacity:1; } }
+@keyframes ins-slide-up { from { transform:translateY(100%); } to { transform:translateY(0); } }
+@keyframes ins-spin     { to { transform:rotate(360deg); } }
