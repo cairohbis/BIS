@@ -5,6 +5,8 @@
   const THEME_KEY   = "app_theme";
   const FS_KEY      = "chat_font_size";
   const FW_KEY      = "chat_font_weight";
+  const FW_V2_KEY   = "chat_font_weight_v2"; // ترحيل الافتراضي القديم (3) إلى الجديد (6) مرة واحدة
+  const FW_DEFAULT  = 6;
   const CHAT_KEY    = "chat_prefs";
   const PRIV_KEY    = "privacy_prefs";
   let _currentTheme = "dark";   // actual applied theme: "dark" | "light"
@@ -83,7 +85,7 @@
   window._loadAppPrefs = async function(uid) {
     if (!uid || !window.db) return;
     try {
-      const { doc, getDoc } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+      const { doc, getDoc, setDoc } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
       const snap = await getDoc(doc(window.db, "users", uid, "settings", "appPrefs"));
       if (snap.exists()) {
         const d = snap.data();
@@ -93,7 +95,16 @@
           _applyThemeDOM(_resolveTheme(d.theme));
         }
         if (typeof d.chatFontSize === "number") { localStorage.setItem(FS_KEY, d.chatFontSize); _applyChatFontSizeDOM(d.chatFontSize); }
-        if (typeof d.chatFontWeight === "number") { localStorage.setItem(FW_KEY, d.chatFontWeight); _applyChatFontWeightDOM(d.chatFontWeight); }
+        if (typeof d.chatFontWeight === "number") {
+          let _fw = d.chatFontWeight;
+          if (!d.chatFontWeightV2) {
+            // القيمة المخزّنة هي الافتراضي القديم (3) => تتحول للافتراضي الجديد مرة واحدة
+            if (_fw === 3) _fw = FW_DEFAULT;
+            try { await setDoc(doc(window.db, "users", uid, "settings", "appPrefs"), { chatFontWeight: _fw, chatFontWeightV2: true }, { merge: true }); } catch(_e) {}
+          }
+          localStorage.setItem(FW_KEY, _fw); localStorage.setItem(FW_V2_KEY, "1");
+          _applyChatFontWeightDOM(_fw);
+        }
         if (d.chatPrefs)   { _chatPrefs = { ..._chatPrefs, ...d.chatPrefs }; _syncChatPrefs(); }
         if (d.privPrefs)   { _privPrefs = { ..._privPrefs, ...d.privPrefs }; _syncPrivPrefs(); }
       } else {
@@ -156,12 +167,13 @@
   window.applyChatFontWeight = async function(val) {
     const level = parseInt(val, 10);
     localStorage.setItem(FW_KEY, level);
+    localStorage.setItem(FW_V2_KEY, "1");
     _applyChatFontWeightDOM(level);
     const uid = window.currentUser?.uid;
     if (uid && window.db) {
       try {
         const { doc, setDoc } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
-        await setDoc(doc(window.db, "users", uid, "settings", "appPrefs"), { chatFontWeight: level }, { merge: true });
+        await setDoc(doc(window.db, "users", uid, "settings", "appPrefs"), { chatFontWeight: level, chatFontWeightV2: true }, { merge: true });
       } catch(e) {}
     }
   };
@@ -341,7 +353,13 @@
     try { _privPrefs = { ..._privPrefs, ...JSON.parse(localStorage.getItem(PRIV_KEY) || "{}") }; } catch(e) {}
     const savedFs = parseInt(localStorage.getItem(FS_KEY) || "14", 10);
     _applyChatFontSizeDOM(savedFs);
-    const savedFw = parseInt(localStorage.getItem(FW_KEY) || "3", 10);
+    // ترحيل مرة واحدة: لا قيمة محفوظة أو القيمة القديمة الافتراضية (3) => الافتراضي الجديد (6)
+    if (!localStorage.getItem(FW_V2_KEY)) {
+      const _oldFw = localStorage.getItem(FW_KEY);
+      if (_oldFw === null || _oldFw === "3") localStorage.setItem(FW_KEY, String(FW_DEFAULT));
+      localStorage.setItem(FW_V2_KEY, "1");
+    }
+    const savedFw = parseInt(localStorage.getItem(FW_KEY) || String(FW_DEFAULT), 10);
     _applyChatFontWeightDOM(savedFw);
   });
 

@@ -11,7 +11,7 @@
 ══════════════════════════════════════════════════════════════ */
 (function () {
   const HEX_RE = /^#[0-9a-fA-F]{6}$/;
-  const DEFAULT_HEX = "#ffffff";
+  const DEFAULT_HEX = "#000000"; // الافتراضي الجديد: أسود (الشفافية كما هي بدون تغيير)
 
   let _hex = null;
   let _transparent = true;
@@ -32,11 +32,7 @@
   }
 
   function _apply(hex, transparent) {
-    if (!hex || !HEX_RE.test(hex)) {
-      document.documentElement.style.removeProperty("--other-bubble-color");
-      document.documentElement.style.removeProperty("--other-bubble-text");
-      return;
-    }
+    if (!hex || !HEX_RE.test(hex)) hex = DEFAULT_HEX;
     const value = transparent ? (_hexToRgba(hex, 0.24) || hex) : hex;
     document.documentElement.style.setProperty("--other-bubble-color", value);
     document.documentElement.style.setProperty("--other-bubble-text", _contrastText(hex));
@@ -45,15 +41,24 @@
   async function _load(uid) {
     if (!uid || !window.db) return;
     try {
-      const { doc, getDoc } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+      const { doc, getDoc, setDoc } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
       const snap = await getDoc(doc(window.db, "users", uid, "settings", "appPrefs"));
       if (snap.exists()) {
         const d = snap.data();
-        if (typeof d.otherBubbleColor === "string" && HEX_RE.test(d.otherBubbleColor)) {
-          _hex = d.otherBubbleColor;
-          _transparent = d.otherBubbleColorTransparent !== false;
-          _apply(_hex, _transparent);
+        let stored = (typeof d.otherBubbleColor === "string" && HEX_RE.test(d.otherBubbleColor)) ? d.otherBubbleColor : null;
+        // ترحيل مرة واحدة: الأبيض المخزّن (الافتراضي القديم) => الافتراضي الجديد (أسود)
+        if (!d.otherBubbleColorV2) {
+          if (stored && stored.toLowerCase() === "#ffffff") {
+            stored = null;
+            try {
+              await setDoc(doc(window.db, "users", uid, "settings", "appPrefs"),
+                { otherBubbleColor: null, otherBubbleColorV2: true }, { merge: true });
+            } catch (_e) {}
+          }
         }
+        _hex = stored;
+        _transparent = d.otherBubbleColorTransparent !== false;
+        _apply(_hex, _transparent);
       }
     } catch (e) {}
     _syncUI();
@@ -66,7 +71,7 @@
     try {
       const { doc, setDoc } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
       await setDoc(doc(window.db, "users", uid, "settings", "appPrefs"),
-        { otherBubbleColor: _hex, otherBubbleColorTransparent: _transparent },
+        { otherBubbleColor: _hex, otherBubbleColorTransparent: _transparent, otherBubbleColorV2: true },
         { merge: true });
     } catch (e) {}
   }
@@ -137,7 +142,7 @@
     _syncUI();
   }
 
-  document.addEventListener("DOMContentLoaded", _buildUI);
+  document.addEventListener("DOMContentLoaded", function () { _buildUI(); _apply(_hex, _transparent); });
 
   const _origDmsStart = window._dmsStartListeners;
   window._dmsStartListeners = function () {
