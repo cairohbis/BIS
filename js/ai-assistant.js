@@ -39,7 +39,8 @@ function _renderAiMessages() {
     return;
   }
   const dayDivider = `<div class="date-divider"><span>اليوم</span></div>`;
-  body.innerHTML = dayDivider + _aiMessages.map(m => {
+  const mascotHero = `<div style="display:flex;justify-content:center;padding:24px 0 8px;"><img src="images/mascot/actions/sleep.webp" alt="بريق" style="width:220px;max-width:70%;height:auto;"></div>`;
+  body.innerHTML = mascotHero + dayDivider + _aiMessages.map(m => {
     const isMe = m.who === "out";
     const timeStr = new Date(m.ts).toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" });
     return `
