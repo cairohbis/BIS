@@ -1,5 +1,7 @@
 (function() {
   /* ── THEME SYSTEM (with Auto / prefers-color-scheme) ── */
+  // تنبيه: الوضع الفاتح متوقف مؤقتًا للإصلاح. لإعادة التفعيل غيّر القيمة إلى false.
+  const LIGHT_MODE_DISABLED = true;
   const THEME_KEY   = "app_theme";
   const FS_KEY      = "chat_font_size";
   const FW_KEY      = "chat_font_weight";
@@ -12,6 +14,7 @@
 
   /* ── Resolve effective theme from choice ── */
   function _resolveTheme(choice) {
+    if (LIGHT_MODE_DISABLED) return "dark";
     if (choice === "light") return "light";
     if (choice === "dark")  return "dark";
     // "auto" or anything else → follow system
@@ -58,6 +61,10 @@
   }
 
   window.applyTheme = async function(theme) {
+    if (LIGHT_MODE_DISABLED && theme !== "dark") {
+      window.toast && window.toast("الوضع الفاتح قيد الإصلاح حاليًا، سيعود قريبًا.", "error");
+      return;
+    }
     // theme: "dark" | "light" | "auto"
     _themeChoice = theme;
     localStorage.setItem(THEME_KEY, theme);
