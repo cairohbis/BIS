@@ -65,6 +65,7 @@ if ("serviceWorker" in navigator) {
 <link rel="stylesheet" href="lost-found/css/lost-found.css">
 <link rel="stylesheet" href="css/military.css">
 <link rel="stylesheet" href="css/instructions.css">
+<link rel="stylesheet" href="css/account-archive.css">
 <link rel="stylesheet" href="css/style.css">
 <link rel="stylesheet" href="css/why-here-forum.css">
 <link rel="stylesheet" href="css/chat-reply.css">
@@ -4649,6 +4650,7 @@ async function toggleChatBan(uid, userName, currentlyBanned, btnEl, onSuccess) {
       banReason:    deleteField()
     });
 
+    window.AccountArchive?.log(uid, "chatBan", newVal ? "unbanned" : "banned", newVal ? "banned" : "unbanned");
     toast(newVal ? "تم حظر الشات" : "تم رفع حظر الشات");
 
     // ── Audit Log ──
@@ -4709,6 +4711,7 @@ async function ownerSelfUnban() {
       { note: 'Owner removed own chat ban via emergency banner' }
     );
 
+    window.AccountArchive?.log(currentUser.uid, "chatBan", "banned", "unbanned");
     toast("تم فك الحظر بنجاح", "success");
   } catch(e) {
     toast("فشل فك الحظر — حاول مجدداً", "error");
@@ -4727,8 +4730,11 @@ document.getElementById("saveProfile").addEventListener("click", async () => {
   const bio  = document.getElementById("editBio").value.trim();
   if (!name) return toast("اكتب اسمك أولاً", "error");
 
+  const _aaOldName = currentName, _aaOldBio = document.getElementById("profileBioText")?.textContent || "";
   try {
     await updateDoc(doc(db, "users", currentUser.uid), { name, bio });
+    if (name !== _aaOldName) window.AccountArchive?.log(currentUser.uid, "name", _aaOldName, name);
+    if (bio  !== _aaOldBio)  window.AccountArchive?.log(currentUser.uid, "bio",  _aaOldBio,  bio);
     currentName = name;
     // ✅ تحديث الاسم في _currentUserData قبل إعادة الرسم
     if (window._currentUserData) window._currentUserData.name = name;
@@ -4801,7 +4807,9 @@ document.getElementById("uploadBtn").addEventListener("click", async () => {
   toast("جاري الرفع...", "warn");
   try {
     const url = await uploadToCloudinary(file);
+    const _aaOldPhoto = currentPhoto;
     await updateDoc(doc(db, "users", currentUser.uid), { photo: url });
+    window.AccountArchive?.log(currentUser.uid, "photo", _aaOldPhoto, url);
     currentPhoto = url;
     setAvatarUI(url, true, window._currentUserData?.gender);
     toast("تم رفع الصورة");
@@ -5470,6 +5478,7 @@ function renderOwnerUsers(users) {
         banBtn.disabled = true; banBtn.textContent = "جاري...";
         try {
           await updateDoc(doc(db, "users", uid), { isBanned: !u.isBanned });
+          window.AccountArchive?.log(uid, "ban", u.isBanned ? "banned" : "unbanned", u.isBanned ? "unbanned" : "banned");
           // ── Audit Log ──
           await writeAuditLog(
             u.isBanned ? AUDIT_ACTIONS.UNBAN_USER : AUDIT_ACTIONS.BAN_USER,
@@ -5523,6 +5532,7 @@ function renderOwnerUsers(users) {
           roleBtn.disabled = true; roleBtn.textContent = "جاري...";
           try {
             await updateDoc(doc(db, "users", uid), { role: newRole });
+            window.AccountArchive?.log(uid, "role", uRole, newRole);
             // ── Audit Log ──
             await writeAuditLog(
               isCurrentlyAdmin ? AUDIT_ACTIONS.DEMOTE_ADMIN : AUDIT_ACTIONS.PROMOTE_ADMIN,
@@ -5635,6 +5645,7 @@ function renderAdminUsers(users) {
         banBtn.disabled = true; banBtn.textContent = "جاري...";
         try {
           await updateDoc(doc(db, "users", uid), { isBanned: !u.isBanned });
+          window.AccountArchive?.log(uid, "ban", u.isBanned ? "banned" : "unbanned", u.isBanned ? "unbanned" : "banned");
           // ── Audit Log ──
           await writeAuditLog(
             u.isBanned ? AUDIT_ACTIONS.UNBAN_USER : AUDIT_ACTIONS.BAN_USER,
@@ -7127,6 +7138,8 @@ window._picCtxEdit = async function() {
     const trimmed = val.trim();
     try {
       await updateDoc(doc(db, "users", currentUser.uid), { bio: trimmed });
+      const _aaOldBio2 = current === "لا توجد نبذة" ? "" : current;
+      if (trimmed !== _aaOldBio2) window.AccountArchive?.log(currentUser.uid, "bio", _aaOldBio2, trimmed);
       const bioEl = document.getElementById("profInfoBioVal");
       if (bioEl) { bioEl.textContent = trimmed || "لا توجد نبذة"; bioEl.classList.toggle("empty", !trimmed); }
       const editBioInp = document.getElementById("editBio");
@@ -7567,6 +7580,7 @@ function _renderProfileViewModal(uid, userData) {
       <button class="pvm-act" id="pvmCopyBtn" title="نسخ المعرف">
         <i class="fa-solid fa-fingerprint"></i> نسخ المعرف
       </button>
+      ${window.isOwner && window.isOwner() ? `<button class="pvm-act" id="pvmArchiveBtn" title="أرشيف الحساب"><i class="fa-solid fa-clock-rotate-left"></i> أرشيف الحساب</button>` : ""}
       <button class="pvm-act" id="pvmReportBtn" style="background:rgba(239,68,68,.1);border-color:rgba(239,68,68,.25);color:#fca5a5;">
         <i class="fa-solid fa-flag"></i> تبليغ
       </button>
@@ -7666,6 +7680,10 @@ function _renderProfileViewModal(uid, userData) {
         .then(() => toast("✓ تم نسخ المعرف " + idToCopy, "success"))
         .catch(fallback);
     } else { fallback(); }
+  });
+
+  document.getElementById("pvmArchiveBtn")?.addEventListener("click", () => {
+    window.AccountArchive?.open(uid, d.name);
   });
 
   document.getElementById("pvmReportBtn")?.addEventListener("click", () => {
@@ -8998,6 +9016,7 @@ try { window._listenPinnedMsg?.(); } catch(e) {}
 
 <div id="instructions-app-root" aria-label="تعليمات" role="dialog"></div>
 <script src="js/instructions.js" defer></script>
+<script src="js/account-archive.js" defer></script>
 
 <!-- ══════════════════════════════════════════
      MAINTENANCE MODE — Overlay
