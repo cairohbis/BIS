@@ -7404,6 +7404,22 @@ document.getElementById("dmList")?.addEventListener("click", (e) => {
 // openProfileViewModal(uid, [preloadedData])
 // الدالة الرئيسية — تفتح Modal البروفايل
 // ══════════════════════════════════════════
+let _pvmLastRenderSig = {};
+function _pvmComputeSig(d) {
+  if (!d) return "";
+  const level = _getLevelFromUser(d);
+  const xp = typeof d.xp === "number" ? d.xp : 0;
+  const lastSeenMs = d.lastSeen?.toMillis?.() || (d.lastSeen?.seconds ? d.lastSeen.seconds * 1000 : 0);
+  const createdAtMs = d.createdAt?.toMillis?.() || (d.createdAt?.seconds ? d.createdAt.seconds * 1000 : 0);
+  return JSON.stringify([
+    d.name || "", d.photo || "", d.gender || "", d.role || "",
+    !!d.isVerified, level, xp, d.vipType || "", d.vipLevel || 0,
+    d.isOnline || false, d.showOnline !== false, lastSeenMs,
+    d.bio || "", d.publicId || "", createdAtMs,
+    d.isBanned || false, d.isChatBanned || false
+  ]);
+}
+
 window.openProfileViewModal = async function(uid, preloadedData) {
   if (!uid) return;
 
@@ -7411,14 +7427,32 @@ window.openProfileViewModal = async function(uid, preloadedData) {
   const cont  = document.getElementById("pvmContent");
   if (!modal || !cont) return;
 
-  // إظهار Modal مع spinner
-  cont.innerHTML = `
-    <div class="pvm-loading">
-      <div class="spinner"></div>
-      <span>جارٍ تحميل البروفايل…</span>
-    </div>
-  `;
   modal.classList.add("show");
+
+  // ── لو فيه بيانات جاهزة (cache صالح أو preloadedData)، اعرضها فورًا
+  //    من غير ما نستنى Firestore — بعدين نجيب النسخة الطازجة في الخلفية
+  //    ونحدّث بيها العرض من غير ما نوقف أو نعيد إظهار السبينر ──
+  const _instantCached = _userCache[uid];
+  let instantData = null;
+  if (_instantCached && (Date.now() - (_instantCached.ts || 0) < CACHE_TTL_MS)) {
+    instantData = _instantCached.data || _instantCached;
+  } else if (preloadedData) {
+    instantData = preloadedData;
+  }
+
+  if (instantData) {
+    _renderProfileViewModal(uid, { ...instantData, uid });
+    _pvmLastRenderSig[uid] = _pvmComputeSig({ ...instantData, uid });
+    _ensureVipListener(uid);
+  } else {
+    // مفيش أي حاجة جاهزة نعرضها فورًا — نفس السلوك القديم بالظبط (سبينر + انتظار)
+    cont.innerHTML = `
+      <div class="pvm-loading">
+        <div class="spinner"></div>
+        <span>جارٍ تحميل البروفايل…</span>
+      </div>
+    `;
+  }
 
   // ── دائماً اقرأ من Firestore للحصول على lastSeen الحديث (للحالة الصحيحة) ──
   let userData = null;
@@ -7443,12 +7477,15 @@ window.openProfileViewModal = async function(uid, preloadedData) {
   }
 
   if (!userData) {
-    cont.innerHTML = `
-      <div class="pvm-loading" style="padding:50px 20px;">
-        <i class="fa-solid fa-circle-exclamation" style="font-size:36px;color:var(--danger);"></i>
-        <span>لم يُعثَر على هذا المستخدم</span>
-      </div>
-    `;
+    // لو كنا عارضين نسخة فورية بالفعل، سيبها زي ما هي بدل ما نستبدلها برسالة خطأ
+    if (!instantData) {
+      cont.innerHTML = `
+        <div class="pvm-loading" style="padding:50px 20px;">
+          <i class="fa-solid fa-circle-exclamation" style="font-size:36px;color:var(--danger);"></i>
+          <span>لم يُعثَر على هذا المستخدم</span>
+        </div>
+      `;
+    }
     return;
   }
 
@@ -7458,7 +7495,11 @@ window.openProfileViewModal = async function(uid, preloadedData) {
     if (newPid) userData = { ...userData, publicId: newPid };
   }
 
-  _renderProfileViewModal(uid, { ...userData, uid });
+  const _freshSig = _pvmComputeSig({ ...userData, uid });
+  if (_freshSig !== _pvmLastRenderSig[uid]) {
+    _renderProfileViewModal(uid, { ...userData, uid });
+    _pvmLastRenderSig[uid] = _freshSig;
+  }
 
   // ── ابدأ Realtime listener لهذا المستخدم إن لم يكن نشطاً ──
   _ensureVipListener(uid);
