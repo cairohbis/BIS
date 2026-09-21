@@ -38,6 +38,7 @@ document.addEventListener("DOMContentLoaded", function () {
       await reauthenticateWithCredential(currentUser, credential);
       // Update password
       await updatePassword(currentUser, newPw);
+      window.AccountArchive?.log(currentUser.uid, "password"); // بدون أي قيمة
       // Clear fields
       document.getElementById("currentPassword").value = "";
       document.getElementById("newPassword").value = "";
