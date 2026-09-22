@@ -68,6 +68,7 @@ if ("serviceWorker" in navigator) {
 <link rel="stylesheet" href="css/account-archive.css">
 <link rel="stylesheet" href="css/tuition-fees.css">
 <link rel="stylesheet" href="css/expenses.css">
+<link rel="stylesheet" href="css/study-schedule.css">
 <link rel="stylesheet" href="css/style.css">
 <link rel="stylesheet" href="css/why-here-forum.css">
 <link rel="stylesheet" href="css/chat-reply.css">
@@ -264,6 +265,11 @@ if ("serviceWorker" in navigator) {
         <div class="forum-card-icon forum-card-icon--attendance"><i class="fa-solid fa-clipboard-check"></i></div>
         <div class="forum-card-title">الحضور والغياب</div>
         <div class="forum-card-sub">سجلك ونسبة حضورك</div>
+      </div>
+      <div class="forum-section-card" onclick="window.StudyScheduleModule && window.StudyScheduleModule.open()">
+        <div class="forum-card-icon forum-card-icon--studyschedule"><i class="fa-solid fa-calendar-week"></i></div>
+        <div class="forum-card-title">الجدول الدراسي</div>
+        <div class="forum-card-sub">مواعيد المحاضرات وتنبيه اليوم</div>
       </div>
       <div class="forum-section-card" onclick="window.MyExpensesHub && window.MyExpensesHub.open()">
         <div class="forum-card-icon forum-card-icon--tuition"><i class="fa-solid fa-sack-dollar"></i></div>
@@ -9012,6 +9018,7 @@ try { window._listenPinnedMsg?.(); } catch(e) {}
 <div id="tuition-hub-root" aria-label="مصروفاتي" role="dialog"></div>
 <div id="tuition-app-root" aria-label="مصروفات السنة الدراسية" role="dialog"></div>
 <div id="expenses-app-root" aria-label="احسب فلوسك ومواصلاتك" role="dialog"></div>
+<div id="study-schedule-app-root" aria-label="الجدول الدراسي" role="dialog"></div>
 <script src="grades/grades.js" defer></script>
 
 <!-- ══════════════════════════════════════════
@@ -9029,6 +9036,8 @@ try { window._listenPinnedMsg?.(); } catch(e) {}
 <script src="js/account-archive.js" defer></script>
 <script src="js/tuition-fees.js" defer></script>
 <script src="js/expenses.js" defer></script>
+<script src="js/study-schedule.js" defer></script>
+<script src="js/study-schedule-reminder.js" defer></script>
 
 <!-- ══════════════════════════════════════════
      MAINTENANCE MODE — Overlay
