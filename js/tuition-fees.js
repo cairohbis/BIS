@@ -45,6 +45,7 @@
 
   let _view    = "home";   // home | owner-form | student-view
   let _majors  = [];       // قائمة تخصصات معروفة من السجلات المحفوظة (لا نظام تخصصات منفصل)
+  let _yearMajors = {};    // فرقة -> [تخصصات مضافة لها فقط] — لجهة الطالب (اقتراحات مفلترة بالفرقة)
   let _docs    = {};       // docId -> record (المالك فقط يحمّلها كاملة)
   let _draft   = null;     // نموذج المالك
   let _pick    = { year: "", major: "" }; // اختيار الطالب المؤقت (لا يُحفظ في Firestore)
@@ -88,32 +89,48 @@
       <div class="tf-pick">
         <div class="tf-hint">اختر الفرقة والتخصص لعرض مصروفات السنة الدراسية</div>
         <label class="tf-label">الفرقة الدراسية</label>
-        <select class="tf-select" id="tfPickYear">
+        <select class="tf-select" id="tfPickYear" onchange="window.TuitionModule._yearChanged(this.value)">
           <option value="">— اختر الفرقة —</option>
           ${YEARS.map(y => `<option value="${_esc(y)}" ${last.year === y ? "selected" : ""}>${_esc(y)}</option>`).join("")}
         </select>
         <label class="tf-label">التخصص</label>
-        <input class="tf-select" id="tfPickMajor" type="text" placeholder="اكتب اسم التخصص" value="${_esc(last.major || "")}" list="tfMajorList">
-        <datalist id="tfMajorList">${_majors.map(m => `<option value="${_esc(m)}">`).join("")}</datalist>
+        <input class="tf-select" id="tfPickMajor" type="text" placeholder="اكتب اسم التخصص، أو اختر من المقترحة بعد اختيار الفرقة" value="${_esc(last.major || "")}" list="tfMajorList">
+        <datalist id="tfMajorList"></datalist>
+        <div class="tf-hint" id="tfMajorHint" style="display:none">لا توجد تخصصات مضافة لهذه الفرقة بعد — اكتب التخصص يدويًا</div>
         <button class="tf-btn-primary" onclick="window.TuitionModule._studentSearch()"><i class="fa-solid fa-magnifying-glass"></i> عرض المصروفات</button>
       </div>`;
     _loadMajorsHint();
   }
 
   async function _loadMajorsHint() {
-    // تلميحات فقط لأسماء تخصصات سبق للمالك إدخالها — لا يمنع كتابة أي اسم آخر
+    // تلميحات فقط لأسماء تخصصات سبق للمالك إدخالها لكل فرقة — لا يمنع كتابة أي اسم آخر
     try {
       const { db, collection, getDocs } = await _fs();
       const snap = await getDocs(collection(db, COL));
-      const set = new Set();
-      snap.docs.forEach(d => { const m = d.data().major; if (m) set.add(m); });
+      const set = new Set(); const byYear = {};
+      snap.docs.forEach(d => {
+        const rec = d.data();
+        if (rec.major) set.add(rec.major);
+        if (rec.year && rec.major) (byYear[rec.year] = byYear[rec.year] || new Set()).add(rec.major);
+      });
       _majors = [...set];
-      const dl = document.getElementById("tfMajorList");
-      if (dl) dl.innerHTML = _majors.map(m => `<option value="${_esc(m)}">`).join("");
+      _yearMajors = {};
+      Object.keys(byYear).forEach(y => { _yearMajors[y] = [...byYear[y]]; });
+      const curYear = document.getElementById("tfPickYear")?.value || "";
+      window.TuitionModule._yearChanged(curYear);
     } catch (e) { /* غير حرج */ }
   }
 
   window.TuitionModule = window.TuitionModule || {};
+
+  window.TuitionModule._yearChanged = function (year) {
+    const dl = document.getElementById("tfMajorList");
+    const hint = document.getElementById("tfMajorHint");
+    if (!dl) return;
+    const list = year ? (_yearMajors[year] || []) : [];
+    dl.innerHTML = list.map(m => `<option value="${_esc(m)}">`).join("");
+    if (hint) hint.style.display = (year && !list.length) ? "" : "none";
+  };
 
   window.TuitionModule._studentSearch = async function () {
     const year  = (document.getElementById("tfPickYear")?.value || "").trim();
