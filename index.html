@@ -67,6 +67,7 @@ if ("serviceWorker" in navigator) {
 <link rel="stylesheet" href="css/instructions.css">
 <link rel="stylesheet" href="css/account-archive.css">
 <link rel="stylesheet" href="css/tuition-fees.css">
+<link rel="stylesheet" href="css/expenses.css">
 <link rel="stylesheet" href="css/style.css">
 <link rel="stylesheet" href="css/why-here-forum.css">
 <link rel="stylesheet" href="css/chat-reply.css">
@@ -264,10 +265,10 @@ if ("serviceWorker" in navigator) {
         <div class="forum-card-title">الحضور والغياب</div>
         <div class="forum-card-sub">سجلك ونسبة حضورك</div>
       </div>
-      <div class="forum-section-card" onclick="window.TuitionModule && window.TuitionModule.open()">
+      <div class="forum-section-card" onclick="window.MyExpensesHub && window.MyExpensesHub.open()">
         <div class="forum-card-icon forum-card-icon--tuition"><i class="fa-solid fa-sack-dollar"></i></div>
         <div class="forum-card-title">مصروفاتي</div>
-        <div class="forum-card-sub">مصروفات السنة الدراسية</div>
+        <div class="forum-card-sub">مصروفات السنة الدراسية ومصاريفك اليومية</div>
       </div>
       <div class="forum-section-card grades-forum-card" onclick="window.GradesModule && window.GradesModule.open()">
         <div class="forum-card-icon forum-card-icon--grades"><i class="fa-solid fa-graduation-cap"></i></div>
@@ -9008,7 +9009,9 @@ try { window._listenPinnedMsg?.(); } catch(e) {}
      حاوية مستقلة + تحميل الوحدة
 ══════════════════════════════════════════ -->
 <div id="grades-app-root" aria-label="درجاتي" role="dialog"></div>
-<div id="tuition-app-root" aria-label="مصروفاتي" role="dialog"></div>
+<div id="tuition-hub-root" aria-label="مصروفاتي" role="dialog"></div>
+<div id="tuition-app-root" aria-label="مصروفات السنة الدراسية" role="dialog"></div>
+<div id="expenses-app-root" aria-label="احسب فلوسك ومواصلاتك" role="dialog"></div>
 <script src="grades/grades.js" defer></script>
 
 <!-- ══════════════════════════════════════════
@@ -9025,6 +9028,7 @@ try { window._listenPinnedMsg?.(); } catch(e) {}
 <script src="js/instructions.js" defer></script>
 <script src="js/account-archive.js" defer></script>
 <script src="js/tuition-fees.js" defer></script>
+<script src="js/expenses.js" defer></script>
 
 <!-- ══════════════════════════════════════════
      MAINTENANCE MODE — Overlay
