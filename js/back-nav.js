@@ -106,6 +106,7 @@
     "grades-app-root":      { openClass: "grades-open", close: () => window.GradesModule?.close?.() },
     "military-app-root":    { openClass: "military-open", close: () => window.MilitaryModule?.close?.() },
     "instructions-app-root": { openClass: "instructions-open", close: () => window.InstructionsModule?.close?.() },
+    "tuition-app-root": { openClass: "tuition-open", close: () => window.TuitionModule?.close?.() },
   };
 
   let _modalVisible = {};
