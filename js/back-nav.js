@@ -107,6 +107,8 @@
     "military-app-root":    { openClass: "military-open", close: () => window.MilitaryModule?.close?.() },
     "instructions-app-root": { openClass: "instructions-open", close: () => window.InstructionsModule?.close?.() },
     "tuition-app-root": { openClass: "tuition-open", close: () => window.TuitionModule?.close?.() },
+    "tuition-hub-root": { openClass: "tuition-hub-open", close: () => window.MyExpensesHub?.close?.() },
+    "expenses-app-root": { openClass: "expenses-open", close: () => window.ExpensesModule?.close?.() },
   };
 
   let _modalVisible = {};
