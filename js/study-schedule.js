@@ -209,7 +209,7 @@
 
   window.StudyScheduleModule._newLecture = function () {
     if (!_isAdmin()) return;
-    _draft = { id: null, subject: "", day: "sat", startTime: "", endTime: "", reminderMinutes: 0, reminderCustomH: "", reminderCustomM: "", enabled: true };
+    _draft = { id: null, subject: "", day: "", startTime: "", endTime: "", reminderMinutes: 0, reminderCustomH: "", reminderCustomM: "", enabled: true };
     _view = "form";
     _setTitle("إضافة محاضرة");
     _syncAddBtn();
@@ -247,6 +247,7 @@
 
         <label class="ss-label">اليوم</label>
         <select class="ss-select" id="ssFDay" onchange="window.StudyScheduleModule._setField('day', this.value)">
+          <option value="" ${!_draft.day ? "selected" : ""} disabled>اختر اليوم</option>
           ${DAYS.map((d) => `<option value="${d.key}" ${_draft.day === d.key ? "selected" : ""}>${d.label}</option>`).join("")}
         </select>
 
