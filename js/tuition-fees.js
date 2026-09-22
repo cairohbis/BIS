@@ -1,14 +1,15 @@
 /**
  * ══════════════════════════════════════════
  *   مصروفاتي — مصروفات السنة الدراسية
- *   المالك: إضافة/تعديل/حذف بيانات مصروفات كل فرقة وتخصص
- *   الطالب: استعلام عن أي فرقة وتخصص يريدهما، في كل مرة — بدون قفل أو حفظ اختياره
+ *   المالك: إضافة/تعديل/حذف بيانات مصروفات كل فرقة
+ *   الطالب: استعلام عن أي فرقة يريدها، في كل مرة — بدون قفل أو حفظ اختياره
+ *   (كل المستخدمين على نفس التخصص، فلا داعي لحقل تخصص منفصل)
  *
  *   ▸ مستقلة تمامًا عن درجاتي: لا قراءة ولا اعتماد على grades/ إطلاقًا
  *   ▸ لا تُضاف أو تُعدَّل أي بيانات في users/{uid}
  *   ▸ المصدر الوحيد: tuitionFees/{docId}
- *       { year, major, cash, installments:[{label,amount}], updatedAt, updatedBy }
- *     docId = بناء من الفرقة والتخصص (نفس أسلوب _key في grades.js) لضمان مستند واحد لكل تركيبة
+ *       { year, cash, installments:[{label,amount}], updatedAt, updatedBy }
+ *     docId = بناء من الفرقة فقط لضمان مستند واحد لكل فرقة
  *   ▸ يُمنع الحفظ إذا مجموع الأقساط ≠ الكاش
  *
  *   ▸ القواعد المطلوبة في Firestore Rules (إضافة فقط):
@@ -33,8 +34,8 @@
     if (!window.db) throw new Error("Firebase غير متاح");
     return { db: window.db, ...(await import(_FB)) };
   }
-  function _key(year, major) {
-    return (year + "__" + major).replace(/\s+/g, "_").replace(/[^a-zA-Z0-9_\u0600-\u06FF]/g, "");
+  function _key(year) {
+    return year.replace(/\s+/g, "_").replace(/[^a-zA-Z0-9_\u0600-\u06FF]/g, "");
   }
   function _esc(s) {
     return String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -44,11 +45,9 @@
   function _money(n) { return _num(n).toLocaleString("ar-EG"); }
 
   let _view    = "home";   // home | owner-form | student-view
-  let _majors  = [];       // قائمة تخصصات معروفة من السجلات المحفوظة (لا نظام تخصصات منفصل)
-  let _yearMajors = {};    // فرقة -> [تخصصات مضافة لها فقط] — لجهة الطالب (اقتراحات مفلترة بالفرقة)
   let _docs    = {};       // docId -> record (المالك فقط يحمّلها كاملة)
   let _draft   = null;     // نموذج المالك
-  let _pick    = { year: "", major: "" }; // اختيار الطالب المؤقت (لا يُحفظ في Firestore)
+  let _pick    = { year: "" }; // اختيار الطالب المؤقت (لا يُحفظ في Firestore)
 
   function _root() { return document.getElementById("tuition-app-root"); }
   function _body() { return document.getElementById("tfBody"); }
@@ -87,65 +86,30 @@
     if (!body) return;
     body.innerHTML = `
       <div class="tf-pick">
-        <div class="tf-hint">اختر الفرقة والتخصص لعرض مصروفات السنة الدراسية</div>
+        <div class="tf-hint">اختر الفرقة لعرض مصروفات السنة الدراسية</div>
         <label class="tf-label">الفرقة الدراسية</label>
-        <select class="tf-select" id="tfPickYear" onchange="window.TuitionModule._yearChanged(this.value)">
+        <select class="tf-select" id="tfPickYear">
           <option value="">— اختر الفرقة —</option>
           ${YEARS.map(y => `<option value="${_esc(y)}" ${last.year === y ? "selected" : ""}>${_esc(y)}</option>`).join("")}
         </select>
-        <label class="tf-label">التخصص</label>
-        <input class="tf-select" id="tfPickMajor" type="text" placeholder="اكتب اسم التخصص، أو اختر من المقترحة بعد اختيار الفرقة" value="${_esc(last.major || "")}" list="tfMajorList">
-        <datalist id="tfMajorList"></datalist>
-        <div class="tf-hint" id="tfMajorHint" style="display:none">لا توجد تخصصات مضافة لهذه الفرقة بعد — اكتب التخصص يدويًا</div>
         <button class="tf-btn-primary" onclick="window.TuitionModule._studentSearch()"><i class="fa-solid fa-magnifying-glass"></i> عرض المصروفات</button>
       </div>`;
-    _loadMajorsHint();
-  }
-
-  async function _loadMajorsHint() {
-    // تلميحات فقط لأسماء تخصصات سبق للمالك إدخالها لكل فرقة — لا يمنع كتابة أي اسم آخر
-    try {
-      const { db, collection, getDocs } = await _fs();
-      const snap = await getDocs(collection(db, COL));
-      const set = new Set(); const byYear = {};
-      snap.docs.forEach(d => {
-        const rec = d.data();
-        if (rec.major) set.add(rec.major);
-        if (rec.year && rec.major) (byYear[rec.year] = byYear[rec.year] || new Set()).add(rec.major);
-      });
-      _majors = [...set];
-      _yearMajors = {};
-      Object.keys(byYear).forEach(y => { _yearMajors[y] = [...byYear[y]]; });
-      const curYear = document.getElementById("tfPickYear")?.value || "";
-      window.TuitionModule._yearChanged(curYear);
-    } catch (e) { /* غير حرج */ }
   }
 
   window.TuitionModule = window.TuitionModule || {};
 
-  window.TuitionModule._yearChanged = function (year) {
-    const dl = document.getElementById("tfMajorList");
-    const hint = document.getElementById("tfMajorHint");
-    if (!dl) return;
-    const list = year ? (_yearMajors[year] || []) : [];
-    dl.innerHTML = list.map(m => `<option value="${_esc(m)}">`).join("");
-    if (hint) hint.style.display = (year && !list.length) ? "" : "none";
-  };
-
   window.TuitionModule._studentSearch = async function () {
     const year  = (document.getElementById("tfPickYear")?.value || "").trim();
-    const major = (document.getElementById("tfPickMajor")?.value || "").trim();
     if (!year)  { window.toast?.("اختر الفرقة الدراسية", "error"); return; }
-    if (!major) { window.toast?.("اكتب التخصص", "error"); return; }
-    try { localStorage.setItem(LAST_KEY, JSON.stringify({ year, major })); } catch (e) {}
-    _pick = { year, major };
+    try { localStorage.setItem(LAST_KEY, JSON.stringify({ year })); } catch (e) {}
+    _pick = { year };
     _view = "student-view";
     _setTitle(`مصروفات ${year}`);
     const body = _body();
     if (body) body.innerHTML = `<div class="tf-loading"><div class="tf-spin"></div></div>`;
     try {
       const { db, doc, getDoc } = await _fs();
-      const snap = await getDoc(doc(db, COL, _key(year, major)));
+      const snap = await getDoc(doc(db, COL, _key(year)));
       _renderStudentResult(snap.exists() ? snap.data() : null);
     } catch (e) {
       if (body) body.innerHTML = `<div class="tf-empty"><div class="tf-empty-title">تعذّر تحميل المصروفات</div></div>`;
@@ -159,7 +123,7 @@
       body.innerHTML = `
         <div class="tf-empty">
           <div class="tf-empty-icon"><i class="fa-solid fa-circle-info"></i></div>
-          <div class="tf-empty-title">لم تُضَف بيانات مصروفات لهذه الفرقة والتخصص بعد</div>
+          <div class="tf-empty-title">لم تُضَف بيانات مصروفات لهذه الفرقة بعد</div>
           <button class="tf-btn-cancel" onclick="window.TuitionModule._studentPickBack()">بحث آخر</button>
         </div>`;
       return;
@@ -169,7 +133,6 @@
       <div class="tf-result">
         <div class="tf-result-head">
           <div class="tf-result-year">${_esc(d.year)}</div>
-          <div class="tf-result-major">${_esc(d.major)}</div>
         </div>
         <div class="tf-tabs">
           <button class="tf-tab active" data-tf-tab="cash" onclick="window.TuitionModule._tab('cash')">كاش</button>
@@ -193,7 +156,7 @@
             <div class="tf-inst-total"><span>الإجمالي</span><span>${_money(d.cash)} جنيه</span></div>
           ` : `<div class="tf-empty-sub">لا يوجد نظام تقسيط لهذه البيانات</div>`}
         </div>
-        <button class="tf-btn-cancel tf-full" onclick="window.TuitionModule._studentPickBack()"><i class="fa-solid fa-arrow-right-arrow-left"></i> بحث عن فرقة/تخصص آخر</button>
+        <button class="tf-btn-cancel tf-full" onclick="window.TuitionModule._studentPickBack()"><i class="fa-solid fa-arrow-right-arrow-left"></i> بحث عن فرقة أخرى</button>
       </div>`;
   }
 
@@ -217,7 +180,6 @@
       const snap = await getDocs(collection(db, COL));
       _docs = {};
       snap.docs.forEach(d => { _docs[d.id] = d.data(); });
-      _majors = [...new Set(Object.values(_docs).map(d => d.major).filter(Boolean))];
     } catch (e) { _docs = {}; }
     _renderOwnerList();
   }
@@ -241,7 +203,6 @@
             <div class="tf-owner-card">
               <div class="tf-owner-card-info">
                 <div class="tf-owner-card-year">${_esc(d.year)}</div>
-                <div class="tf-owner-card-major">${_esc(d.major)}</div>
                 <div class="tf-owner-card-cash">${_money(d.cash)} جنيه${(d.installments || []).length ? ` · ${d.installments.length} أقساط` : " · كاش فقط"}</div>
               </div>
               <div class="tf-owner-card-actions">
@@ -257,8 +218,8 @@
     if (!_isOwner()) return;
     const existing = id && _docs[id];
     _draft = existing
-      ? { id, year: existing.year, major: existing.major, cash: String(existing.cash ?? ""), installments: (existing.installments || []).map(x => ({ label: x.label || "", amount: String(x.amount ?? "") })) }
-      : { id: null, year: "", major: "", cash: "", installments: [] };
+      ? { id, year: existing.year, cash: String(existing.cash ?? ""), installments: (existing.installments || []).map(x => ({ label: x.label || "", amount: String(x.amount ?? "") })) }
+      : { id: null, year: "", cash: "", installments: [] };
     _view = "owner-form";
     _setTitle(existing ? "تعديل مصروفات السنة" : "إضافة مصروفات سنة دراسية");
     _renderForm();
@@ -285,12 +246,7 @@
           <option value="">— اختر الفرقة —</option>
           ${YEARS.map(y => `<option value="${_esc(y)}" ${_draft.year === y ? "selected" : ""}>${_esc(y)}</option>`).join("")}
         </select>
-
-        <label class="tf-label">التخصص</label>
-        <input class="tf-select" id="tfFMajor" type="text" placeholder="اكتب اسم التخصص" value="${_esc(_draft.major)}"
-          ${_draft.id ? "disabled" : ""} oninput="window.TuitionModule._setField('major', this.value)" list="tfMajorList2">
-        <datalist id="tfMajorList2">${_majors.map(m => `<option value="${_esc(m)}">`).join("")}</datalist>
-        ${_draft.id ? `<div class="tf-note"><i class="fa-solid fa-lock"></i> لتغيير الفرقة أو التخصص، احذف هذا السجل وأنشئ سجلاً جديدًا</div>` : ""}
+        ${_draft.id ? `<div class="tf-note"><i class="fa-solid fa-lock"></i> لتغيير الفرقة، احذف هذا السجل وأنشئ سجلاً جديدًا</div>` : ""}
 
         <label class="tf-label">المبلغ كاش (جنيه)</label>
         <input class="tf-select" id="tfFCash" type="number" inputmode="numeric" min="0" placeholder="مثال: 25000" value="${_esc(_draft.cash)}"
@@ -366,11 +322,9 @@
   window.TuitionModule._save = async function () {
     if (!_isOwner() || !_draft) return;
     const year = (_draft.year || "").trim();
-    const major = (_draft.major || "").trim();
     const cash = _num(_draft.cash);
     if (!_draft.id) {
       if (!year)  { window.toast?.("اختر الفرقة الدراسية", "error"); return; }
-      if (!major) { window.toast?.("اكتب التخصص", "error"); return; }
     }
     if (cash <= 0) { window.toast?.("اكتب المبلغ كاش", "error"); return; }
     const installments = _draft.installments
@@ -381,9 +335,9 @@
       window.toast?.(`مجموع الأقساط (${_money(sum)}) لا يساوي الكاش (${_money(cash)})`, "error");
       return;
     }
-    const id = _draft.id || _key(year, major);
+    const id = _draft.id || _key(year);
     if (!_draft.id && _docs[id]) {
-      window.toast?.("هذه الفرقة والتخصص مضافة بالفعل — استخدم زر التعديل بدل الإضافة", "error");
+      window.toast?.("هذه الفرقة مضافة بالفعل — استخدم زر التعديل بدل الإضافة", "error");
       return;
     }
     const btn = document.getElementById("tfSaveBtn");
@@ -392,7 +346,6 @@
       const { db, doc, setDoc, serverTimestamp } = await _fs();
       await setDoc(doc(db, COL, id), {
         year: _draft.id ? _docs[id]?.year : year,
-        major: _draft.id ? _docs[id]?.major : major,
         cash, installments,
         updatedAt: serverTimestamp(),
         updatedBy: window.currentUser?.uid || ""
@@ -409,7 +362,7 @@
 
   window.TuitionModule._delete = async function (id) {
     if (!_isOwner()) return;
-    if (!window.confirm("حذف بيانات مصروفات هذه الفرقة والتخصص نهائيًا؟")) return;
+    if (!window.confirm("حذف بيانات مصروفات هذه الفرقة نهائيًا؟")) return;
     try {
       const { db, doc, deleteDoc } = await _fs();
       await deleteDoc(doc(db, COL, id));
@@ -424,7 +377,6 @@
   window.TuitionModule._back = function () {
     if (_view === "owner-form") { _ownerList(); return; }
     if (_view === "student-view") { _studentPick(); return; }
-    if (_view === "student-pick" || _view === "owner-list") { _home(); return; }
     window.TuitionModule.close();
   };
 
@@ -443,6 +395,6 @@
     root.classList.remove("tuition-open");
     root.style.display = "none";
     root.innerHTML = "";
-    _view = "home"; _draft = null; _docs = {}; _pick = { year: "", major: "" };
+    _view = "home"; _draft = null; _docs = {}; _pick = { year: "" };
   };
 })();
