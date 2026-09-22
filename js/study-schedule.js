@@ -184,15 +184,26 @@
       </div>`;
   }
 
+  function _lectSubBlock(subject, startTime, endTime) {
+    return `
+      <div class="ss-lect-sub-block">
+        <div class="ss-lect-time">${_esc(_fmtTime(startTime))}${endTime ? ` – ${_esc(_fmtTime(endTime))}` : ""}</div>
+        <div class="ss-lect-main">
+          <div class="ss-lect-subject">${_esc(subject)}</div>
+        </div>
+      </div>`;
+  }
+
   function _renderLectureRow(l, admin) {
     const paused = l.enabled === false;
+    const hasSecond = !!(l.subject2 && l.startTime2);
     return `
-      <div class="ss-lect-row ${paused ? "ss-paused" : ""}">
-        <div class="ss-lect-time">${_esc(_fmtTime(l.startTime))}${l.endTime ? ` – ${_esc(_fmtTime(l.endTime))}` : ""}</div>
-        <div class="ss-lect-main">
-          <div class="ss-lect-subject">${_esc(l.subject)}</div>
-          ${admin ? `<div class="ss-lect-reminder"><i class="fa-solid fa-bell"></i> تنبيه اليوم: ${_esc(_reminderLabel(l.reminderMinutes))}${paused ? " · متوقفة" : ""}</div>` : ""}
+      <div class="ss-lect-row ${hasSecond ? "ss-two" : ""} ${paused ? "ss-paused" : ""}">
+        <div class="ss-lect-blocks ${hasSecond ? "ss-lect-blocks-two" : ""}">
+          ${_lectSubBlock(l.subject, l.startTime, l.endTime)}
+          ${hasSecond ? `<div class="ss-lect-divider"></div>${_lectSubBlock(l.subject2, l.startTime2, l.endTime2)}` : ""}
         </div>
+        ${admin ? `<div class="ss-lect-reminder"><i class="fa-solid fa-bell"></i> تنبيه اليوم: ${_esc(_reminderLabel(l.reminderMinutes))}${paused ? " · متوقفة" : ""}</div>` : ""}
         ${admin ? `
           <div class="ss-lect-actions">
             <button class="ss-mini-btn" title="تعديل" onclick="window.StudyScheduleModule._editLecture('${l.id}')"><i class="fa-solid fa-pen"></i></button>
@@ -209,7 +220,7 @@
 
   window.StudyScheduleModule._newLecture = function () {
     if (!_isAdmin()) return;
-    _draft = { id: null, subject: "", day: "", startTime: "", endTime: "", reminderMinutes: 0, reminderCustomH: "", reminderCustomM: "", enabled: true };
+    _draft = { id: null, subject: "", day: "", startTime: "", endTime: "", subject2: "", startTime2: "", endTime2: "", reminderMinutes: 0, reminderCustomH: "", reminderCustomM: "", enabled: true };
     _view = "form";
     _setTitle("إضافة محاضرة");
     _syncAddBtn();
@@ -224,6 +235,7 @@
     _draft = {
       id: l.id, subject: l.subject || "", day: l.day || "sat",
       startTime: l.startTime || "", endTime: l.endTime || "",
+      subject2: l.subject2 || "", startTime2: l.startTime2 || "", endTime2: l.endTime2 || "",
       reminderMinutes: known ? _num(l.reminderMinutes) : "custom",
       reminderCustomH: known ? "" : String(Math.floor(_num(l.reminderMinutes) / 60) || ""),
       reminderCustomM: known ? "" : String(_num(l.reminderMinutes) % 60 || ""),
@@ -261,6 +273,24 @@
             <label class="ss-label">وقت النهاية (اختياري)</label>
             <input class="ss-select" id="ssFEnd" type="time" value="${_esc(_draft.endTime)}"
               onchange="window.StudyScheduleModule._setField('endTime', this.value)">
+          </div>
+        </div>
+
+        <div class="ss-sub2-block">
+          <label class="ss-label ss-label-sub2">مادة ثانية في نفس الكرت <span class="ss-hint-inline">(اختياري — لو فيه مادتين في نفس الميعاد)</span></label>
+          <input class="ss-select" id="ssFSubject2" type="text" placeholder="اسم المادة الثانية" value="${_esc(_draft.subject2)}"
+            oninput="window.StudyScheduleModule._setField('subject2', this.value)">
+          <div class="ss-row2">
+            <div>
+              <label class="ss-label">وقت البداية</label>
+              <input class="ss-select" id="ssFStart2" type="time" value="${_esc(_draft.startTime2)}"
+                onchange="window.StudyScheduleModule._setField('startTime2', this.value)">
+            </div>
+            <div>
+              <label class="ss-label">وقت النهاية (اختياري)</label>
+              <input class="ss-select" id="ssFEnd2" type="time" value="${_esc(_draft.endTime2)}"
+                onchange="window.StudyScheduleModule._setField('endTime2', this.value)">
+            </div>
           </div>
         </div>
 
@@ -318,6 +348,12 @@
     if (_draft.endTime && _draft.endTime <= _draft.startTime) {
       window.toast?.("وقت النهاية لازم يكون بعد وقت البداية", "error"); return;
     }
+    const subject2 = (_draft.subject2 || "").trim();
+    if (subject2 && !_draft.startTime2) { window.toast?.("اختر وقت بداية المادة الثانية", "error"); return; }
+    if (!subject2 && _draft.startTime2) { window.toast?.("اكتب اسم المادة الثانية", "error"); return; }
+    if (_draft.startTime2 && _draft.endTime2 && _draft.endTime2 <= _draft.startTime2) {
+      window.toast?.("وقت نهاية المادة الثانية لازم يكون بعد وقت بدايتها", "error"); return;
+    }
     let reminderMinutes = _draft.reminderMinutes;
     if (reminderMinutes === "custom") {
       const h = _num(_draft.reminderCustomH), m = _num(_draft.reminderCustomM);
@@ -326,6 +362,7 @@
     }
     const payload = {
       subject, day: _draft.day, startTime: _draft.startTime, endTime: _draft.endTime || "",
+      subject2, startTime2: subject2 ? _draft.startTime2 : "", endTime2: subject2 ? (_draft.endTime2 || "") : "",
       reminderMinutes: _num(reminderMinutes), enabled: !!_draft.enabled,
       updatedAt: undefined, updatedBy: window.currentUser?.uid || "",
     };
