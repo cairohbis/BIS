@@ -140,6 +140,13 @@
     }
   }
 
+  const _JSDAY_TO_KEY = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
+  function _todayKey() { return _JSDAY_TO_KEY[new Date().getDay()]; }
+  function _nowHHMM() {
+    const d = new Date();
+    return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+  }
+
   function _groupByDay(list) {
     const map = {};
     DAYS.forEach((d) => (map[d.key] = []));
@@ -174,34 +181,47 @@
 
     body.innerHTML = `
       <div class="ss-days">
-        ${grouped.map((g) => `
-          <div class="ss-day-block">
-            <div class="ss-day-title">${_esc(g.label)}</div>
+        ${grouped.map((g) => {
+          const isToday = g.key === _todayKey();
+          return `
+          <div class="ss-day-block ${isToday ? "ss-day-today" : ""}">
+            <div class="ss-day-title">${_esc(g.label)}${isToday ? `<span class="ss-today-badge">اليوم</span>` : ""}</div>
             <div class="ss-lect-list">
-              ${g.lectures.map((l) => _renderLectureRow(l, admin)).join("")}
+              ${g.lectures.map((l) => _renderLectureRow(l, admin, isToday)).join("")}
             </div>
-          </div>`).join("")}
+          </div>`;
+        }).join("")}
       </div>`;
+    _scheduleLiveRefresh();
   }
 
-  function _lectSubBlock(subject, startTime, endTime) {
+  function _lectSubBlock(subject, startTime, endTime, isLive) {
     return `
-      <div class="ss-lect-sub-block">
+      <div class="ss-lect-sub-block ${isLive ? "ss-live" : ""}">
         <div class="ss-lect-time">${_esc(_fmtTime(startTime))}${endTime ? ` – ${_esc(_fmtTime(endTime))}` : ""}</div>
         <div class="ss-lect-main">
           <div class="ss-lect-subject">${_esc(subject)}</div>
         </div>
+        ${isLive ? `<span class="ss-live-dot" title="شغّالة دلوقتي"></span>` : ""}
       </div>`;
   }
 
-  function _renderLectureRow(l, admin) {
+  function _isNowInRange(isToday, startTime, endTime) {
+    if (!isToday || !startTime || !endTime) return false;
+    const now = _nowHHMM();
+    return now >= startTime && now < endTime;
+  }
+
+  function _renderLectureRow(l, admin, isToday) {
     const paused = l.enabled === false;
     const hasSecond = !!(l.subject2 && l.startTime2);
+    const live1 = !paused && _isNowInRange(isToday, l.startTime, l.endTime);
+    const live2 = hasSecond && !paused && _isNowInRange(isToday, l.startTime2, l.endTime2);
     return `
-      <div class="ss-lect-row ${hasSecond ? "ss-two" : ""} ${paused ? "ss-paused" : ""}">
+      <div class="ss-lect-row ${hasSecond ? "ss-two" : ""} ${paused ? "ss-paused" : ""} ${(live1 || live2) ? "ss-row-live" : ""}">
         <div class="ss-lect-blocks ${hasSecond ? "ss-lect-blocks-two" : ""}">
-          ${_lectSubBlock(l.subject, l.startTime, l.endTime)}
-          ${hasSecond ? `<div class="ss-lect-divider"></div>${_lectSubBlock(l.subject2, l.startTime2, l.endTime2)}` : ""}
+          ${_lectSubBlock(l.subject, l.startTime, l.endTime, live1)}
+          ${hasSecond ? `<div class="ss-lect-divider"></div>${_lectSubBlock(l.subject2, l.startTime2, l.endTime2, live2)}` : ""}
         </div>
         ${admin ? `<div class="ss-lect-reminder"><i class="fa-solid fa-bell"></i> تنبيه اليوم: ${_esc(_reminderLabel(l.reminderMinutes))}${paused ? " · متوقفة" : ""}</div>` : ""}
         ${admin ? `
@@ -410,6 +430,19 @@
     } catch (e) { window.toast?.("فشل الحذف", "error"); }
   };
 
+  let _liveTimer = null;
+  function _scheduleLiveRefresh() {
+    if (_liveTimer) return;
+    _liveTimer = setInterval(() => {
+      const root = _root();
+      if (!root || !root.classList.contains("ss-open") || _view !== "home") return;
+      _renderHome();
+    }, 30000);
+  }
+  function _clearLiveRefresh() {
+    if (_liveTimer) { clearInterval(_liveTimer); _liveTimer = null; }
+  }
+
   /* ─────────────────────────────────────────
      رجوع / فتح / إغلاق
   ───────────────────────────────────────── */
@@ -434,5 +467,6 @@
     root.style.display = "none";
     root.innerHTML = "";
     _view = "home"; _draft = null;
+    _clearLiveRefresh();
   };
 })();
