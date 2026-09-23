@@ -186,6 +186,23 @@ if ("serviceWorker" in navigator) {
         </div>
       </div>
 
+      <div id="worldRow">
+        <select class="inp" id="regDept">
+          <option value="" selected disabled>اختر الشعبة</option>
+          <option value="is">نظم المعلومات</option>
+          <option value="lt">اللغات والترجمة</option>
+          <option value="th">سياحة وفنادق</option>
+          <option value="ba">إدارة أعمال</option>
+        </select>
+        <select class="inp" id="regYear">
+          <option value="" selected disabled>اختر الفرقة</option>
+          <option value="1">الأولى</option>
+          <option value="2">الثانية</option>
+          <option value="3">الثالثة</option>
+          <option value="4">الرابعة</option>
+        </select>
+      </div>
+
       <input class="inp" id="loginEmail" placeholder="البريد الإلكتروني" type="email">
       <input class="inp" id="loginPass"  placeholder="كلمة المرور (6+ أحرف)" type="password">
 
@@ -1107,6 +1124,40 @@ if ("serviceWorker" in navigator) {
 
     <div class="owner-sections-list">
 
+      <!-- ══ قسم — Phase 1/5.1: العالم الحالي (activeWorld — حالة جلسة فقط) ══ -->
+      <div class="owner-collapse-item">
+        <div class="owner-collapse-header" onclick="ownerToggleSection(this)">
+          <div class="owner-collapse-icon-wrap"><i class="fa-solid fa-globe"></i></div>
+          <div class="owner-collapse-body-text">
+            <div class="owner-collapse-title">العالم الحالي</div>
+            <div class="owner-collapse-sub">لهذه الجلسة فقط</div>
+          </div>
+          <i class="fa-solid fa-chevron-down owner-collapse-arrow"></i>
+        </div>
+        <div class="owner-collapse-panel">
+          <div class="owner-collapse-inner">
+            <select class="inp" id="activeWorldSelect" onchange="setActiveWorld(this.value)">
+              <option value="is_1">نظم المعلومات — الأولى</option>
+              <option value="is_2">نظم المعلومات — الثانية</option>
+              <option value="is_3">نظم المعلومات — الثالثة</option>
+              <option value="is_4">نظم المعلومات — الرابعة</option>
+              <option value="lt_1">اللغات والترجمة — الأولى</option>
+              <option value="lt_2">اللغات والترجمة — الثانية</option>
+              <option value="lt_3">اللغات والترجمة — الثالثة</option>
+              <option value="lt_4">اللغات والترجمة — الرابعة</option>
+              <option value="th_1">سياحة وفنادق — الأولى</option>
+              <option value="th_2">سياحة وفنادق — الثانية</option>
+              <option value="th_3">سياحة وفنادق — الثالثة</option>
+              <option value="th_4">سياحة وفنادق — الرابعة</option>
+              <option value="ba_1">إدارة أعمال — الأولى</option>
+              <option value="ba_2">إدارة أعمال — الثانية</option>
+              <option value="ba_3">إدارة أعمال — الثالثة</option>
+              <option value="ba_4">إدارة أعمال — الرابعة</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
       <!-- ══ قسم 1: الإحصائيات العامة ══ -->
       <div class="owner-collapse-item">
         <div class="owner-collapse-header" onclick="ownerToggleSection(this)">
@@ -1846,6 +1897,8 @@ function ownerToggleSection(headerEl) {
      هيكسر الاستدعاء ده بصمت. باقي الملفات المستقلة اتنقلت لبعد السكريبت الرئيسي (تحت). -->
 <script type="module" src="js/pin-message.js"></script>
 <script type="module" src="js/chat-backgrounds.js"></script>
+<!-- Phase 1 / 5.1 — World Model: تعريف فقط، لا يغيّر أي سلوك حالي -->
+<script src="js/world-model.js"></script>
 <script type="module">
 
 import { initializeApp }
@@ -2725,6 +2778,14 @@ window.isOwner = isOwner;
 window.getCurrentRole = () => currentRole;
 window.getCurrentName = () => currentName;
 
+// Phase 1 / 5.1 — Owner activeWorld: تبديل حالة جلسة فقط، بدون أي Firestore write
+window.setActiveWorld = function(worldId) {
+  if (!isOwner()) return;
+  if (typeof window.isValidWorldId !== "function" || !window.isValidWorldId(worldId)) return;
+  window._activeWorld = worldId;
+  sessionStorage.setItem("activeWorld", worldId);
+};
+
 // ── دالة مساعدة للخصوصية ──
 // تُعيد true إذا يجب إظهار حالة الاتصال لـ u في واجهة المستخدم.
 // المالك/الأدمن يرون الحالة الحقيقية دائماً.
@@ -2828,7 +2889,12 @@ window.showPage = (id) => {
   window.dispatchEvent(new Event("uniAppReady")); // يقفل شاشة التحميل الحديثة بمجرد ظهور أول صفحة فعلية
   const _bn = document.querySelector(".bottom-nav");
   if (_bn) _bn.style.display = (id === "page-login") ? "none" : "";
-  if (id === "page-owner") { loadOwnerStats(); }
+  if (id === "page-owner") {
+    loadOwnerStats();
+    // Phase 1 / 5.1 — Owner activeWorld: عرض الاختيار الحالي عند فتح اللوحة
+    const _aws = document.getElementById("activeWorldSelect");
+    if (_aws && window._activeWorld) _aws.value = window._activeWorld;
+  }
   if (id === "page-admin") { loadAdminUsers(); }
   if (_prevPageId && _prevPageId !== id) {
     window._navPush?.(`page:${id}`, () => window.showPage(_prevPageId));
@@ -3014,6 +3080,7 @@ window.setAuthMode = (mode) => {
   authMode = mode;
   document.getElementById("nameRow").classList.toggle("show", mode === "register");
   document.getElementById("genderRow").classList.toggle("show", mode === "register");
+  document.getElementById("worldRow").classList.toggle("show", mode === "register");
   document.getElementById("termsRow").classList.toggle("show", mode === "register");
   document.getElementById("mainAuthBtn").innerHTML = mode === "register" ? '<i class="fa-solid fa-user-plus"></i> إنشاء حساب' : '<i class="fa-solid fa-key"></i> تسجيل الدخول';
   document.getElementById("toggleLogin").classList.toggle("active", mode === "login");
@@ -3025,6 +3092,9 @@ window.setAuthMode = (mode) => {
     selectGender("male");
     const _tc = document.getElementById("agreeTermsCheck");
     if (_tc) _tc.checked = false;
+    // Phase 1 / 5.1 — Signup World: تصفير اختيار الشعبة/الفرقة عند الدخول لوضع التسجيل
+    const _dRow = document.getElementById("regDept"); if (_dRow) _dRow.value = "";
+    const _yRow = document.getElementById("regYear"); if (_yRow) _yRow.value = "";
   }
 };
 // ربط الـ stubs بالدوال الحقيقية
@@ -3058,9 +3128,16 @@ async function doRegister() {
   const pass   = document.getElementById("loginPass").value;
   const gender = _selectedGender || "male";
 
+  // Phase 1 / 5.1 — Signup World: قراءة الشعبة/الفرقة وبناء worldId (بدون أي كتابة الآن)
+  const _deptVal = document.getElementById("regDept")?.value || "";
+  const _yearVal = document.getElementById("regYear")?.value || "";
+  const worldId  = (_deptVal && _yearVal) ? `${_deptVal}_${_yearVal}` : null;
+  const _worldOk = !!worldId && typeof window.isValidWorldId === "function" && window.isValidWorldId(worldId);
+
   if (!name)           return showErr("اكتب اسمك الكامل أولاً");
   if (!email)          return showErr("اكتب البريد الإلكتروني");
   if (pass.length < 6) return showErr("كلمة المرور 6 أحرف على الأقل");
+  if (!_worldOk)        return showErr("اختر الشعبة والفرقة أولاً");
   if (!document.getElementById("agreeTermsCheck")?.checked) {
     return showErr("يجب الموافقة على شروط الاستخدام وسياسة الخصوصية أولاً");
   }
@@ -3085,6 +3162,8 @@ async function doRegister() {
       photo:     "",
       bio:       "",
       gender,
+      // Phase 1 / 5.1 — Signup World: يُضاف فقط للمستخدم العادي، الـOwner لا يأخذ worldId إطلاقًا
+      ...(uid !== OWNER_UID ? { worldId } : {}),
       xp:        0,
       level:     1,
       banReason: "",
@@ -3455,6 +3534,13 @@ onAuthStateChanged(auth, async (user) => {
     currentRole = ROLES.OWNER;
   }
 
+  // Phase 1 / 5.1 — Owner activeWorld: حالة جلسة فقط (sessionStorage)، بدون أي كتابة لبيانات Owner
+  if (currentRole === ROLES.OWNER) {
+    const _savedWorld = sessionStorage.getItem("activeWorld");
+    window._activeWorld = (typeof window.isValidWorldId === "function" && window.isValidWorldId(_savedWorld))
+      ? _savedWorld : "is_2";
+  }
+
   const email = userData.email || user.email || "";
   const bio   = userData.bio   || "";
   const photo = userData.photo || "";
@@ -3775,6 +3861,21 @@ window.openDirectChat = async function(toUid, toUser) {
   if (toUid === currentUser.uid) { toast("لا يمكنك مراسلة نفسك", "warn"); return; }
 
   const myToken = ++_dcReqToken;
+
+  // ✅ World Model: منع فتح/إنشاء محادثة خاصة مع مستخدم من عالم مختلف
+  // (الـOwner مستثنى). المصدر الوحيد: users/{uid}.worldId من الخادم عبر
+  // _getUser() — وليس أي قيمة ممرَّرة من الواجهة (toUser قد لا تحمل worldId
+  // لو جاءت من كائن مبني جزئيًا في مكان آخر).
+  if (!isOwner()) {
+    const _myWorld = window.currentUserWorldId?.();
+    const _toUserSrc = await _getUser(toUid);
+    if (myToken !== _dcReqToken) return;
+    const _toWorld = window.isValidWorldId?.(_toUserSrc?.worldId) ? _toUserSrc.worldId : null;
+    if (!_myWorld || !_toWorld || _myWorld !== _toWorld) {
+      toast("لا يمكنك مراسلة مستخدم من عالم مختلف", "error");
+      return;
+    }
+  }
 
   // تحميل بيانات المستخدم إن لزم
   if (!toUser?.name) toUser = await _getUser(toUid);
@@ -4354,6 +4455,11 @@ async function sendChatMsg() {
   const isPrivate = _currentChatId !== "public";
   const colPath   = chatColPath(_currentChatId);
 
+  // Phase 1 / 5.1 — World Model: يُضاف فقط للشات العام، وفقط لو فيه عالم صالح حاليًا.
+  // لا worldId: null، ولا افتراض is_2 — لو activeWorldContext() رجّعت null، الحقل ما يُكتبش أصلاً.
+  const _worldId = (colPath === "messages" && typeof window.activeWorldContext === "function")
+    ? window.activeWorldContext() : null;
+
   try {
     const msgData = {
       text,
@@ -4361,6 +4467,7 @@ async function sendChatMsg() {
       name:      currentName,
       photo:     currentPhoto,
       createdAt: serverTimestamp(),
+      ...(_worldId ? { worldId: _worldId } : {}),
       // حقول مشتركة بين العام والخاص
       ...(isPrivate ? {
         senderId:  currentUser.uid,
@@ -4503,6 +4610,11 @@ document.getElementById("chatFileInput").addEventListener("change", async () => 
     const colPath   = chatColPath(_currentChatId);
     const cat = _getFileCategory(file);
 
+    // Phase 1 / 5.1 — World Model: يُضاف فقط للشات العام، وفقط لو فيه عالم صالح حاليًا.
+    // لا worldId: null، ولا افتراض is_2 — لو activeWorldContext() رجّعت null، الحقل ما يُكتبش أصلاً.
+    const _worldId = (colPath === "messages" && typeof window.activeWorldContext === "function")
+      ? window.activeWorldContext() : null;
+
     // Build message data based on file type
     let fileFields = {};
     if (isPDF) {
@@ -4521,6 +4633,7 @@ document.getElementById("chatFileInput").addEventListener("change", async () => 
       photo:     currentPhoto,
       createdAt: serverTimestamp(),
       ...fileFields,
+      ...(_worldId ? { worldId: _worldId } : {}),
       ...(isPrivate ? {
         senderId:  currentUser.uid,
         delivered: false,
@@ -4950,7 +5063,10 @@ function makeAdder(btnId, getFields, colName, successMsg, reloadFn) {
     if (!fields) return;
     let saved = false;
     try {
-      await addDoc(collection(db, colName), { ...fields, createdAt: serverTimestamp() });
+      // Phase 1 / 5.1 — World Model: يُضاف فقط لو فيه عالم صالح حاليًا.
+      // لا worldId: null، ولا افتراض is_2 — لو activeWorldContext() رجّعت null، الحقل ما يُكتبش أصلاً.
+      const _worldId = (typeof window.activeWorldContext === "function") ? window.activeWorldContext() : null;
+      await addDoc(collection(db, colName), { ...fields, ...(_worldId ? { worldId: _worldId } : {}), createdAt: serverTimestamp() });
       saved = true;
     } catch(e) {
       toast("فشلت الإضافة", "error");
@@ -5242,8 +5358,12 @@ async function loadAnalytics(period) {
     });
 
     // rooms messages
+    const worldId = window.activeWorldContext?.();
+    const worldOk = !!worldId && !!window.isValidWorldId?.(worldId);
     try {
-      const roomsSnap = await getDocs(collection(db, "rooms"));
+      const roomsSnap = worldOk
+        ? await getDocs(query(collection(db, "rooms"), where("worldId", "==", worldId)))
+        : { docs: [] };
       for (const rd of roomsSnap.docs) {
         const rmsgsSnap = await getDocs(collection(db, "rooms", rd.id, "messages"));
         rmsgsSnap.forEach(d => {
@@ -5271,7 +5391,9 @@ async function loadAnalytics(period) {
     if (statMsgsPeriodLbl) statMsgsPeriodLbl.textContent = period === "day" ? "رسائل اليوم" : period === "week" ? "رسائل الأسبوع" : "رسائل الشهر";
 
     // ── 5. Rooms ──
-    const roomsCount = (await getDocs(collection(db, "rooms"))).size;
+    const roomsCount = worldOk
+      ? (await getDocs(query(collection(db, "rooms"), where("worldId", "==", worldId)))).size
+      : 0;
     const statRoomsEl = document.getElementById("statRoomsCount");
     if (statRoomsEl) statRoomsEl.textContent = roomsCount;
 
@@ -6399,12 +6521,20 @@ let _selectedRoomIcon = "💬";
 // Start realtime listener for rooms collection
 function startRoomsListener() {
   if (_roomsUnsub) return; // already listening
+
+  const worldId = window.activeWorldContext?.();
+  if (!worldId || typeof window.isValidWorldId !== "function" || !window.isValidWorldId(worldId)) {
+    _allRooms = [];
+    renderRoomsList();
+    return;
+  }
+
   // Show rooms skeleton while waiting for first snapshot
   const roomsEl = document.getElementById("roomsList");
   if (roomsEl && window._buildMemberSkeletons) {
     roomsEl.innerHTML = window._buildMemberSkeletons(3);
   }
-  const q = query(collection(db, "rooms"), orderBy("createdAt", "asc"));
+  const q = query(collection(db, "rooms"), where("worldId", "==", worldId), orderBy("createdAt", "asc"));
   _roomsUnsub = onSnapshot(q, snap => {
     _allRooms = [];
     snap.forEach(d => _allRooms.push({ id: d.id, ...d.data() }));
@@ -6526,6 +6656,13 @@ window.selectRoomChat = selectRoomChat;
 // Create Room (Owner only)
 async function createRoom() {
   if (!isOwner()) { toast("المالك فقط يستطيع إنشاء الغرف", "error"); return; }
+
+  const worldId = window.activeWorldContext?.();
+  if (!worldId || typeof window.isValidWorldId !== "function" || !window.isValidWorldId(worldId)) {
+    toast("لا يوجد عالم نشط حاليًا — اختر عالمًا أولًا", "error");
+    return;
+  }
+
   const name = document.getElementById("oRoomName")?.value.trim();
   if (!name) { toast("اكتب اسم الغرفة أولاً", "error"); return; }
   if (name.length > 40) { toast("اسم الغرفة طويل جداً (40 حرف كحد أقصى)", "error"); return; }
@@ -6540,7 +6677,8 @@ async function createRoom() {
       description: "",
       createdBy:   currentUser.uid,
       createdAt:   serverTimestamp(),
-      updatedAt:   serverTimestamp()
+      updatedAt:   serverTimestamp(),
+      worldId
     });
     // ── Audit Log ──
     await writeAuditLog(
@@ -8084,6 +8222,11 @@ async function forwardMsgTo(targetChatId, msgData) {
     await ensurePrivateChatDoc(targetChatId).catch(() => {});
   }
 
+  // Phase 1 / 5.1 — World Model: يُضاف فقط للشات العام، وفقط لو فيه عالم صالح حاليًا.
+  // لا worldId: null، ولا افتراض is_2 — لو activeWorldContext() رجّعت null، الحقل ما يُكتبش أصلاً.
+  const _worldId = (colPath === "messages" && typeof window.activeWorldContext === "function")
+    ? window.activeWorldContext() : null;
+
   // بناء payload الرسالة المُعاد توجيهها — نحتفظ بالمحتوى الأصلي + نضيف علامة forwarded
   const payload = {
     uid:       currentUser.uid,
@@ -8091,6 +8234,7 @@ async function forwardMsgTo(targetChatId, msgData) {
     photo:     currentPhoto,
     createdAt: serverTimestamp(),
     forwarded: true,
+    ...(_worldId ? { worldId: _worldId } : {}),
     ...(isPrivate
       ? { senderId: currentUser.uid, delivered: false, seen: false }
       : { time: new Date().toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" }) }
