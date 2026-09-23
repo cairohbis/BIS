@@ -4960,8 +4960,13 @@ async function loadList(containerId, colName, renderFn) {
   try {
     const snap = await getDocs(query(collection(db, colName), orderBy("createdAt","desc")));
     list.innerHTML = "";
-    if (snap.empty) { list.innerHTML = `<div class="empty-state">لم تتم الإضافة بعد</div>`; return; }
-    snap.forEach(d => { const el = renderFn(d); if (el) list.appendChild(el); });
+    // ✅ Admin Isolation: الأونر يبقى Global بلا فلترة — أي حد تاني (أدمن/مستخدم عادي)
+    // يرى فقط عناصر عالمه. عناصر بلا worldId (قديمة) لا تُفترض تابعة لأي عالم،
+    // فتُستبعد من غير الأونر بدل عرضها بالخطأ ضمن عالم بعينه.
+    const _worldId = (typeof window.activeWorldContext === "function") ? window.activeWorldContext() : null;
+    const _docs = isOwner() ? snap.docs : (_worldId ? snap.docs.filter(d => d.data().worldId === _worldId) : []);
+    if (!_docs.length) { list.innerHTML = `<div class="empty-state">لم تتم الإضافة بعد</div>`; return; }
+    _docs.forEach(d => { const el = renderFn(d); if (el) list.appendChild(el); });
   } catch(e) { list.innerHTML = `<div class="empty-state">خطأ في التحميل</div>`; console.error(e); }
 }
 
@@ -5024,6 +5029,16 @@ async function deleteItem(col, id, cardEl) {
     const _snap = await getDoc(doc(db, col, id));
     if (_snap.exists()) itemData = _snap.data();
   } catch(_e) {}
+
+  // ✅ Admin Isolation: تحقق داخل عملية الحذف نفسها (وليس اعتمادًا على أن العنصر
+  // ظهر أصلاً في قائمة مفلترة) — الأونر يتجاوز التحقق ويبقى Global كالمعتاد.
+  if (!isOwner()) {
+    const _myWorld = (typeof window.currentUserWorldId === "function") ? window.currentUserWorldId() : null;
+    if (!itemData.worldId || itemData.worldId !== _myWorld) {
+      toast("غير مصرح — هذا العنصر لا يتبع عالمك", "error");
+      return;
+    }
+  }
 
   const _auditActionMap = {
     news:      AUDIT_ACTIONS.DELETE_NEWS,
@@ -5725,8 +5740,13 @@ async function loadAdminUsers() {
   list.innerHTML = `<div class="spinner"></div>`;
   try {
     const snap = await getDocs(collection(db, "users"));
-    _allAdminUsers = [];
-    snap.forEach(docu => _allAdminUsers.push({ id: docu.id, ...docu.data() }));
+    const _allFetched = [];
+    snap.forEach(docu => _allFetched.push({ id: docu.id, ...docu.data() }));
+    // ✅ Admin Isolation: الأونر يبقى Global بلا فلترة — الأدمن العادي يرى فقط
+    // المستخدمين اللي user.worldId بتاعهم يطابق currentUserWorldId(). مستخدم
+    // بلا worldId لا يُعامَل كأنه تابع لعالم الأدمن.
+    const _myWorld = (typeof window.currentUserWorldId === "function") ? window.currentUserWorldId() : null;
+    _allAdminUsers = isOwner() ? _allFetched : _allFetched.filter(u => u.worldId === _myWorld);
     renderAdminUsers(_allAdminUsers);
   } catch(e) {
     list.innerHTML = `<div class="empty-state">خطأ في التحميل</div>`;
@@ -5774,6 +5794,12 @@ function renderAdminUsers(users) {
       banBtn.className   = `act-btn ${u.isBanned ? "unban" : "ban"}`;
       banBtn.innerHTML = u.isBanned ? '<i class="fa-solid fa-check"></i> رفع الحظر' : '<i class="fa-solid fa-ban"></i> حظر الحساب';
       banBtn.addEventListener("click", async () => {
+        // ✅ Admin Isolation: تحقق مباشر وقت التنفيذ (وليس فقط اعتمادًا على
+        // أن المستخدم ظهر في قائمة مفلترة) — الأونر يتجاوز هذا التحقق.
+        if (!isOwner()) {
+          const _myWorld = (typeof window.currentUserWorldId === "function") ? window.currentUserWorldId() : null;
+          if (!u.worldId || u.worldId !== _myWorld) { toast("غير مصرح — هذا المستخدم لا يتبع عالمك", "error"); return; }
+        }
         const ok = await confirm(u.isBanned ? "رفع الحظر" : "حظر المستخدم",
           `${u.isBanned ? "هل تريد رفع الحظر عن" : "هل تريد حظر"} "${esc(u.name||"هذا المستخدم")}"؟`);
         if (!ok) return;
@@ -5804,6 +5830,11 @@ function renderAdminUsers(users) {
         chatBanBtn.className   = "act-btn chatban";
         chatBanBtn.innerHTML = '<i class="fa-solid fa-volume-xmark"></i> حظر الشات';
         chatBanBtn.addEventListener("click", () => {
+          // ✅ Admin Isolation: تحقق مباشر وقت التنفيذ — الأونر يتجاوز هذا التحقق.
+          if (!isOwner()) {
+            const _myWorld = (typeof window.currentUserWorldId === "function") ? window.currentUserWorldId() : null;
+            if (!u.worldId || u.worldId !== _myWorld) { toast("غير مصرح — هذا المستخدم لا يتبع عالمك", "error"); return; }
+          }
           toggleChatBan(uid, u.name || "هذا المستخدم", false, chatBanBtn, (newBannedState) => {
             // تحديث cache محلي
             const cached = _allAdminUsers.find(x => (x.uid || x.id) === uid);
