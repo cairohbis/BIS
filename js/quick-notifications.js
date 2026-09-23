@@ -159,6 +159,8 @@ import {
             _checkNotification(change.doc);
           }
         });
+      }, function (err) {
+        console.error("[QuickNotif] خطأ في الاستماع:", err);
       });
     } catch (e) {
       console.error("[QuickNotif] تعذّر بدء الاستماع:", e);

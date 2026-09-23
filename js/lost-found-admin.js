@@ -59,21 +59,19 @@
     }
     const { db, collection, query, where, orderBy, onSnapshot } = fs;
 
+    const worldId = (typeof window.activeWorldContext === "function") ? window.activeWorldContext() : null;
+
     const q = query(
       collection(db, "lostFound"),
       where("status", "in", ["pending", "rejected"]),
+      where("worldId", "==", worldId),
       orderBy("createdAt", "desc")
     );
 
     _unsubQueue = onSnapshot(
       q,
       (snap) => {
-        const allDocs = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-        // ✅ Admin Isolation: الأونر Global بلا فلترة — الأدمن العادي يرى بس
-        // طلبات عالمه. طلب بلا worldId لا يُعامَل كأنه تابع لعالم الأدمن.
-        const isGlobalOwner = !!(window.isOwner && window.isOwner());
-        const _myWorld = (typeof window.currentUserWorldId === "function") ? window.currentUserWorldId() : null;
-        const docs = isGlobalOwner ? allDocs : allDocs.filter((d) => d.worldId === _myWorld);
+        const docs = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
         renderQueue(listEl, docs);
       },
       (err) => {
@@ -209,30 +207,12 @@
   /* ─────────────────────────────────────────
      الكتابات — كل دالة بتتحقق isAdmin() بنفسها أولًا (دفاع إضافي)
   ───────────────────────────────────────── */
-  // ✅ Admin Isolation: تحقق مباشر من عالم الطلب قبل أي كتابة إدارية — بيتم حتى
-  // لو اتنادت الدالة من غير المرور بالقائمة المفلترة. الأونر يتجاوز، وطلب بلا
-  // worldId ممنوع على أي أدمن غير الأونر لأن عالمه غير معروف.
-  async function _worldCheckOrDeny(postRef, fs) {
-    if (window.isOwner && window.isOwner()) return true;
-    const { getDoc } = fs;
-    const _myWorld = (typeof window.currentUserWorldId === "function") ? window.currentUserWorldId() : null;
-    const snap = await getDoc(postRef);
-    const _postWorld = snap.exists() ? snap.data().worldId : null;
-    if (!_postWorld || _postWorld !== _myWorld) {
-      window.toast?.("غير مصرح — هذا الطلب لا يتبع عالمك", "error");
-      return false;
-    }
-    return true;
-  }
-
   async function approve(postId) {
     if (!core.state.isAdmin) { window.toast?.("غير مسموح", "warn"); return; }
     try {
       const fs = await core.getFS();
       const { db, doc, updateDoc, serverTimestamp } = fs;
-      const postRef = doc(db, "lostFound", postId);
-      if (!(await _worldCheckOrDeny(postRef, fs))) return;
-      await updateDoc(postRef, {
+      await updateDoc(doc(db, "lostFound", postId), {
         status: "published",
         approvedBy: window.currentUser.uid,
         approvedAt: serverTimestamp(),
@@ -249,9 +229,7 @@
     try {
       const fs = await core.getFS();
       const { db, doc, updateDoc, serverTimestamp } = fs;
-      const postRef = doc(db, "lostFound", postId);
-      if (!(await _worldCheckOrDeny(postRef, fs))) return;
-      await updateDoc(postRef, {
+      await updateDoc(doc(db, "lostFound", postId), {
         status: "rejected",
         rejectedBy: window.currentUser.uid,
         rejectedAt: serverTimestamp(),
@@ -269,10 +247,8 @@
     try {
       const fs = await core.getFS();
       const { db, doc, updateDoc } = fs;
-      const postRef = doc(db, "lostFound", postId);
-      if (!(await _worldCheckOrDeny(postRef, fs))) return;
       // الحالة تفضل pending — بس بملاحظة توضح للطالب المطلوب تعديله في "طلباتك السابقة"
-      await updateDoc(postRef, { adminNote: note });
+      await updateDoc(doc(db, "lostFound", postId), { adminNote: note });
       window.toast?.("تم إرسال الملاحظة ✓");
     } catch (e) {
       console.error("[LostFound:admin] فشل requestEdit", e);
