@@ -69,6 +69,25 @@ async function ensurePrivateChatDoc(otherUid) {
 
   if (snap.exists()) { _ensuredRooms.add(chatId); return; } // موجود بالفعل ✓
 
+  // ✅ World Model: عزل العالم عند إنشاء محادثة جديدة فقط — لا يؤثر إطلاقًا
+  // على أي محادثة موجودة بالفعل (تم الخروج بالفعل أعلاه لو snap.exists()).
+  // Owner مستثنى. المصدر الوحيد: users/{uid}.worldId من الخادم — وليس أي
+  // قيمة ممرَّرة من الواجهة. هذا يغطي كل مسارات الإنشاء (openDirectChat،
+  // forwardMsgTo، وأي استدعاء مباشر لـ selectChat/startChatListener) لأن
+  // ensurePrivateChatDoc هي نقطة الإنشاء الحقيقية الوحيدة في المشروع.
+  if (!(window.isOwner && window.isOwner())) {
+    const _myWorld = window.currentUserWorldId?.();
+    let _toWorld = null;
+    try {
+      const _toSnap = await getDoc(doc(db, "users", otherUid));
+      const _toData = _toSnap.exists() ? _toSnap.data() : null;
+      _toWorld = window.isValidWorldId?.(_toData?.worldId) ? _toData.worldId : null;
+    } catch(e) {}
+    if (!_myWorld || !_toWorld || _myWorld !== _toWorld) {
+      throw { code: "world-mismatch", message: "لا يمكن إنشاء محادثة مع مستخدم من عالم مختلف" };
+    }
+  }
+
   // إنشاء الغرفة
   // Rules تتطلب: participants (Array, size 2, يشمل currentUser.uid)
   await setDoc(chatRef, {
@@ -258,6 +277,11 @@ window.ensurePrivateChatDoc = ensurePrivateChatDoc;
       const isPrivate = _currentChatId !== "public";
       const colPath   = chatColPath(_currentChatId);
 
+      // Phase 1 / 5.1 — World Model: يُضاف فقط للشات العام، وفقط لو فيه عالم صالح حاليًا.
+      // لا worldId: null، ولا افتراض is_2 — لو activeWorldContext() رجّعت null، الحقل ما يُكتبش أصلاً.
+      const _worldId = (colPath === "messages" && typeof window.activeWorldContext === "function")
+        ? window.activeWorldContext() : null;
+
       const msgData = {
         uid:       currentUser.uid,
         name:      currentName,
@@ -266,6 +290,7 @@ window.ensurePrivateChatDoc = ensurePrivateChatDoc;
         audio:     url,
         fileName:  fileName,
         fileSize:  blob.size,
+        ...(_worldId ? { worldId: _worldId } : {}),
         ...(isPrivate ? {
           senderId:  currentUser.uid,
           delivered: false,

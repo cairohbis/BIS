@@ -61,8 +61,21 @@ async function startChatListener(chatId) {
 
   // ── تحميل الصفحة الأولى (أحدث PAGE_SIZE رسالة) ─
   const colPath = chatColPath(chatId);
+
+  // ✅ World Model: Public Chat فقط يُربط بالعالم النشط — لا تأثير على Private/Rooms
+  const worldId = chatId === "public" ? window.activeWorldContext?.() : null;
+  const worldOk = chatId !== "public" || (!!worldId && !!window.isValidWorldId?.(worldId));
+  if (!worldOk) {
+    if (msgUnsub) { msgUnsub(); msgUnsub = null; }
+    if (_reactionsUnsub) { _reactionsUnsub(); _reactionsUnsub = null; }
+    container.innerHTML = `<div class="empty-state" style="margin:auto;">لا يوجد عالم نشط حاليًا — اختر عالمًا أولًا</div>`;
+    _allLoaded = true;
+    return;
+  }
+
   const initQ   = query(
     collection(db, colPath),
+    ...(chatId === "public" ? [where("worldId", "==", worldId)] : []),
     orderBy("createdAt", "desc"),
     limit(PAGE_SIZE)
   );
@@ -133,11 +146,17 @@ async function startChatListener(chatId) {
     const newestTs = newestDoc.data().createdAt ?? new Date(0);
     liveQ = query(
       collection(db, colPath),
+      ...(chatId === "public" ? [where("worldId", "==", worldId)] : []),
       orderBy("createdAt", "asc"),
       where("createdAt", ">", newestTs)
     );
   } else {
-    liveQ = query(collection(db, colPath), orderBy("createdAt", "asc"), limit(1));
+    liveQ = query(
+      collection(db, colPath),
+      ...(chatId === "public" ? [where("worldId", "==", worldId)] : []),
+      orderBy("createdAt", "asc"),
+      limit(1)
+    );
   }
 
   msgUnsub = onSnapshot(liveQ, snap => {
@@ -205,6 +224,7 @@ async function startChatListener(chatId) {
     const oldestTs = _oldestDoc.data().createdAt ?? new Date(0);
     const reactQ   = query(
       collection(db, colPath),
+      ...(chatId === "public" ? [where("worldId", "==", worldId)] : []),
       orderBy("createdAt", "asc"),
       where("createdAt", ">=", oldestTs)
     );
@@ -274,8 +294,15 @@ async function _loadOlderMessages(chatId) {
 
   try {
     const colPath = chatColPath(chatId);
+    const worldId = chatId === "public" ? window.activeWorldContext?.() : null;
+    if (chatId === "public" && (!worldId || !window.isValidWorldId?.(worldId))) {
+      _loadingMore = false;
+      if (btn) { btn.innerHTML = "<i class=\"fa-solid fa-arrow-up\"></i> تحميل رسائل أقدم"; btn.disabled = false; }
+      return;
+    }
     const olderQ  = query(
       collection(db, colPath),
+      ...(chatId === "public" ? [where("worldId", "==", worldId)] : []),
       orderBy("createdAt", "desc"),
       startAfter(_oldestDoc),
       limit(PAGE_SIZE)

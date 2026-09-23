@@ -396,6 +396,10 @@
       } else {
         payload.createdAt = serverTimestamp();
         payload.createdBy = window.currentUser?.uid || "";
+        // Phase 1 / 5.1 — World Model: يُضاف فقط للمستند الجديد، وفقط لو فيه عالم صالح حاليًا.
+        // لا worldId: null، ولا افتراض is_2 — لو activeWorldContext() رجّعت null، الحقل ما يُكتبش أصلاً.
+        const _worldId = (typeof window.activeWorldContext === "function") ? window.activeWorldContext() : null;
+        if (_worldId) payload.worldId = _worldId;
         await addDoc(collection(db, COL), payload);
       }
       window.toast?.("تم الحفظ بنجاح ✓");

@@ -442,7 +442,13 @@ window._dmsStartListeners = function() {
   }, () => {});
 
   // الغرف — تُدمَج الآن داخل نفس قائمة الدردشات (بدل تبويب مستقل)
-  onSnapshot(collection(window.db,"rooms"), snap => {
+  const worldId = window.activeWorldContext?.();
+  if (!worldId || !window.isValidWorldId?.(worldId)) {
+    _dmsRooms = [];
+    _render(document.getElementById("dmsSearchInp")?.value||"");
+    return;
+  }
+  onSnapshot(query(collection(window.db,"rooms"), where("worldId","==",worldId)), snap => {
     _dmsRooms = snap.docs.map(d => ({id:d.id,...d.data()}));
     _render(document.getElementById("dmsSearchInp")?.value||"");
   }, () => {});

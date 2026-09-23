@@ -46,6 +46,10 @@ async function writeAuditLog(action, details = {}, targetUid = null, targetName 
       timestamp:  serverTimestamp(),
       ...(targetUid  ? { targetUid }  : {}),
       ...(targetName ? { targetName } : {}),
+      // Phase 1 / 5.1 — World Model: يُضاف فقط لو فيه عالم صالح حاليًا.
+      // لا worldId: null، ولا افتراض is_2 — لو activeWorldContext() رجّعت null، الحقل ما يُكتبش أصلاً.
+      ...((typeof window.activeWorldContext === "function" && window.activeWorldContext())
+        ? { worldId: window.activeWorldContext() } : {}),
       ...details
     };
     await addDoc(collection(db, 'auditLogs'), logEntry);
