@@ -115,10 +115,17 @@
   /* ─────────────────────────────────────────
      الاستماع الحي لمجموعة studySchedule
   ───────────────────────────────────────── */
+  var _wTries = 0;
   function _startListening() {
+    // ✅ لا استماع بدون World صحيح (تفاديًا لـ where worldId == null). Owner بلا World → لا استماع ولا retry؛ غيره → إعادة محاولة محدودة لحين تحميل بيانات المستخدم.
+    var _w = (typeof window.activeWorldContext === "function") ? window.activeWorldContext() : null;
+    if (!_w) {
+      if (!(window.isOwner && window.isOwner()) && ++_wTries <= 50) setTimeout(_startListening, 400);
+      return;
+    }
     import(_FB).then(function (mod) {
       try {
-        var _worldId = (typeof window.activeWorldContext === "function") ? window.activeWorldContext() : null;
+        var _worldId = _w;
         mod.onSnapshot(mod.query(mod.collection(window.db, COL), mod.where("worldId", "==", _worldId)), function (snap) {
           // ✅ World Isolation: نفس مصدر العالم الموحّد — activeWorldContext(). لا تنبيه من عالم آخر.
           var _worldId = (typeof window.activeWorldContext === "function") ? window.activeWorldContext() : null;
@@ -128,7 +135,7 @@
             if (_worldId && data.worldId === _worldId) _lectures.push({ id: d.id, ...data });
           });
           _scheduleCheck();
-        });
+        }, function (e) { console.warn("[StudyScheduleReminder] snapshot error:", e && e.code); });
       } catch (e) { console.error("[StudyScheduleReminder] تعذّر بدء الاستماع:", e); }
     }).catch(function (e) { console.error("[StudyScheduleReminder] فشل تحميل Firestore:", e); });
   }
