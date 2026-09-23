@@ -4960,11 +4960,10 @@ async function loadList(containerId, colName, renderFn) {
   try {
     const snap = await getDocs(query(collection(db, colName), orderBy("createdAt","desc")));
     list.innerHTML = "";
-    // ✅ Admin Isolation: الأونر يبقى Global بلا فلترة — أي حد تاني (أدمن/مستخدم عادي)
-    // يرى فقط عناصر عالمه. عناصر بلا worldId (قديمة) لا تُفترض تابعة لأي عالم،
-    // فتُستبعد من غير الأونر بدل عرضها بالخطأ ضمن عالم بعينه.
+    // ✅ World Isolation: activeWorldContext() هو المصدر الوحيد للعالم للجميع (بما فيهم الأونر).
+    // عناصر بلا worldId (قديمة) لا تُفترض تابعة لأي عالم، فتُستبعد من الجميع بلا استثناء.
     const _worldId = (typeof window.activeWorldContext === "function") ? window.activeWorldContext() : null;
-    const _docs = isOwner() ? snap.docs : (_worldId ? snap.docs.filter(d => d.data().worldId === _worldId) : []);
+    const _docs = _worldId ? snap.docs.filter(d => d.data().worldId === _worldId) : [];
     if (!_docs.length) { list.innerHTML = `<div class="empty-state">لم تتم الإضافة بعد</div>`; return; }
     _docs.forEach(d => { const el = renderFn(d); if (el) list.appendChild(el); });
   } catch(e) { list.innerHTML = `<div class="empty-state">خطأ في التحميل</div>`; console.error(e); }
@@ -5074,14 +5073,14 @@ function makeAdder(btnId, getFields, colName, successMsg, reloadFn) {
   if (!el) return;
   el.addEventListener("click", async () => {
     if (!isAdmin()) return toast("ليس لديك صلاحية", "error");
+    // ✅ World Isolation: worldId إلزامي — activeWorldContext() هو المصدر الوحيد، لا يُخمَّن ولا يُترك فارغًا.
+    const _worldId = (typeof window.activeWorldContext === "function") ? window.activeWorldContext() : null;
+    if (!_worldId) { toast("لا يوجد عالم نشط — تعذّرت الإضافة", "error"); return; }
     const fields = getFields();
     if (!fields) return;
     let saved = false;
     try {
-      // Phase 1 / 5.1 — World Model: يُضاف فقط لو فيه عالم صالح حاليًا.
-      // لا worldId: null، ولا افتراض is_2 — لو activeWorldContext() رجّعت null، الحقل ما يُكتبش أصلاً.
-      const _worldId = (typeof window.activeWorldContext === "function") ? window.activeWorldContext() : null;
-      await addDoc(collection(db, colName), { ...fields, ...(_worldId ? { worldId: _worldId } : {}), createdAt: serverTimestamp() });
+      await addDoc(collection(db, colName), { ...fields, worldId: _worldId, createdAt: serverTimestamp() });
       saved = true;
     } catch(e) {
       toast("فشلت الإضافة", "error");
