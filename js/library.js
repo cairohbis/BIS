@@ -1,4 +1,4 @@
-import { collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { collection, getDocs, query, orderBy, where } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 /* ══════════════════════════════════════════
    LIBRARY SYSTEM — مكتبة المحاضرات
@@ -346,10 +346,10 @@ async function loadLectures() {
   _libCurSubject = null;
 
   try {
-    const snap = await getDocs(query(collection(window.db, "lectures"), orderBy("createdAt","desc")));
     // ✅ World Isolation: activeWorldContext() هو المصدر الوحيد للعالم للجميع (بما فيهم الأونر).
     // عناصر بلا worldId (قديمة) تُستبعد من الجميع بلا استثناء.
     const _worldId = (typeof window.activeWorldContext === "function") ? window.activeWorldContext() : null;
+    const snap = await getDocs(query(collection(window.db, "lectures"), where("worldId", "==", _worldId), orderBy("createdAt","desc")));
     const _srcDocs = _worldId ? snap.docs.filter(d => d.data().worldId === _worldId) : [];
     _libAllDocs  = [];
     _srcDocs.forEach(d => _libAllDocs.push({ _id: d.id, ...d.data() }));

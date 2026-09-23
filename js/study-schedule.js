@@ -129,11 +129,11 @@
     const body = _body();
     if (body) body.innerHTML = `<div class="ss-loading"><div class="ss-spin"></div></div>`;
     try {
-      const { db, collection, getDocs } = await _fs();
-      const snap = await getDocs(collection(db, COL));
+      const { db, collection, getDocs, query, where } = await _fs();
       // ✅ World Isolation: activeWorldContext() هو المصدر الوحيد للعالم للجميع (بما فيهم الأونر).
       // عناصر بلا worldId (قديمة) لا تُفترض تابعة لأي عالم، فتُستبعد من الجميع بلا استثناء.
       const _worldId = (typeof window.activeWorldContext === "function") ? window.activeWorldContext() : null;
+      const snap = await getDocs(query(collection(db, COL), where("worldId", "==", _worldId)));
       _lectures = [];
       snap.forEach((d) => { const data = d.data(); if (_worldId && data.worldId === _worldId) _lectures.push({ id: d.id, ...data }); });
       _loaded = true;

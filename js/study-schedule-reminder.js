@@ -118,7 +118,8 @@
   function _startListening() {
     import(_FB).then(function (mod) {
       try {
-        mod.onSnapshot(mod.collection(window.db, COL), function (snap) {
+        var _worldId = (typeof window.activeWorldContext === "function") ? window.activeWorldContext() : null;
+        mod.onSnapshot(mod.query(mod.collection(window.db, COL), mod.where("worldId", "==", _worldId)), function (snap) {
           // ✅ World Isolation: نفس مصدر العالم الموحّد — activeWorldContext(). لا تنبيه من عالم آخر.
           var _worldId = (typeof window.activeWorldContext === "function") ? window.activeWorldContext() : null;
           _lectures = [];
