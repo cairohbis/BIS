@@ -1,8 +1,8 @@
 /**
  * ══════════════════════════════════════════
- *   الجدول الدراسي — جدول واحد موحّد لكل المستخدمين
- *   المالك/الأدمن: إضافة/تعديل/حذف/تعطيل المحاضرات
- *   المستخدم العادي: قراءة فقط — يشوف الأيام اللي فيها محاضرات بس
+ *   الجدول الدراسي — World-scoped: جدول مستقل لكل عالم (worldId)
+ *   المالك/الأدمن: إضافة/تعديل/حذف/تعطيل محاضرات عالمهم (activeWorldContext())
+ *   المستخدم العادي: قراءة فقط — لعالمه فقط، يشوف الأيام اللي فيها محاضرات بس
  *
  *   ▸ المصدر الوحيد: studySchedule/{lectureId}
  *       { subject, day, startTime, endTime, reminderMinutes, enabled,
@@ -15,13 +15,13 @@
  *         الوقت الفعلي وإرسال الإشعار تلقائيًا (حتى لو الموقع مقفول)
  *         محتاج Cloud Function مجدولة من السيرفر — مؤجّل حاليًا باتفاق
  *         مسبق، ومش موجود في هذا الملف. الملف ده بيبني الجدول والإدارة فقط.
- *     لا يوجد batchId ولا userId — الجدول موحّد للجميع.
+ *     لا يوجد batchId ولا userId — لكن worldId إلزامي الآن (World Isolation)،
+ *     ولا يمكن تغييره بعد الإنشاء.
  *
- *   ▸ القواعد المطلوبة في Firestore Rules (إضافة فقط):
- *       match /studySchedule/{lectureId} {
- *         allow read: if isSignedIn();
- *         allow create, update, delete: if isAdmin();
- *       }
+ *   ▸ Firestore Rules المطلوبة (World Isolation — مُعدَّلة محليًا، غير منشورة بعد):
+ *       create: worldId إلزامي ومطابق لعالم الأدمن (أو غير فارغ للأونر).
+ *       update: يمنع تغيير worldId. delete: بنفس شرط ملكية العالم.
+ *       read: يبقى isSignedIn() عام — الفلترة في هذا الملف وحده.
  * ══════════════════════════════════════════
  */
 
@@ -131,8 +131,11 @@
     try {
       const { db, collection, getDocs } = await _fs();
       const snap = await getDocs(collection(db, COL));
+      // ✅ World Isolation: activeWorldContext() هو المصدر الوحيد للعالم للجميع (بما فيهم الأونر).
+      // عناصر بلا worldId (قديمة) لا تُفترض تابعة لأي عالم، فتُستبعد من الجميع بلا استثناء.
+      const _worldId = (typeof window.activeWorldContext === "function") ? window.activeWorldContext() : null;
       _lectures = [];
-      snap.forEach((d) => _lectures.push({ id: d.id, ...d.data() }));
+      snap.forEach((d) => { const data = d.data(); if (_worldId && data.worldId === _worldId) _lectures.push({ id: d.id, ...data }); });
       _loaded = true;
       _renderHome();
     } catch (e) {
@@ -392,14 +395,19 @@
       const { db, doc, addDoc, updateDoc, collection, serverTimestamp } = await _fs();
       payload.updatedAt = serverTimestamp();
       if (_draft.id) {
+        // Update: worldId غير موجود أصلاً في payload هنا — لا يُغيَّر أبدًا بعد الإنشاء.
         await updateDoc(doc(db, COL, _draft.id), payload);
       } else {
+        // ✅ World Isolation: worldId إلزامي عند الإنشاء — activeWorldContext() هو المصدر الوحيد.
+        const _worldId = (typeof window.activeWorldContext === "function") ? window.activeWorldContext() : null;
+        if (!_worldId) {
+          window.toast?.("لا يوجد عالم نشط — تعذّر الحفظ", "error");
+          if (btn) btn.disabled = false;
+          return;
+        }
         payload.createdAt = serverTimestamp();
         payload.createdBy = window.currentUser?.uid || "";
-        // Phase 1 / 5.1 — World Model: يُضاف فقط للمستند الجديد، وفقط لو فيه عالم صالح حاليًا.
-        // لا worldId: null، ولا افتراض is_2 — لو activeWorldContext() رجّعت null، الحقل ما يُكتبش أصلاً.
-        const _worldId = (typeof window.activeWorldContext === "function") ? window.activeWorldContext() : null;
-        if (_worldId) payload.worldId = _worldId;
+        payload.worldId = _worldId;
         await addDoc(collection(db, COL), payload);
       }
       window.toast?.("تم الحفظ بنجاح ✓");
@@ -426,6 +434,15 @@
   window.StudyScheduleModule._delete = async function (id) {
     if (!_isAdmin()) return;
     if (!window.confirm("حذف هذه المحاضرة نهائيًا؟")) return;
+    // ✅ World Isolation: فحص ملكية العالم قبل الحذف — نفس منطق deleteItem بباقي الميزات. الأونر معفى.
+    if (!(window.isOwner && window.isOwner())) {
+      const l = _lectures.find((x) => x.id === id);
+      const _myWorld = (typeof window.currentUserWorldId === "function") ? window.currentUserWorldId() : null;
+      if (!l || !l.worldId || l.worldId !== _myWorld) {
+        window.toast?.("غير مصرح — هذا العنصر لا يتبع عالمك", "error");
+        return;
+      }
+    }
     try {
       const { db, doc, deleteDoc } = await _fs();
       await deleteDoc(doc(db, COL, id));

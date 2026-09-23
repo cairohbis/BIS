@@ -119,8 +119,13 @@
     import(_FB).then(function (mod) {
       try {
         mod.onSnapshot(mod.collection(window.db, COL), function (snap) {
+          // ✅ World Isolation: نفس مصدر العالم الموحّد — activeWorldContext(). لا تنبيه من عالم آخر.
+          var _worldId = (typeof window.activeWorldContext === "function") ? window.activeWorldContext() : null;
           _lectures = [];
-          snap.forEach(function (d) { _lectures.push({ id: d.id, ...d.data() }); });
+          snap.forEach(function (d) {
+            var data = d.data();
+            if (_worldId && data.worldId === _worldId) _lectures.push({ id: d.id, ...data });
+          });
           _scheduleCheck();
         });
       } catch (e) { console.error("[StudyScheduleReminder] تعذّر بدء الاستماع:", e); }
