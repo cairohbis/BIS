@@ -133,6 +133,12 @@ import {
     if (!uid) return; // لسه المستخدم مش عامل تسجيل دخول
     var d = docSnap.data();
     if (d.active === false) return;
+    // ✅ Admin Isolation: إخطار قديم/عام (بلا worldId) يصل للجميع كما كان تمامًا —
+    // بدون Migration ولا تعديل. إخطار مربوط بعالم يصل فقط لمستخدمي نفس العالم.
+    if (d.worldId) {
+      var _myWorld = (typeof window.currentUserWorldId === "function") ? window.currentUserWorldId() : null;
+      if (d.worldId !== _myWorld) return;
+    }
     var _uca = window._currentUserData && window._currentUserData.createdAt;
     var userMs = _uca && _uca.toMillis ? _uca.toMillis()
       : (window.currentUser.metadata && window.currentUser.metadata.creationTime
@@ -175,13 +181,23 @@ import {
   // ────────────────────────────────────────────
   window.qnPublish = async function (title, body) {
     if (!title || !title.trim()) { window.toast && window.toast("اكتب عنوان الإخطار", "error"); return; }
+    // ✅ Admin Isolation: الأونر ينشر Global كالمعتاد (بلا worldId) — الأدمن
+    // العادي يُختم إخطاره بعالمه الحالي، ولا يُسمح له بالنشر بدون عالم صالح.
+    var _isOwnerNow = !!(window.isOwner && window.isOwner());
+    var _worldId = null;
+    if (!_isOwnerNow) {
+      _worldId = (typeof window.activeWorldContext === "function") ? window.activeWorldContext() : null;
+      if (!_worldId) { window.toast && window.toast("لا يوجد عالم نشط حاليًا — لا يمكن نشر الإخطار", "error"); return; }
+    }
     try {
-      await addDoc(collection(window.db, "quickNotifications"), {
+      var _payload = {
         title: title.trim(),
         body: (body || "").trim(),
         active: true,
         createdAt: serverTimestamp()
-      });
+      };
+      if (_worldId) _payload.worldId = _worldId;
+      await addDoc(collection(window.db, "quickNotifications"), _payload);
       window.toast && window.toast("تم نشر الإخطار للجميع", "success");
     } catch (e) {
       console.error("[QuickNotif] فشل النشر:", e);

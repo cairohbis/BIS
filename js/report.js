@@ -1,4 +1,4 @@
-import { collection, doc, getDocs, addDoc, updateDoc, deleteDoc, serverTimestamp, query, orderBy, where, deleteField, limit } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, serverTimestamp, query, orderBy, where, deleteField, limit } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 /* ══════════════════════════════════════════
    REPORT SYSTEM — نظام التبليغات
@@ -290,7 +290,13 @@ async function loadAdminReports() {
   try {
     const q = query(collection(window.db, "reports"), orderBy("createdAt", "desc"), limit(100));
     const snap = await getDocs(q);
-    _adminReportsAll = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const _allFetched = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    // ✅ Admin Isolation: الأونر يبقى Global بلا فلترة — الأدمن العادي يرى فقط
+    // البلاغات اللي report.worldId بتاعها يطابق عالمه. بلاغ بلا worldId لا
+    // يُعامَل كأنه تابع لعالم الأدمن.
+    const _isOwnerNow = !!(window.isOwner && window.isOwner());
+    const _myWorld    = (typeof window.currentUserWorldId === "function") ? window.currentUserWorldId() : null;
+    _adminReportsAll = _isOwnerNow ? _allFetched : _allFetched.filter(r => r.worldId === _myWorld);
     let open = 0, resolved = 0, rejected = 0;
     _adminReportsAll.forEach(r => {
       if (r.status === "open" || r.status === "reviewing") open++;
@@ -373,6 +379,14 @@ function _renderAdminReports() {
 async function adminUpdateReportStatus(reportId, status) {
   if (!window.isAdmin()) return;
   try {
+    // ✅ Admin Isolation: تحقق مباشر من عالم البلاغ قبل أي تعديل — بيتم حتى
+    // لو اتنادت الدالة مباشرة من غير المرور بالقائمة المفلترة. الأونر يتجاوز.
+    if (!(window.isOwner && window.isOwner())) {
+      const _myWorld  = (typeof window.currentUserWorldId === "function") ? window.currentUserWorldId() : null;
+      const _rptSnap  = await getDoc(doc(window.db, "reports", reportId));
+      const _rptWorld = _rptSnap.exists() ? _rptSnap.data().worldId : null;
+      if (!_rptWorld || _rptWorld !== _myWorld) { window.toast("غير مصرح — هذا البلاغ لا يتبع عالمك", "error"); return; }
+    }
     await updateDoc(doc(window.db, "reports", reportId), { status });
     const idx = _adminReportsAll.findIndex(r => r.id === reportId);
     if (idx !== -1) _adminReportsAll[idx].status = status;
@@ -397,6 +411,14 @@ window.adminUpdateReportStatus = adminUpdateReportStatus;
 async function adminDeleteReportedMsg(reportId, chatId, msgId) {
   if (!window.isAdmin() || !chatId || !msgId) return;
   try {
+    // ✅ Admin Isolation: تحقق من عالم البلاغ قبل أي حذف — يشمل حالة الرسالة
+    // الخاصة (privateChats) بدون توسيع صلاحيات الأدمن عليها. الأونر يتجاوز.
+    if (!(window.isOwner && window.isOwner())) {
+      const _myWorld  = (typeof window.currentUserWorldId === "function") ? window.currentUserWorldId() : null;
+      const _rptSnap  = await getDoc(doc(window.db, "reports", reportId));
+      const _rptWorld = _rptSnap.exists() ? _rptSnap.data().worldId : null;
+      if (!_rptWorld || _rptWorld !== _myWorld) { window.toast("غير مصرح — هذا البلاغ لا يتبع عالمك", "error"); return; }
+    }
     let msgRef;
     if (chatId === "public") {
       msgRef = doc(window.db, "messages", msgId);

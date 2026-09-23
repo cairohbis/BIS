@@ -347,8 +347,13 @@ async function loadLectures() {
 
   try {
     const snap = await getDocs(query(collection(window.db, "lectures"), orderBy("createdAt","desc")));
+    // ✅ Admin Isolation: الأونر يبقى Global بلا فلترة — أي حد تاني (أدمن/مستخدم عادي)
+    // يرى فقط محاضرات عالمه. عناصر بلا worldId (قديمة) تُستبعد من غير الأونر.
+    const _isOwnerNow = !!(window.isOwner && window.isOwner());
+    const _worldId    = (typeof window.activeWorldContext === "function") ? window.activeWorldContext() : null;
+    const _srcDocs    = _isOwnerNow ? snap.docs : (_worldId ? snap.docs.filter(d => d.data().worldId === _worldId) : []);
     _libAllDocs  = [];
-    snap.forEach(d => _libAllDocs.push({ _id: d.id, ...d.data() }));
+    _srcDocs.forEach(d => _libAllDocs.push({ _id: d.id, ...d.data() }));
     _libCurrentQuery = (document.getElementById("libSearchInp")?.value || "").trim();
     const filtered = _libFilterDocs(_libAllDocs, _libCurrentQuery);
     _libRenderSubjectGrid(filtered, _libCurrentQuery);
