@@ -208,15 +208,7 @@
 
     try {
       const fs = await core.getFS();
-      const { db, doc, getDoc, collection, addDoc, serverTimestamp } = fs;
-
-      // بيانات مرجعية بس — worldId المنشور الأب، بيُستخدم وقت الحذف الإداري
-      // للتعليق، مش لمنع أي حد من قراءة تعليقات المنشور العام
-      let _postWorldId = null;
-      try {
-        const postSnap = await getDoc(doc(db, "lostFound", postId));
-        if (postSnap.exists()) _postWorldId = postSnap.data().worldId || null;
-      } catch (e) {}
+      const { db, collection, addDoc, serverTimestamp } = fs;
 
       await addDoc(collection(db, "lostFound", postId, "comments"), {
         text,
@@ -224,7 +216,6 @@
         createdByName: window.getCurrentName?.() || "مستخدم",
         createdByPhoto: window.currentPhoto || "",
         parentId: parentId || null,
-        worldId: _postWorldId,
         createdAt: serverTimestamp(),
       });
 

@@ -265,9 +265,10 @@
       if (_editingPostId) {
         const postRef = doc(db, "lostFound", _editingPostId);
 
-        // ✅ Admin Isolation: تحقق مباشر من عالم المنشور قبل أي تعديل — دايمًا
-        // صاحب المنشور بس اللي بيعدّل (زي ما هو أصلًا)، بس لازم كمان عالمه الحالي
-        // يطابق worldId المنشور. الأونر Global، ومنشور بلا worldId ممنوع على غير الأونر.
+        // ✅ Admin Isolation: تحقق مباشر من ملكية وعالم المنشور قبل أي تعديل —
+        // دايمًا صاحب المنشور بس اللي بيعدّل (زي ما هو أصلًا)، بس لازم كمان عالمه
+        // الحالي يطابق worldId المنشور. الأونر Global، ومنشور بلا worldId ممنوع
+        // على غير الأونر.
         const existSnap = await getDoc(postRef);
         const existing = existSnap.exists() ? existSnap.data() : null;
         const isOwnerOfPost = !!(existing && currentUser.uid === existing.createdBy);
