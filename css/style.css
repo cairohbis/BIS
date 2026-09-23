@@ -236,6 +236,11 @@ body {
 #nameRow { display: none; }
 #nameRow.show { display: block; }
 
+/* Phase 1 / 5.1 — Signup World: صف اختيار الشعبة/الفرقة، بنفس نمط nameRow/termsRow */
+#worldRow { display: none; }
+#worldRow.show { display: flex; gap: 10px; }
+#worldRow select { flex: 1; }
+
 #termsRow { display: none; }
 #termsRow.show {
   display: flex; align-items: center; justify-content: space-between;
