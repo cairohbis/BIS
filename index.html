@@ -4958,11 +4958,11 @@ async function loadList(containerId, colName, renderFn) {
   if (!list) return;
   list.innerHTML = `<div class="spinner"></div>`;
   try {
-    const snap = await getDocs(query(collection(db, colName), orderBy("createdAt","desc")));
-    list.innerHTML = "";
     // ✅ World Isolation: activeWorldContext() هو المصدر الوحيد للعالم للجميع (بما فيهم الأونر).
     // عناصر بلا worldId (قديمة) لا تُفترض تابعة لأي عالم، فتُستبعد من الجميع بلا استثناء.
     const _worldId = (typeof window.activeWorldContext === "function") ? window.activeWorldContext() : null;
+    const snap = await getDocs(query(collection(db, colName), where("worldId", "==", _worldId), orderBy("createdAt","desc")));
+    list.innerHTML = "";
     const _docs = _worldId ? snap.docs.filter(d => d.data().worldId === _worldId) : [];
     if (!_docs.length) { list.innerHTML = `<div class="empty-state">لم تتم الإضافة بعد</div>`; return; }
     _docs.forEach(d => { const el = renderFn(d); if (el) list.appendChild(el); });
