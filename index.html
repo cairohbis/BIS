@@ -3159,6 +3159,85 @@ function hideErr()    { document.getElementById("loginError").style.display="non
 // قبل أن يكتمل setDoc، فيجد الـ handler وثيقة Firestore غير موجودة ويعمل signOut
 let _isRegistering = false;
 
+// ── إنشاء وثيقة المستخدم (مشتركة بين التسجيل والإكمال التلقائي) ──
+// الوثيقة تُكتب أولاً بدون publicId، وبعدها نولّده ونحدّثه؛
+// لو فشل يتولّاه كود الترحيل في onAuthStateChanged عند أول دخول.
+async function _createUserProfile(user, { name, gender, worldId }) {
+  const uid  = user.uid;
+  const role = uid === OWNER_UID ? ROLES.OWNER : ROLES.USER;
+  await setDoc(doc(db, "users", uid), {
+    uid, name, email: user.email, role,
+    publicId:  "",
+    photo:     "",
+    bio:       "",
+    gender,
+    ...(uid !== OWNER_UID ? { worldId } : {}),
+    xp:        0,
+    level:     1,
+    banReason: "",
+    agreedToTerms:   true,
+    agreedToTermsAt: serverTimestamp(),
+    createdAt: serverTimestamp()
+  });
+  try {
+    const publicId = await _generatePublicId();
+    await updateDoc(doc(db, "users", uid), { publicId });
+  } catch (e) { console.warn("publicId will be generated on next login:", e); }
+}
+
+// ── نسخة محلية من بيانات التسجيل (بدون كلمة المرور) ──
+const _PENDING_KEY = "bis_pending_profile";
+function _savePendingProfile(email, p) {
+  try { localStorage.setItem(_PENDING_KEY, JSON.stringify({ email: email.toLowerCase(), ...p, ts: Date.now() })); } catch (e) {}
+}
+function _readPendingProfile(email) {
+  try {
+    const p = JSON.parse(localStorage.getItem(_PENDING_KEY) || "null");
+    if (!p || !email || p.email !== email.toLowerCase()) return null;
+    if (Date.now() - p.ts > 7 * 864e5) return null;
+    return { name: p.name, gender: p.gender, worldId: p.worldId };
+  } catch (e) { return null; }
+}
+function _clearPendingProfile() { try { localStorage.removeItem(_PENDING_KEY); } catch (e) {} }
+
+// ── شاشة "كمّل بيانات حسابك" للحسابات اليتيمة (Auth بدون Firestore) ──
+function _showCompleteProfile(user) {
+  if (document.getElementById("completeProfileOverlay")) return;
+  const ov = document.createElement("div");
+  ov.id = "completeProfileOverlay";
+  ov.style.cssText = "position:fixed;inset:0;z-index:99999;background:rgba(6,13,26,.95);display:flex;align-items:center;justify-content:center;padding:20px;overflow:auto;";
+  ov.innerHTML = `
+    <div style="width:100%;max-width:380px;background:var(--card);border:1px solid var(--border);border-radius:16px;padding:22px;display:flex;flex-direction:column;gap:10px;direction:rtl;color:var(--text);">
+      <div style="font-weight:800;font-size:17px;">كمّل بيانات حسابك</div>
+      <div style="font-size:12.5px;color:var(--muted);line-height:1.7;">حسابك اتعمل بس خطوة التسجيل ما اكتملتش. اكتب بياناتك مرة واحدة وتدخل على طول.</div>
+      <input class="inp" id="cpName" placeholder="الاسم الكامل" value="${esc(user.displayName || "")}">
+      <select class="inp" id="cpGender"><option value="male">طالب</option><option value="female">طالبة</option></select>
+      <select class="inp" id="cpDept">${document.getElementById("regDept")?.innerHTML || ""}</select>
+      <select class="inp" id="cpYear">${document.getElementById("regYear")?.innerHTML || ""}</select>
+      <label style="display:flex;gap:8px;align-items:center;font-size:12.5px;"><input type="checkbox" id="cpTerms"> أوافق على شروط الاستخدام وسياسة الخصوصية</label>
+      <div id="cpErr" style="display:none;color:#f87171;font-size:12.5px;"></div>
+      <button class="btn" id="cpSave">حفظ ومتابعة</button>
+      <button type="button" id="cpLogout" style="background:none;border:0;color:var(--muted);font-size:12.5px;cursor:pointer;">تسجيل الخروج</button>
+    </div>`;
+  document.body.appendChild(ov);
+  const err = m => { const e = document.getElementById("cpErr"); e.textContent = m; e.style.display = "block"; };
+  document.getElementById("cpLogout").onclick = async () => { ov.remove(); await signOut(auth); };
+  document.getElementById("cpSave").onclick = async () => {
+    const name = document.getElementById("cpName").value.trim();
+    const dept = document.getElementById("cpDept").value;
+    const year = document.getElementById("cpYear").value;
+    const worldId = (dept && year) ? `${dept}_${year}` : "";
+    if (!name) return err("اكتب اسمك الكامل");
+    if (!worldId || !window.isValidWorldId?.(worldId)) return err("اختر الشعبة والفرقة");
+    if (!document.getElementById("cpTerms").checked) return err("يجب الموافقة على شروط الاستخدام");
+    const btn = document.getElementById("cpSave"); btn.disabled = true;
+    try {
+      await _createUserProfile(user, { name, gender: document.getElementById("cpGender").value, worldId });
+      window.location.reload();
+    } catch (e) { btn.disabled = false; err("تعذر الحفظ، تأكد من الاتصال وحاول تاني"); }
+  };
+}
+
 async function doRegister() {
   const name   = document.getElementById("loginName").value.trim();
   const email  = document.getElementById("loginEmail").value.trim();
@@ -3179,38 +3258,31 @@ async function doRegister() {
     return showErr("يجب الموافقة على شروط الاستخدام وسياسة الخصوصية أولاً");
   }
 
+  const profile = { name, gender, worldId };
   try {
     // ✅ نمنع onAuthStateChanged من التدخل أثناء إنشاء الحساب
     _isRegistering = true;
+    // شبكة أمان: نحفظ البيانات محلياً قبل إنشاء الحساب، لو العملية اتقطعت تتكمّل عند أول دخول
+    _savePendingProfile(email, profile);
 
-    const cred = await createUserWithEmailAndPassword(auth, email, pass);
-    const uid  = cred.user.uid;
-    const role = uid === OWNER_UID ? ROLES.OWNER : ROLES.USER;
+    let cred;
+    try {
+      cred = await createUserWithEmailAndPassword(auth, email, pass);
+    } catch (e) {
+      if (e.code !== "auth/email-already-in-use") throw e;
+      // ممكن يكون حساب يتيم من محاولة قديمة اتقطعت: لو الباسورد صح ومفيش وثيقة، نكمّل عليه
+      let existing;
+      try { existing = await signInWithEmailAndPassword(auth, email, pass); } catch (_) { throw e; }
+      const snap = await getDoc(doc(db, "users", existing.user.uid));
+      if (snap.exists()) { await signOut(auth); throw e; }
+      cred = existing;
+    }
 
-    // ✅ إنشاء معرف عام فريد (Public ID) — مستقل عن Firebase UID
-    const publicId = await _generatePublicId();
-
-    // ✅ قواعد Firestore تمنع وضع isBanned/isChatBanned/bannedBy/vipLevel/vipType
-    //    عند الإنشاء لأي مستخدم عادي — لذا نحذفها تماماً من الـ payload
-    //    vipLevel/vipType تُحسب لاحقاً تلقائياً بواسطة _ensureUserXPLevel/_awardXP
-    await setDoc(doc(db, "users", uid), {
-      uid, name, email, role,
-      publicId,           // ← المعرف العام الفريد
-      photo:     "",
-      bio:       "",
-      gender,
-      // Phase 1 / 5.1 — Signup World: يُضاف فقط للمستخدم العادي، الـOwner لا يأخذ worldId إطلاقًا
-      ...(uid !== OWNER_UID ? { worldId } : {}),
-      xp:        0,
-      level:     1,
-      banReason: "",
-      agreedToTerms:   true,
-      agreedToTermsAt: serverTimestamp(),
-      createdAt: serverTimestamp()
-    });
+    // ✅ الكتابة في Firestore فوراً بعد إنشاء الحساب (بدون أي طلب شبكة بينهم)
+    await _createUserProfile(cred.user, profile);
+    _clearPendingProfile();
 
     // ✅ بعد اكتمال كتابة Firestore، نعيد تحميل الصفحة
-    //    حتى يشتغل onAuthStateChanged بشكل نظيف مع وثيقة موجودة
     _isRegistering = false;
     window.location.reload();
 
@@ -3525,9 +3597,17 @@ onAuthStateChanged(auth, async (user) => {
       // البيانات لحد ما الاتصال يرجع ويزامن تلقائي، من غير أي رسالة مقاطعة
       userData = { name: user.displayName || "مستخدم", publicId: null };
     } else {
-      toast("حساب غير مكتمل، حاول مجدداً", "error");
-      await signOut(auth);
-      return;
+      // حساب يتيم: موجود في Auth بدون وثيقة Firestore — نكمّله بدل ما نطرده
+      const pending = _readPendingProfile(user.email);
+      if (pending) {
+        try {
+          await _createUserProfile(user, pending);
+          _clearPendingProfile();
+          const s2 = await getDoc(doc(db, "users", user.uid));
+          if (s2.exists()) userData = s2.data();
+        } catch (e) { console.error("auto-complete profile failed:", e); }
+      }
+      if (!userData) { _showCompleteProfile(user); return; }
     }
   }
 
