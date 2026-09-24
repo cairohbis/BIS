@@ -35,11 +35,18 @@ async function renderMembersList(q, containerId = "membersList") {
   try {
     const all = await window._getAllUsers();
 
+    // ✅ World Isolation: أعضاء العالم الحالي فقط + الـOwner (Global) يظهر دائمًا
+    const _w = window.activeWorldContext?.();
+    const scoped = all.filter(u => {
+      const _uid = u.uid || u.id;
+      return _uid === window.OWNER_UID || (!!_w && u.worldId === _w);
+    });
+
     const lower = q.toLowerCase();
     // هل الاستعلام رقمي؟ → بحث مباشر بـ publicId
     const isNumericId = /^\d{5,6}$/.test(q.trim());
 
-    const filtered = all.filter(u => {
+    const filtered = scoped.filter(u => {
       const uid = u.uid || u.id;
       if (uid === window.currentUser.uid) return false;
       if (!q) return true;
