@@ -346,12 +346,16 @@ window._dmsStartListeners = function() {
   const pubItem = { id:"public", name:"الشات العام", photo:"", cls:"public", lastMsg:"مباشر — الجميع", lastTime:null, unread:0 };
   _dmsItems = [pubItem];
 
-  onSnapshot(query(collection(window.db,"messages"), orderBy("createdAt","desc"), limit(1)), snap => {
-    const d = snap.docs[0]?.data();
-    const p = _dmsItems.find(i => i.id==="public");
-    if (p && d) { p.lastMsg = d.text||(d.image?"📷 صورة":d.audio?"🎤 تسجيل":""); p.lastTime = d.createdAt; }
-    _render(""); _updateNavBadge();
-  }, () => {});
+  // ✅ World Isolation: معاينة الشات العام لعالم المستخدم النشط فقط — لا مستمع إن لم يوجد عالم صالح
+  const _pubWorld = window.activeWorldContext?.();
+  if (_pubWorld && window.isValidWorldId?.(_pubWorld)) {
+    onSnapshot(query(collection(window.db,"messages"), where("worldId","==",_pubWorld), orderBy("createdAt","desc"), limit(1)), snap => {
+      const d = snap.docs[0]?.data();
+      const p = _dmsItems.find(i => i.id==="public");
+      if (p && d) { p.lastMsg = d.text||(d.image?"📷 صورة":d.audio?"🎤 تسجيل":""); p.lastTime = d.createdAt; }
+      _render(""); _updateNavBadge();
+    }, () => {});
+  }
 
   // ── مستمع فوري لعدد غير المقروء الخاص بمحادثة واحدة (idempotent) ──
   function _dmsAttachUnreadListener(roomId, otherId) {

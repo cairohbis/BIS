@@ -154,8 +154,7 @@ async function startChatListener(chatId) {
     liveQ = query(
       collection(db, colPath),
       ...(chatId === "public" ? [where("worldId", "==", worldId)] : []),
-      orderBy("createdAt", "asc"),
-      limit(1)
+      orderBy("createdAt", "asc")
     );
   }
 
