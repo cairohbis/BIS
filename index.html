@@ -9352,12 +9352,12 @@ try { window._listenPinnedMsg?.(); } catch(e) {}
   }
 
   input.addEventListener('input', updateBarState);
-  input.addEventListener('keydown', function(e){
-    if(e.key === 'Enter'){
-      e.preventDefault();
-      sendMessage();
-    }
-  });
+  // ✅ إصلاح: أُزيل مستمع Enter المحلي من هنا — كان بيرسم فقاعة وهمية
+  // في حاوية غير #chatMessages ويُفضّي input.value قبل ما المستمع
+  // الحقيقي (index.html ~4559، بينادي sendChatMsg() الفعلية) ياخد
+  // فرصته، فيمنع إرسال الرسالة لـ Firestore فعليًا عند استخدام Enter.
+  // sendMessage() هنا بقت بلا أي استدعاء (كانت بلا استدعاء أصلاً غير
+  // هذا المستمع المحذوف)، فضلت معرّفة ومصدّرة تحسبًا لأي اعتماد خارجي.
 
   window.sendMessage = sendMessage;
   window.updateBarState = updateBarState;
