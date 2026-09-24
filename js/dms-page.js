@@ -76,6 +76,8 @@ function _dmsSetupPresenceObserver() {
 ══════════════════════════════════════════ */
 
 let _dmsStarted   = false;
+let _dmsStartedUid = null; // uid الحساب الذي بدأت له المستمعات حالياً
+let _dmsGen       = 0;     // رقم "جلسة" المستمعات — أي callback متأخر من جلسة قديمة يُتجاهل
 let _dmsCurFilter = "all";
 let _dmsCurTab    = "chats";
 let _dmsUnsubs    = [];
@@ -325,10 +327,39 @@ function _roomToItem(r) {
 }
 
 /* ══ PRELOAD — يبدأ فور تسجيل الدخول ══ */
+/* ── إيقاف كل مستمعات/حالة قائمة الـDM (تسجيل خروج أو تغيّر الحساب) ── */
+window._dmsStopListeners = function() {
+  _dmsGen++; // يُبطل أي callback غير متزامن ما زال معلّقاً من الجلسة السابقة
+  _dmsUnsubs.forEach(fn => { try { fn(); } catch (e) {} });
+  _dmsUnsubs = [];
+  Object.keys(_dmsUnreadUnsubs).forEach(k => { try { _dmsUnreadUnsubs[k](); } catch (e) {} });
+  _dmsUnreadUnsubs = {};
+  _dmsUnreadMap    = {};
+  Object.keys(_dmsPresenceUnsubs).forEach(k => { try { _dmsPresenceUnsubs[k](); } catch (e) {} });
+  _dmsPresenceUnsubs = {};
+  if (_dmsPresenceObserver) { _dmsPresenceObserver.disconnect(); _dmsPresenceObserver = null; }
+  _dmsItems = [];
+  _dmsRooms = [];
+  _dmsStarted = false;
+  _dmsStartedUid = null;
+  ["dmsConvList", "dmsArchiveList"].forEach(id => { const el = document.getElementById(id); if (el) el.innerHTML = ""; });
+  const si = document.getElementById("dmsSearchInp"); if (si) si.value = "";
+  _updateNavBadge();
+};
+
+/* ── حارس: لو الحساب الحالي غير الحساب المرتبط بالمستمعات، أوقفها فوراً ── */
+window._dmsGuardUser = function(uid) {
+  if (_dmsStarted && _dmsStartedUid !== uid) window._dmsStopListeners();
+};
+
 window._dmsStartListeners = function() {
-  if (_dmsStarted || !window.db || !window.currentUser) return;
-  _dmsStarted = true;
+  if (!window.db || !window.currentUser) return;
   const uid = window.currentUser.uid;
+  if (_dmsStarted && _dmsStartedUid === uid) return; // نفس الحساب: لا تكرار
+  if (_dmsStarted) window._dmsStopListeners();       // حساب مختلف: نظّف الجلسة السابقة أولاً
+  _dmsStarted = true;
+  _dmsStartedUid = uid;
+  const gen = ++_dmsGen;
 
   // cache أسماء المستخدمين لتجنب getDoc متكررة
   const _nameCache = {};
@@ -349,12 +380,13 @@ window._dmsStartListeners = function() {
   // ✅ World Isolation: معاينة الشات العام لعالم المستخدم النشط فقط — لا مستمع إن لم يوجد عالم صالح
   const _pubWorld = window.activeWorldContext?.();
   if (_pubWorld && window.isValidWorldId?.(_pubWorld)) {
-    onSnapshot(query(collection(window.db,"messages"), where("worldId","==",_pubWorld), orderBy("createdAt","desc"), limit(1)), snap => {
+    _dmsUnsubs.push(onSnapshot(query(collection(window.db,"messages"), where("worldId","==",_pubWorld), orderBy("createdAt","desc"), limit(1)), snap => {
+      if (gen !== _dmsGen) return;
       const d = snap.docs[0]?.data();
       const p = _dmsItems.find(i => i.id==="public");
       if (p && d) { p.lastMsg = d.text||(d.image?"📷 صورة":d.audio?"🎤 تسجيل":""); p.lastTime = d.createdAt; }
       _render(""); _updateNavBadge();
-    }, () => {});
+    }, err => { console.error("[dms] public preview listener error:", err); }));
   }
 
   // ── مستمع فوري لعدد غير المقروء الخاص بمحادثة واحدة (idempotent) ──
@@ -365,6 +397,7 @@ window._dmsStartListeners = function() {
       where("seen","==",false)
     );
     _dmsUnreadUnsubs[roomId] = onSnapshot(uQ, uSnap => {
+      if (gen !== _dmsGen) return;
       // إذا كانت المحادثة مفتوحة حالياً مع نفس الشخص: لا تُحسب كغير مقروءة
       const cnt = (window._currentChatId === otherId)
         ? 0
@@ -374,7 +407,15 @@ window._dmsStartListeners = function() {
       if (item) item.unread = cnt;
       _render(document.getElementById("dmsSearchInp")?.value||"");
       _updateNavBadge();
-    }, () => {});
+    }, err => {
+      console.error("[dms] unread listener error:", roomId, err);
+      if (gen !== _dmsGen) return;
+      delete _dmsUnreadUnsubs[roomId]; // المستمع مات — اسمح بإعادة ربطه
+      delete _dmsUnreadMap[roomId];
+      const item = _dmsItems.find(i => i.id === otherId);
+      if (item) item.unread = 0;
+      _updateNavBadge();
+    });
   }
 
   // ── تحديث DOM مباشرة لمؤشر الاتصال (بدون إعادة رسم كامل القائمة) ──
@@ -382,7 +423,8 @@ window._dmsStartListeners = function() {
 
   // المحادثات الخاصة
   const privQ = query(collection(window.db,"privateChats"), where("participants","array-contains",uid));
-  onSnapshot(privQ, async snap => {
+  _dmsUnsubs.push(onSnapshot(privQ, async snap => {
+    if (gen !== _dmsGen) return;
     const activeRoomIds  = new Set();
     const activeOtherIds = new Set();
     const pairs = [];
@@ -400,6 +442,7 @@ window._dmsStartListeners = function() {
     // لكل محادثة على حدة بالتتابع — ده كان سبب البطء اللي بياخد ثواني
     // كتير مع زيادة عدد المحادثات) ─────────────────────────────────
     await Promise.all(pairs.map(p => _getUser(p.otherId)));
+    if (gen !== _dmsGen) return; // تغيّر الحساب/سُجّل الخروج أثناء الانتظار
 
     const items = [];
     for (const { d, roomId, otherId } of pairs) {
@@ -443,7 +486,18 @@ window._dmsStartListeners = function() {
     _dmsItems = [pub, ...items];
     _render(document.getElementById("dmsSearchInp")?.value||"");
     _updateNavBadge();
-  }, () => {});
+  }, err => {
+    console.error("[dms] privateChats listener error:", err);
+    if (gen !== _dmsGen) return;
+    // لا تُبقِ أي بيانات قديمة معروضة: امسح المحادثات ومستمعاتها الفرعية
+    Object.keys(_dmsUnreadUnsubs).forEach(k => { try { _dmsUnreadUnsubs[k](); } catch (e) {} });
+    _dmsUnreadUnsubs = {}; _dmsUnreadMap = {};
+    Object.keys(_dmsPresenceUnsubs).forEach(k => { try { _dmsPresenceUnsubs[k](); } catch (e) {} });
+    _dmsPresenceUnsubs = {};
+    _dmsItems = [_dmsItems.find(i => i.id === "public") || pubItem];
+    _render(document.getElementById("dmsSearchInp")?.value||"");
+    _updateNavBadge();
+  }));
 
   // الغرف — تُدمَج الآن داخل نفس قائمة الدردشات (بدل تبويب مستقل)
   const worldId = window.activeWorldContext?.();
@@ -452,10 +506,16 @@ window._dmsStartListeners = function() {
     _render(document.getElementById("dmsSearchInp")?.value||"");
     return;
   }
-  onSnapshot(query(collection(window.db,"rooms"), where("worldId","==",worldId)), snap => {
+  _dmsUnsubs.push(onSnapshot(query(collection(window.db,"rooms"), where("worldId","==",worldId)), snap => {
+    if (gen !== _dmsGen) return;
     _dmsRooms = snap.docs.map(d => ({id:d.id,...d.data()}));
     _render(document.getElementById("dmsSearchInp")?.value||"");
-  }, () => {});
+  }, err => {
+    console.error("[dms] rooms listener error:", err);
+    if (gen !== _dmsGen) return;
+    _dmsRooms = [];
+    _render(document.getElementById("dmsSearchInp")?.value||"");
+  }));
 };
 
 /* ══════════════════════════════════════════
