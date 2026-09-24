@@ -29,6 +29,11 @@ import {
 
 function _db() { return window.db; }
 
+// ── World Isolation: activeWorldContext() هو المصدر الوحيد للعالم ──
+function _worldId() {
+  return (typeof window.activeWorldContext === "function") ? window.activeWorldContext() : null;
+}
+
 const DAY_LABELS = {
   sunday: "الأحد", monday: "الإثنين", tuesday: "الثلاثاء",
   wednesday: "الأربعاء", thursday: "الخميس", friday: "الجمعة", saturday: "السبت"
@@ -62,11 +67,14 @@ export async function checkAttendancePopup() {
     const uid = window.currentUser?.uid;
     if (!uid) return;
 
-    const cfgSnap = await getDoc(doc(_db(), "attendanceSettings", "config"));
+    const wid = _worldId();
+    if (!wid) return; // ✅ World Isolation: بلا عالم صالح لا تُعرض أي بيانات حضور
+
+    const cfgSnap = await getDoc(doc(_db(), "attendanceSettings", wid));
     if (!cfgSnap.exists() || cfgSnap.data().enabled !== true) return;
 
     const { dateStr, hhmm, weekday } = _cairoNow();
-    const schedSnap = await getDoc(doc(_db(), "attendanceSchedules", weekday));
+    const schedSnap = await getDoc(doc(_db(), "attendanceSchedules", `${wid}_${weekday}`));
     if (!schedSnap.exists()) return;
     const sched = schedSnap.data();
     if (!sched.enabled) return;
@@ -275,29 +283,50 @@ window.__attShowDayDetail = (ds) => {
 ══════════════════════════════════════════ */
 let _weeklyCache = {}; // { sunday: {enabled,startTime,subjects:[{name,order}]}, ... }
 
-export async function attOwnerInit() {
-  try {
-    const cfgSnap = await getDoc(doc(_db(), "attendanceSettings", "config"));
-    const enabled = cfgSnap.exists() ? !!cfgSnap.data().enabled : false;
-    const sw = _el("attOwnerEnableSwitch");
-    if (sw) sw.checked = enabled;
-  } catch (e) {}
-  await _loadWeeklyCache();
-  _renderWeeklySummary();
+// ── World Isolation: مجموعتا معرّفات DOM لكل لوحة (Owner/Admin) — نفس المودال مشترك بينهما ──
+const _OWNER_PANEL_IDS = { switchId: "attOwnerEnableSwitch", summaryId: "attWeeklySummary", worldLabelId: "attOwnerWorldLabel" };
+const _ADMIN_PANEL_IDS = { switchId: "attAdminEnableSwitch", summaryId: "attAdminWeeklySummary", worldLabelId: "attAdminWorldLabel" };
+let _panelIds = _OWNER_PANEL_IDS; // آخر لوحة تم فتحها — تُستخدم لتحديث المكان الصحيح بعد الحفظ
+
+function _renderWorldLabel(elId, wid) {
+  const el = _el(elId);
+  if (el) el.textContent = wid || "—";
 }
 
-async function _loadWeeklyCache() {
+async function _initPanel(panelIds) {
+  _panelIds = panelIds;
+  const wid = _worldId();
+  _renderWorldLabel(panelIds.worldLabelId, wid);
+  if (!wid) {
+    const wrap = _el(panelIds.summaryId);
+    if (wrap) wrap.innerHTML = `<div class="empty-state">لا يوجد عالم نشط</div>`;
+    return;
+  }
+  try {
+    const cfgSnap = await getDoc(doc(_db(), "attendanceSettings", wid));
+    const enabled = cfgSnap.exists() ? !!cfgSnap.data().enabled : false;
+    const sw = _el(panelIds.switchId);
+    if (sw) sw.checked = enabled;
+  } catch (e) {}
+  await _loadWeeklyCache(wid);
+  _renderWeeklySummary(panelIds.summaryId);
+}
+
+export async function attOwnerInit() { await _initPanel(_OWNER_PANEL_IDS); }
+export async function attAdminInit() { await _initPanel(_ADMIN_PANEL_IDS); }
+
+async function _loadWeeklyCache(wid) {
   const results = await Promise.all(DAY_ORDER.map(async (k) => {
     try {
-      const snap = await getDoc(doc(_db(), "attendanceSchedules", k));
+      const snap = await getDoc(doc(_db(), "attendanceSchedules", `${wid}_${k}`));
       return [k, snap.exists() ? snap.data() : null];
     } catch (e) { return [k, null]; }
   }));
   _weeklyCache = Object.fromEntries(results);
 }
 
-function _renderWeeklySummary() {
-  const wrap = _el("attWeeklySummary");
+function _renderWeeklySummary(summaryId) {
+  const wrap = _el(summaryId);
   if (!wrap) return;
   const activeDays = DAY_ORDER.filter(k => _weeklyCache[k] && _weeklyCache[k].enabled);
   if (!activeDays.length) {
@@ -316,28 +345,34 @@ function _renderWeeklySummary() {
   }).join("");
 }
 
-window.attOwnerToggleSystem = async () => {
-  const sw = _el("attOwnerEnableSwitch");
+async function _toggleSystem(switchId) {
+  const sw = _el(switchId);
   if (!sw) return;
+  const wid = _worldId();
+  if (!wid) { window.toast?.("لا يوجد عالم نشط — تعذّر الحفظ", "error"); sw.checked = !sw.checked; return; }
   try {
-    await setDoc(doc(_db(), "attendanceSettings", "config"), { enabled: sw.checked }, { merge: true });
+    await setDoc(doc(_db(), "attendanceSettings", wid), { enabled: sw.checked }, { merge: true });
     window.toast?.(sw.checked ? "تم تفعيل نظام الحضور" : "تم إيقاف نظام الحضور");
   } catch (e) {
     console.error(e);
     window.toast?.("حصل خطأ", "error");
     sw.checked = !sw.checked;
   }
-};
+}
+window.attOwnerToggleSystem = async () => { await _toggleSystem(_OWNER_PANEL_IDS.switchId); };
+window.attAdminToggleSystem = async () => { await _toggleSystem(_ADMIN_PANEL_IDS.switchId); };
 
-/* ── نافذة إعداد جدول الحضور (Modal مستقل) ── */
+/* ── نافذة إعداد جدول الحضور (Modal مستقل — مشترك بين لوحتي Owner وAdmin) ── */
 let _modalSelectedDays = new Set();
 let _modalDayData = {}; // { sunday: { time:"15:00", subjects:["اسم1","اسم2"] } }
 
 window.__attOpenScheduleModal = async (editMode) => {
+  const wid = _worldId();
+  if (!wid) { window.toast?.("لا يوجد عالم نشط", "error"); return; }
   _modalSelectedDays = new Set();
   _modalDayData = {};
   if (editMode) {
-    await _loadWeeklyCache();
+    await _loadWeeklyCache(wid);
     DAY_ORDER.forEach(k => {
       const d = _weeklyCache[k];
       if (d && d.enabled) {
@@ -437,6 +472,8 @@ window.__attModalCountChange = async (dayKey, val) => {
 };
 
 window.attScheduleSave = async () => {
+  const wid = _worldId();
+  if (!wid) { window.toast?.("لا يوجد عالم نشط — تعذّر الحفظ", "error"); return; }
   const days = Array.from(_modalSelectedDays);
   if (!days.length) { window.toast?.("اختر يوم واحد على الأقل", "error"); return; }
   for (const k of days) {
@@ -450,21 +487,21 @@ window.attScheduleSave = async () => {
     days.forEach(k => {
       const names = _modalDayData[k].subjects.map(s => (s || "").trim()).filter(Boolean);
       const subjects = names.map((name, i) => ({ id: `subject_${i + 1}`, name, order: i + 1 }));
-      batch.set(doc(_db(), "attendanceSchedules", k), {
-        enabled: true, startTime: _modalDayData[k].time || "15:00", endTime: "23:59", subjects
+      batch.set(doc(_db(), "attendanceSchedules", `${wid}_${k}`), {
+        worldId: wid, enabled: true, startTime: _modalDayData[k].time || "15:00", endTime: "23:59", subjects
       }, { merge: true });
     });
     // أي يوم كان مفعّل قبل كده وماعادش مختار دلوقتي — يتقفل بس (مش يتحذف)
     DAY_ORDER.forEach(k => {
       if (!_modalSelectedDays.has(k) && _weeklyCache[k] && _weeklyCache[k].enabled) {
-        batch.set(doc(_db(), "attendanceSchedules", k), { enabled: false }, { merge: true });
+        batch.set(doc(_db(), "attendanceSchedules", `${wid}_${k}`), { worldId: wid, enabled: false }, { merge: true });
       }
     });
     await batch.commit();
     window.toast?.("تم حفظ جدول الحضور ✅");
     window.__attCloseScheduleModal();
-    await _loadWeeklyCache();
-    _renderWeeklySummary();
+    await _loadWeeklyCache(wid);
+    _renderWeeklySummary(_panelIds.summaryId);
   } catch (e) {
     console.error(e);
     window.toast?.("حصل خطأ أثناء الحفظ", "error");
@@ -477,3 +514,4 @@ window.attScheduleSave = async () => {
 window.checkAttendancePopup  = checkAttendancePopup;
 window.loadAttendanceHistory = loadAttendanceHistory;
 window.attOwnerInit          = attOwnerInit;
+window.attAdminInit          = attAdminInit;
