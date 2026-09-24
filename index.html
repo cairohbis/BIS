@@ -3354,6 +3354,7 @@ async function doLogout() {
   _acceptedPeers  = {};
   _userCache      = {};
   _allUsersCache  = null;
+  window._dmsStopListeners?.(); // إيقاف مستمعات قائمة الدردشات (dms-page.js) ومسح حالتها
   currentUser = null; currentRole = null; currentName = ""; currentPhoto = "";
   window.currentUser = null; // تنظيف للوحدات الخارجية
   // FCM cleanup
@@ -3566,6 +3567,7 @@ onAuthStateChanged(auth, async (user) => {
       if (_rb) _rb.remove();
       document.body.classList.remove("avm-active");
     }
+    window._dmsStopListeners?.(); // لا تُبقِ أي مستمع/قائمة DM بعد الخروج (مهما كان سبب الخروج)
     window._maintenanceApply?.();
     showPage("page-login"); return;
   }
@@ -3575,6 +3577,7 @@ onAuthStateChanged(auth, async (user) => {
   // ويُحدّث العناصر تدريجيًا عند وصوله، بدون إعادة فتح الصفحة.
   currentUser = user;
   window.currentUser = user;
+  window._dmsGuardUser?.(user.uid); // لو تغيّر الحساب: أوقف مستمعات/بيانات قائمة الـDM للحساب السابق فوراً
   if (!window.db) window.db = db;
   showPage("page-home");
   goTab("tab-home");
