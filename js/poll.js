@@ -167,11 +167,15 @@ window.pollSubmit = async function() {
   try {
     const colPath  = window.chatColPath(window._currentChatId);
     const isPrivate = window._currentChatId !== "public";
+    // ✅ World Isolation: Public Chat فقط — activeWorldContext() المصدر الوحيد، ولا قيمة وهمية لو لا يوجد عالم صالح
+    const _worldId = (colPath === "messages" && typeof window.activeWorldContext === "function")
+      ? window.activeWorldContext() : null;
     const msgData = {
       uid:       window.currentUser.uid,
       name:      window.currentName,
       photo:     window.currentPhoto,
       createdAt: serverTimestamp(),
+      ...(_worldId ? { worldId: _worldId } : {}),
       poll: {
         question,
         options,

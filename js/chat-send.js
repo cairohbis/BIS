@@ -27,10 +27,14 @@ window.sendChatMsg = async function() {
   input.value = ""; input.focus();
   const isPrivate = _currentChatId !== "public";
   const colPath   = chatColPath(_currentChatId);
+  // ✅ World Isolation: Public Chat فقط — activeWorldContext() المصدر الوحيد، ولا قيمة وهمية لو لا يوجد عالم صالح
+  const _worldId = (colPath === "messages" && typeof window.activeWorldContext === "function")
+    ? window.activeWorldContext() : null;
   try {
     const msgData = {
       text, uid: currentUser.uid, name: currentName, photo: currentPhoto,
       createdAt: serverTimestamp(),
+      ...(_worldId ? { worldId: _worldId } : {}),
       ...(isPrivate ? { senderId: currentUser.uid, delivered: false, seen: false }
                     : { time: new Date().toLocaleTimeString("ar-EG",{hour:"2-digit",minute:"2-digit"}) })
     };
