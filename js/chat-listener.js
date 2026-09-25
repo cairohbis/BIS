@@ -9,7 +9,7 @@
      عمدًا في index.html لتقليل الـ bridges — بتتصدّر هناك على window
    ══════════════════════════════════════════════════════════════ */
 
-import { collection, doc, getDocs, limit, onSnapshot, orderBy, query,
+import { collection, doc, getDoc, getDocs, limit, onSnapshot, orderBy, query,
          startAfter, updateDoc, where, writeBatch }
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
@@ -115,6 +115,25 @@ async function startChatListener(chatId) {
   if (initSnap.empty) {
     container.innerHTML = `<div class="empty-state" style="margin:auto;">لا توجد رسائل بعد <i class="fa-solid fa-comments"></i></div>`;
     _allLoaded = true;
+    // ✅ initSnap.empty قد يعني DM جديد (لا يوجد مستند parent بعد) أو
+    // شات موجود بدون رسائل. لازم نفرّق بينهم قبل فتح liveQ: لو الـparent
+    // مش موجود، onSnapshot هيفشل بـpermission-denied فورًا (Rules بتعتمد
+    // get() على مستند الأب). لو موجود، نكمل عادي عشان liveQ يستقبل أول
+    // رسالة من الطرف التاني.
+    if (isPrivateChat && !skipLiveListener) {
+      try {
+        const parentSnap = await getDoc(doc(db, "privateChats", privateChatId(chatId)));
+        if (_activeChatId !== chatId) return;
+        if (!parentSnap.exists()) {
+          window._dmNeedsRelisten = chatId;
+          skipLiveListener = true;
+        }
+      } catch(e) {
+        if (_activeChatId !== chatId) return;
+        window._dmNeedsRelisten = chatId;
+        skipLiveListener = true;
+      }
+    }
   } else {
     // الرسائل جاءت desc، نعكسها للعرض الصحيح
     const docs = [...initSnap.docs].reverse();
