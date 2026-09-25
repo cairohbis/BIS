@@ -4001,28 +4001,8 @@ window.openDirectChat = async function(toUid, toUser) {
   if (!toUser?.name) toUser = await _getUser(toUid);
   if (myToken !== _dcReqToken) return;
 
-  // 1. إنشاء الغرفة في Firestore (إذا لم تكن موجودة)
-  try {
-    await ensurePrivateChatDoc(toUid);
-  } catch(e) {
-    console.error("openDirectChat — createRoom failed:", e.code, e.message);
-    toast(`فشل إنشاء المحادثة (${e.code || "unknown"})`, "error");
-    return;
-  }
-  if (myToken !== _dcReqToken) return;
-
   // 2. تحديث الـ cache المحلي
   if (!_userCache[toUid]) _userCache[toUid] = { data: toUser, ts: Date.now() };
-  _acceptedPeers[toUid] = {
-    roomId:       [currentUser.uid, toUid].sort().join("_"),
-    participants: [currentUser.uid, toUid].sort()
-  };
-
-  // 3. إضافة عنصر DM للقائمة إن لم يكن موجوداً
-  if (!document.getElementById(`dm-${toUid}`)) {
-    await _rebuildDmItems(Object.keys(_acceptedPeers));
-  }
-  if (myToken !== _dcReqToken) return;
 
   // 4. فتح المحادثة
   selectChat(toUid, toUser.name, toUser.photo);
@@ -4728,6 +4708,9 @@ document.getElementById("chatFileInput").addEventListener("change", async () => 
 
     const isPrivate = _currentChatId !== "public";
     const colPath   = chatColPath(_currentChatId);
+    // ✅ نفس نقطة الإنشاء المتأخرة المستخدمة في كل مسارات الإرسال —
+    // الغرفة تتأكّد/تتنشأ فقط عند أول إرسال فعلي، مش عند فتح الشات.
+    if (isPrivate) await ensurePrivateChatDoc(_currentChatId);
     const cat = _getFileCategory(file);
 
     // Phase 1 / 5.1 — World Model: يُضاف فقط للشات العام، وفقط لو فيه عالم صالح حاليًا.
@@ -4779,6 +4762,11 @@ document.getElementById("chatFileInput").addEventListener("change", async () => 
         lastMessageAt: serverTimestamp(),
         lastSenderId:  currentUser.uid
       }).catch(() => {});
+      // ✅ إعادة ربط مستمع الرسائل لو كان الشات فاضي (مات بـ permission-denied) قبل الإرسال
+      if (window._dmNeedsRelisten === _currentChatId) {
+        window._dmNeedsRelisten = null;
+        window.startChatListener?.(_currentChatId);
+      }
     }
 
     upCard.markDone();
