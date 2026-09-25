@@ -408,8 +408,8 @@ window._dmsStartListeners = function() {
       _render(document.getElementById("dmsSearchInp")?.value||"");
       _updateNavBadge();
     }, err => {
-      console.error("[dms] unread listener error:", roomId, err);
       if (gen !== _dmsGen) return;
+      console.error("[dms] unread listener error:", roomId, err);
       delete _dmsUnreadUnsubs[roomId]; // المستمع مات — اسمح بإعادة ربطه
       delete _dmsUnreadMap[roomId];
       const item = _dmsItems.find(i => i.id === otherId);
@@ -423,7 +423,7 @@ window._dmsStartListeners = function() {
 
   // المحادثات الخاصة
   const privQ = query(collection(window.db,"privateChats"), where("participants","array-contains",uid));
-  _dmsUnsubs.push(onSnapshot(privQ, async snap => {
+  _dmsUnsubs.push(onSnapshot(privQ, { includeMetadataChanges: true }, async snap => {
     if (gen !== _dmsGen) return;
     const activeRoomIds  = new Set();
     const activeOtherIds = new Set();
@@ -435,7 +435,7 @@ window._dmsStartListeners = function() {
       if (!otherId) continue;
       activeRoomIds.add(roomId);
       activeOtherIds.add(otherId);
-      pairs.push({ d, roomId, otherId });
+      pairs.push({ d, roomId, otherId, hasPendingWrites: ds.metadata.hasPendingWrites });
     }
 
     // نجيب بيانات كل الأطراف الأخرى مرة واحدة بالتوازي (بدل الانتظار
@@ -445,7 +445,7 @@ window._dmsStartListeners = function() {
     if (gen !== _dmsGen) return; // تغيّر الحساب/سُجّل الخروج أثناء الانتظار
 
     const items = [];
-    for (const { d, roomId, otherId } of pairs) {
+    for (const { d, roomId, otherId, hasPendingWrites } of pairs) {
       const u = _nameCache[otherId] || { name:"مستخدم", photo:"", role:"user", gender:"" };
       const existing = _dmsItems.find(i => i.id === otherId);
       items.push({
@@ -457,8 +457,12 @@ window._dmsStartListeners = function() {
         isOnline: existing?.isOnline || false
       });
 
-      // عدّاد غير المقروء: مستمع فوري دائم لكل المحادثات (بلا استثناء)
-      _dmsAttachUnreadListener(roomId, otherId);
+      // عدّاد غير المقروء: مستمع فوري دائم لكل المحادثات (بلا استثناء) —
+      // ما عدا لحظة local write لسه ماوصلتش commit على السيرفر
+      // (hasPendingWrites === true)، لأن Rules بتعتمد get() على مستند
+      // الأب committed. لما يوصل الـsnapshot التالي بـhasPendingWrites
+      // === false (بفضل includeMetadataChanges) هيتنادى طبيعي هنا.
+      if (!hasPendingWrites) _dmsAttachUnreadListener(roomId, otherId);
       // حالة الاتصال: تُفعَّل فقط عبر IntersectionObserver بعد الرسم (أو إذا كانت المحادثة مفتوحة حالياً)
     }
 
