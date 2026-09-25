@@ -77,6 +77,7 @@ async function startChatListener(chatId) {
   );
 
   let initSnap;
+  let skipLiveListener = false;
   try { initSnap = await getDocs(initQ); }
   catch(e) {
     if (_activeChatId !== chatId) return;
@@ -89,6 +90,9 @@ async function startChatListener(chatId) {
       // ← يُستهلك من مسارات الإرسال (chat-send.js/chat-core.js/poll.js/
       //   index.html) بعد أول رسالة ناجحة، لإعادة ربط مستمع حي فعلي.
       window._dmNeedsRelisten = chatId;
+      // ← الـparent لسه مش موجود، فأي onSnapshot على نفس الـcollection
+      //   هيفشل بنفس permission-denied فورًا. نتجنب تسجيله أصلًا هنا.
+      skipLiveListener = true;
     } else {
       container.innerHTML = `<div class="empty-state" style="margin:auto;">خطأ في التحميل</div>`;
       return;
@@ -144,7 +148,7 @@ async function startChatListener(chatId) {
       orderBy("createdAt", "asc"),
       where("createdAt", ">", newestTs)
     );
-  } else {
+  } else if (!skipLiveListener) {
     liveQ = query(
       collection(db, colPath),
       ...(chatId === "public" ? [where("worldId", "==", worldId)] : []),
@@ -152,7 +156,7 @@ async function startChatListener(chatId) {
     );
   }
 
-  msgUnsub = onSnapshot(liveQ, snap => {
+  if (liveQ) msgUnsub = onSnapshot(liveQ, snap => {
     if (_activeChatId !== chatId) return;
     snap.docChanges().forEach(ch => {
       if (ch.type === "added") {
