@@ -30,6 +30,7 @@
   window.__ssReminderLoaded = true;
 
   const _FB = "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  const _FB_AUTH = "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
   const COL = "studySchedule";
   // Date.getDay(): 0=الأحد … 6=السبت
   const JS_DAY_TO_KEY = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
@@ -37,6 +38,11 @@
   let _lectures = [];
   let _timer = null;
   let _dayWatcherStarted = false;
+  let _authWatcherStarted = false; // منع تشغيل أكثر من onAuthStateChanged واحد لنفس الموديول
+  let _authUid = null;             // uid الحساب اللي الـlistener الحالي شغال عليه (null = مفيش حساب)
+  let _unsub = null;               // دالة إلغاء onSnapshot الحالي (لو موجود)
+  let _listeningWorldId = null;    // العالم اللي الـlistener الحالي مربوط بيه فعليًا
+  let _gen = 0;                    // رقم جيل الحالة — أي retry/callback قديم من جيل سابق يتجاهل تلقائيًا
 
   function _num(v) { const n = Number(v); return isFinite(n) ? n : 0; }
   function _todayKey() { return JS_DAY_TO_KEY[new Date().getDay()]; }
@@ -114,19 +120,43 @@
 
   /* ─────────────────────────────────────────
      الاستماع الحي لمجموعة studySchedule
+     ▸ listener واحد بس في أي وقت، مربوط بـ Auth lifecycle الموجود
+       بالفعل في المشروع (نفس Firebase App الافتراضي — بدون إنشاء
+       أي نظام Auth جديد)، عشان الإيقاف عند Logout يحصل فورًا قبل
+       ما Firestore يحاول يتحقق من صلاحيات قديمة.
   ───────────────────────────────────────── */
   var _wTries = 0;
-  function _startListening() {
+
+  // ✅ إيقاف/تنظيف كامل للـlistener الحالي: onSnapshot + الـtimer
+  //    المرتبط بيه + بيانات _lectures القديمة. بتترقّي _gen عشان أي
+  //    retry (setTimeout) أو callback قديم لسه ماشي في الخلفية
+  //    يتجاهل نفسه تلقائيًا (بند 9: تجاهل أي callback قديم بعد
+  //    Logout/تغيير حساب/تغيير عالم).
+  function _stopListening() {
+    _gen++;
+    if (_unsub) { try { _unsub(); } catch (e) {} _unsub = null; }
+    if (_timer) { clearTimeout(_timer); _timer = null; }
+    _lectures = [];
+    _listeningWorldId = null;
+    _wTries = 0;
+  }
+
+  function _startListening(myGen) {
+    if (myGen !== _gen) return; // الحالة اتغيّرت قبل ما نوصل هنا — تجاهل
+    if (!window.db) { setTimeout(function () { _startListening(myGen); }, 200); return; }
     // ✅ لا استماع بدون World صحيح (تفاديًا لـ where worldId == null). Owner بلا World → لا استماع ولا retry؛ غيره → إعادة محاولة محدودة لحين تحميل بيانات المستخدم.
     var _w = (typeof window.activeWorldContext === "function") ? window.activeWorldContext() : null;
     if (!_w) {
-      if (!(window.isOwner && window.isOwner()) && ++_wTries <= 50) setTimeout(_startListening, 400);
+      if (!(window.isOwner && window.isOwner()) && ++_wTries <= 50) setTimeout(function () { _startListening(myGen); }, 400);
       return;
     }
+    _listeningWorldId = _w;
     import(_FB).then(function (mod) {
+      if (myGen !== _gen) return; // جيل الحالة اتغيّر أثناء تحميل الموديول — تجاهل النتيجة
       try {
         var _worldId = _w;
-        mod.onSnapshot(mod.query(mod.collection(window.db, COL), mod.where("worldId", "==", _worldId)), function (snap) {
+        _unsub = mod.onSnapshot(mod.query(mod.collection(window.db, COL), mod.where("worldId", "==", _worldId)), function (snap) {
+          if (myGen !== _gen) return; // ✅ تجاهل أي callback قديم وصل بعد Logout/تغيير حساب/عالم
           // ✅ World Isolation: نفس مصدر العالم الموحّد — activeWorldContext(). لا تنبيه من عالم آخر.
           var _worldId = (typeof window.activeWorldContext === "function") ? window.activeWorldContext() : null;
           _lectures = [];
@@ -135,29 +165,61 @@
             if (_worldId && data.worldId === _worldId) _lectures.push({ id: d.id, ...data });
           });
           _scheduleCheck();
-        }, function (e) { console.warn("[StudyScheduleReminder] snapshot error:", e && e.code); });
+        }, function (e) {
+          if (myGen !== _gen) return;
+          console.warn("[StudyScheduleReminder] snapshot error:", e && e.code);
+        });
       } catch (e) { console.error("[StudyScheduleReminder] تعذّر بدء الاستماع:", e); }
     }).catch(function (e) { console.error("[StudyScheduleReminder] فشل تحميل Firestore:", e); });
   }
 
-  // إعادة الحساب تلقائيًا لو عدّى نصف الليل والتبويب لسه مفتوح (يوم دراسي جديد)
+  // إعادة الحساب تلقائيًا لو عدّى نصف الليل والتبويب لسه مفتوح (يوم دراسي جديد)،
+  // وكمان بنراقب هنا تغيّر activeWorldContext() (مثلاً الأونر بيبدّل عالم من
+  // الواجهة): مفيش Event جاهز لده في المشروع، فبنتأكد كل دقيقة (زي فحص
+  // تغيّر اليوم بالظبط) بدل ما نضيف مراقبة دورية منفصلة جديدة.
   function _startDayWatcher() {
     if (_dayWatcherStarted) return;
     _dayWatcherStarted = true;
     let lastDate = _todayDateStr();
     setInterval(function () {
+      if (_authUid) {
+        var _w = (typeof window.activeWorldContext === "function") ? window.activeWorldContext() : null;
+        if (_w !== _listeningWorldId) { _stopListening(); _startListening(_gen); }
+      }
       const d = _todayDateStr();
       if (d !== lastDate) { lastDate = d; _scheduleCheck(); }
     }, 60000);
   }
 
-  function _waitForUserThenStart() {
-    if (window.currentUser && window.db) {
-      _startListening();
-      _startDayWatcher();
-    } else {
-      setTimeout(_waitForUserThenStart, 400);
-    }
+  // ✅ نقطة الربط الوحيدة مع دورة حياة الحساب: onAuthStateChanged على
+  //    نفس Auth instance الافتراضي اللي index.html بيستخدمه بالفعل
+  //    (getAuth() من غير تمرير app بترجع نفس الـ[DEFAULT] app — مفيش
+  //    Auth جديد اتعمل). Firebase بيسمح بأكتر من مستمع على نفس الـAuth،
+  //    فمفيش أي تعديل مطلوب في index.html.
+  function _startAuthWatcher() {
+    if (_authWatcherStarted) return;
+    _authWatcherStarted = true;
+    import(_FB_AUTH).then(function (mod) {
+      try {
+        var auth = mod.getAuth();
+        mod.onAuthStateChanged(auth, function (user) {
+          if (!user) {
+            if (_authUid === null) return; // حدث logout مكرر — متجاهلينه (بند 8)
+            _authUid = null;
+            _stopListening(); // ✅ إيقاف فوري قبل ما Firestore يحاول يتحقق من صلاحيات قديمة
+            return;
+          }
+          if (user.uid === _authUid) return; // نفس المستخدم (تكرار حدث Auth) — مفيش داعي لإعادة تشغيل
+          _authUid = user.uid;
+          // ✅ حساب جديد (أول تسجيل دخول أو تبديل حساب بدون Reload):
+          //    أوقف القديم (وامسح _lectures القديمة) وابدأ واحد جديد بس
+          _stopListening();
+          _startListening(_gen);
+          _startDayWatcher();
+        });
+      } catch (e) { console.error("[StudyScheduleReminder] تعذّر بدء مراقبة Auth:", e); }
+    }).catch(function (e) { console.error("[StudyScheduleReminder] فشل تحميل Firebase Auth:", e); });
   }
-  _waitForUserThenStart();
+
+  _startAuthWatcher();
 })();
