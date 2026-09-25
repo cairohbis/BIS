@@ -31,6 +31,11 @@ window.sendChatMsg = async function() {
   const _worldId = (colPath === "messages" && typeof window.activeWorldContext === "function")
     ? window.activeWorldContext() : null;
   try {
+    // ✅ الغرفة (privateChats/{chatId}) بتتأكّد/تتنشأ هنا بس — عند أول
+    // إرسال فعلي — مش عند مجرد فتح/معاينة الشات (كانت بتتنشأ قبل كده
+    // في startChatListener/openDirectChat وده اللي كان بيسبب ظهور
+    // محادثات فاضية في قائمة DMs). ensurePrivateChatDoc نفسها لم تتغيّر.
+    if (isPrivate) await ensurePrivateChatDoc(_currentChatId);
     const msgData = {
       text, uid: currentUser.uid, name: currentName, photo: currentPhoto,
       createdAt: serverTimestamp(),
@@ -62,6 +67,13 @@ window.sendChatMsg = async function() {
         lastMessage: text.length>60?text.slice(0,60)+"…":text,
         lastMessageAt: serverTimestamp(), lastSenderId: currentUser.uid
       }).catch(e=>{ if(e.code!=="permission-denied") console.warn("lastMsg update:",e.code); });
+      // ✅ لو الشات ده كان فاضي (بدون privateChats/{chatId}) وقت فتحه، مستمع
+      // الرسائل الحي كان اتقفل بـ permission-denied — نعيد ربطه دلوقتي بعد
+      // ما المستند بقى موجود فعلاً، عشان الرسالة اللي بعتناها تظهر فورًا.
+      if (window._dmNeedsRelisten === _currentChatId) {
+        window._dmNeedsRelisten = null;
+        window.startChatListener?.(_currentChatId);
+      }
     }
   } catch(e) {
     toast("فشل إرسال الرسالة","error"); console.error(e); input.value = text;

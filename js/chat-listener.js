@@ -41,18 +41,14 @@ async function startChatListener(chatId) {
   _loadingMore = false;
   _activeChatId = chatId;
 
-  // ✅ إصلاح: الغرف (room:xxx) ليست محادثة خاصة — لا يجب أن تمر إطلاقًا
-  // على ensurePrivateChatDoc (كانت تُعامَل كـ DM بالخطأ سابقًا)
+  // ✅ الغرف (room:xxx) ليست محادثة خاصة أصلاً في هذا الفحص
   const isPrivateChat = chatId !== "public" && !chatId.startsWith("room:");
 
-  // ✅ إصلاح: تجهيز المحادثة الخاصة يبدأ الآن ويعمل بالتوازي مع تحميل
-  // الرسائل، بدل انتظاره (await) قبل البدء في جلبها — وهو ما كان يفرض
-  // رحلة شبكة إضافية كاملة قبل رحلة شبكة الرسائل نفسها ويؤخر ظهورها.
-  // وظيفة ensurePrivateChatDoc نفسها لم تتغيّر إطلاقًا.
-  let _ensureErr = null;
-  const _ensureP = isPrivateChat
-    ? ensurePrivateChatDoc(chatId).catch(e => { _ensureErr = e || {}; })
-    : Promise.resolve();
+  // ✅ إصلاح فراغ قائمة الدردشات: privateChats/{chatId} بقى يتنشأ فقط
+  // عند إرسال أول رسالة فعلية (من داخل مسارات الإرسال نفسها)، مش عند
+  // مجرد فتح/معاينة الشات — فمفيش استدعاء لـensurePrivateChatDoc هنا
+  // خالص. لو المحادثة جديدة (لسه ماوصلهاش أول رسالة)، مستند
+  // privateChats/{chatId} لسه مش موجود وده متوقّع تمامًا.
 
   updateChatBannedState();
 
@@ -84,29 +80,27 @@ async function startChatListener(chatId) {
   try { initSnap = await getDocs(initQ); }
   catch(e) {
     if (_activeChatId !== chatId) return;
-    container.innerHTML = `<div class="empty-state" style="margin:auto;">خطأ في التحميل</div>`;
-    return;
+    // ✅ محادثة خاصة جديدة لسه ماوصلهاش أول رسالة → privateChats/{chatId}
+    // لسه مش موجود أصلًا (Rules بتعتمد get() على مستند الأب لإتاحة قراءة
+    // الرسائل)، فالقراءة بترجع permission-denied بشكل طبيعي ومتوقّع في
+    // هذه الحالة بالذات. نعاملها كمحادثة فاضية عادية، مش كخطأ تحميل حقيقي.
+    if (isPrivateChat && e.code === "permission-denied") {
+      initSnap = { empty: true, docs: [], size: 0 };
+      // ← يُستهلك من مسارات الإرسال (chat-send.js/chat-core.js/poll.js/
+      //   index.html) بعد أول رسالة ناجحة، لإعادة ربط مستمع حي فعلي.
+      window._dmNeedsRelisten = chatId;
+    } else {
+      container.innerHTML = `<div class="empty-state" style="margin:auto;">خطأ في التحميل</div>`;
+      return;
+    }
   }
 
   if (_activeChatId !== chatId) return;
 
-  // ✅ إذا فشل تجهيز المحادثة الخاصة (ensurePrivateChatDoc)، نعرض رسالة
-  // الخطأ الآن بدل الرسائل — بنفس شكل الخطأ القديم بالضبط، لكن بعد
-  // محاولة تحميل الرسائل وليس قبلها.
-  if (isPrivateChat && _ensureErr) {
-    container.innerHTML = `<div class="empty-state" style="margin:auto;color:var(--danger);">
-      <i class="fa-solid fa-triangle-exclamation"></i> فشل تحميل المحادثة (${_ensureErr.code || _ensureErr.message || ""})
-      <br><small style="color:var(--muted);">تأكد من تحديث Firestore Rules</small>
-    </div>`;
-    return;
-  }
-
-  if (isPrivateChat) {
-    _ensureP.then(() => {
-      if (_activeChatId !== chatId || _ensureErr) return;
-      _markMessagesSeenAsync(chatId);
-    });
-  }
+  // ✅ تعليم الرسائل كمقروءة: _markMessagesSeenAsync نفسها بتتجاهل
+  // permission-denied بصمت (حالة المحادثة الجديدة اللي لسه مفيش لها
+  // مستند أب) — فمفيش داعي لانتظار/فحص إضافي هنا.
+  if (isPrivateChat) _markMessagesSeenAsync(chatId);
 
   container.innerHTML = "";
 

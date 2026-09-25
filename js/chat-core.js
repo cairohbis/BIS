@@ -277,6 +277,10 @@ window.ensurePrivateChatDoc = ensurePrivateChatDoc;
       const isPrivate = _currentChatId !== "public";
       const colPath   = chatColPath(_currentChatId);
 
+      // ✅ نفس نقطة الإنشاء المتأخرة المستخدمة في كل مسارات الإرسال —
+      // الغرفة تتأكّد/تتنشأ فقط عند أول إرسال فعلي، مش عند فتح الشات.
+      if (isPrivate) await ensurePrivateChatDoc(_currentChatId);
+
       // Phase 1 / 5.1 — World Model: يُضاف فقط للشات العام، وفقط لو فيه عالم صالح حاليًا.
       // لا worldId: null، ولا افتراض is_2 — لو activeWorldContext() رجّعت null، الحقل ما يُكتبش أصلاً.
       const _worldId = (colPath === "messages" && typeof window.activeWorldContext === "function")
@@ -337,6 +341,11 @@ window.ensurePrivateChatDoc = ensurePrivateChatDoc;
           lastMessageAt: serverTimestamp(),
           lastSenderId:  currentUser.uid
         }).catch(function() {});
+        // ✅ إعادة ربط مستمع الرسائل لو كان الشات فاضي (مات بـ permission-denied) قبل الإرسال
+        if (window._dmNeedsRelisten === _currentChatId) {
+          window._dmNeedsRelisten = null;
+          window.startChatListener?.(_currentChatId);
+        }
       }
 
       if (upCard) upCard.markDone();

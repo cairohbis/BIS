@@ -167,6 +167,9 @@ window.pollSubmit = async function() {
   try {
     const colPath  = window.chatColPath(window._currentChatId);
     const isPrivate = window._currentChatId !== "public";
+    // ✅ نفس نقطة الإنشاء المتأخرة المستخدمة في كل مسارات الإرسال —
+    // الغرفة تتأكّد/تتنشأ فقط عند أول إرسال فعلي، مش عند فتح الشات.
+    if (isPrivate) await window.ensurePrivateChatDoc(window._currentChatId);
     // ✅ World Isolation: Public Chat فقط — activeWorldContext() المصدر الوحيد، ولا قيمة وهمية لو لا يوجد عالم صالح
     const _worldId = (colPath === "messages" && typeof window.activeWorldContext === "function")
       ? window.activeWorldContext() : null;
@@ -185,6 +188,11 @@ window.pollSubmit = async function() {
                     : { time: new Date().toLocaleTimeString("ar-EG",{hour:"2-digit",minute:"2-digit"}) })
     };
     await addDoc(collection(window.db, colPath), msgData);
+    // ✅ إعادة ربط مستمع الرسائل لو كان الشات فاضي (مات بـ permission-denied) قبل الإرسال
+    if (isPrivate && window._dmNeedsRelisten === window._currentChatId) {
+      window._dmNeedsRelisten = null;
+      window.startChatListener?.(window._currentChatId);
+    }
     closePollModal();
     window.toast("✅ تم إرسال الاستطلاع","success");
   } catch(e) {
