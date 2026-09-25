@@ -68,7 +68,7 @@ self.addEventListener('notificationclick', function(event) {
    رقم CACHE_VERSION عشان المستخدمين ياخدوا النسخة الجديدة.
    ══════════════════════════════════════════ */
 
-const CACHE_VERSION = 'v5'; // ← تم رفعه عشان المستخدمين ياخدوا نسخة الشفافية المصلّحة (chat-bubbles.css + bubble-blur.js)
+const CACHE_VERSION = 'v6'; // ← تم رفعه عشان المستخدمين ياخدوا نسخة الشفافية المصلّحة (chat-bubbles.css + bubble-blur.js)
 const CACHE_NAME = 'bariq-shell-' + CACHE_VERSION;
 const MEDIA_CACHE_NAME = 'bariq-media-' + CACHE_VERSION;
 
