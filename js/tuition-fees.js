@@ -8,14 +8,15 @@
  *   ▸ مستقلة تمامًا عن درجاتي: لا قراءة ولا اعتماد على grades/ إطلاقًا
  *   ▸ لا تُضاف أو تُعدَّل أي بيانات في users/{uid}
  *   ▸ المصدر الوحيد: tuitionFees/{docId}
- *       { year, cash, installments:[{label,amount}], updatedAt, updatedBy }
- *     docId = بناء من الفرقة فقط لضمان مستند واحد لكل فرقة
+ *       { year, cash, installments:[{label,amount}], updatedAt, updatedBy, worldId }
+ *     docId = worldId__year (World Isolation) لضمان مستند واحد لكل فرقة لكل عالم
  *   ▸ يُمنع الحفظ إذا مجموع الأقساط ≠ الكاش
  *
  *   ▸ القواعد المطلوبة في Firestore Rules (إضافة فقط):
  *       match /tuitionFees/{docId} {
- *         allow read: if isSignedIn();
- *         allow create, update, delete: if isOwner();
+ *         allow read: if isSignedIn() && resource.data.worldId == myWorldId();
+ *         allow create: if isOwner() && request.resource.data.worldId is string;
+ *         allow update, delete: if isOwner() && resource.data.worldId == request.resource.data.worldId;
  *       }
  * ══════════════════════════════════════════
  */
@@ -36,6 +37,15 @@
   }
   function _key(year) {
     return year.replace(/\s+/g, "_").replace(/[^a-zA-Z0-9_\u0600-\u06FF]/g, "");
+  }
+  // ✅ World Isolation: docId = worldId__year — يفصل بيانات كل عالم عن الآخر
+  // فعليًا على مستوى الـdocId نفسه (وليس فلترة عرض فقط).
+  function _docId(worldId, year) { return `${worldId}__${_key(year)}`; }
+  // المصدر الموحّد للعالم الحالي: نفس activeWorldContext() المستخدمة في
+  // باقي المشروع (rooms/messages) — بترجع عالم الأونر النشط، أو عالم
+  // المستخدم العادي الثابت، ولا تفترض أي قيمة افتراضية عند غياب العالم.
+  function _worldId() {
+    return (typeof window.activeWorldContext === "function") ? window.activeWorldContext() : null;
   }
   function _esc(s) {
     return String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -101,6 +111,8 @@
   window.TuitionModule._studentSearch = async function () {
     const year  = (document.getElementById("tfPickYear")?.value || "").trim();
     if (!year)  { window.toast?.("اختر الفرقة الدراسية", "error"); return; }
+    const worldId = _worldId();
+    if (!worldId) { window.toast?.("لا يوجد عالم صالح لعرض المصروفات", "error"); return; }
     try { localStorage.setItem(LAST_KEY, JSON.stringify({ year })); } catch (e) {}
     _pick = { year };
     _view = "student-view";
@@ -109,7 +121,7 @@
     if (body) body.innerHTML = `<div class="tf-loading"><div class="tf-spin"></div></div>`;
     try {
       const { db, doc, getDoc } = await _fs();
-      const snap = await getDoc(doc(db, COL, _key(year)));
+      const snap = await getDoc(doc(db, COL, _docId(worldId, year)));
       _renderStudentResult(snap.exists() ? snap.data() : null);
     } catch (e) {
       if (body) body.innerHTML = `<div class="tf-empty"><div class="tf-empty-title">تعذّر تحميل المصروفات</div></div>`;
@@ -175,9 +187,15 @@
     _setTitle("مصروفات السنة الدراسية");
     const body = _body();
     if (body) body.innerHTML = `<div class="tf-loading"><div class="tf-spin"></div></div>`;
+    const worldId = _worldId();
+    if (!worldId) {
+      _docs = {};
+      if (body) body.innerHTML = `<div class="tf-empty"><div class="tf-empty-icon"><i class="fa-solid fa-triangle-exclamation"></i></div><div class="tf-empty-title">لا يوجد عالم نشط صالح</div></div>`;
+      return;
+    }
     try {
-      const { db, collection, getDocs } = await _fs();
-      const snap = await getDocs(collection(db, COL));
+      const { db, collection, getDocs, query, where } = await _fs();
+      const snap = await getDocs(query(collection(db, COL), where("worldId","==",worldId)));
       _docs = {};
       snap.docs.forEach(d => { _docs[d.id] = d.data(); });
     } catch (e) { _docs = {}; }
@@ -216,6 +234,7 @@
 
   window.TuitionModule._openForm = function (id) {
     if (!_isOwner()) return;
+    if (!_worldId()) { window.toast?.("لا يوجد عالم نشط — تعذّرت الإضافة/التعديل", "error"); return; }
     const existing = id && _docs[id];
     _draft = existing
       ? { id, year: existing.year, cash: String(existing.cash ?? ""), installments: (existing.installments || []).map(x => ({ label: x.label || "", amount: String(x.amount ?? "") })) }
@@ -321,6 +340,8 @@
 
   window.TuitionModule._save = async function () {
     if (!_isOwner() || !_draft) return;
+    const worldId = _worldId();
+    if (!worldId) { window.toast?.("لا يوجد عالم نشط — تعذّر الحفظ", "error"); return; }
     const year = (_draft.year || "").trim();
     const cash = _num(_draft.cash);
     if (!_draft.id) {
@@ -335,7 +356,7 @@
       window.toast?.(`مجموع الأقساط (${_money(sum)}) لا يساوي الكاش (${_money(cash)})`, "error");
       return;
     }
-    const id = _draft.id || _key(year);
+    const id = _draft.id || _docId(worldId, year);
     if (!_draft.id && _docs[id]) {
       window.toast?.("هذه الفرقة مضافة بالفعل — استخدم زر التعديل بدل الإضافة", "error");
       return;
@@ -347,6 +368,7 @@
       await setDoc(doc(db, COL, id), {
         year: _draft.id ? _docs[id]?.year : year,
         cash, installments,
+        worldId,
         updatedAt: serverTimestamp(),
         updatedBy: window.currentUser?.uid || ""
       }, { merge: false });
@@ -362,6 +384,8 @@
 
   window.TuitionModule._delete = async function (id) {
     if (!_isOwner()) return;
+    const worldId = _worldId();
+    if (!worldId || !id.startsWith(worldId + "__")) { window.toast?.("غير مصرح بحذف بيانات هذا العالم", "error"); return; }
     if (!window.confirm("حذف بيانات مصروفات هذه الفرقة نهائيًا؟")) return;
     try {
       const { db, doc, deleteDoc } = await _fs();
