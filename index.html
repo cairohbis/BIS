@@ -3359,6 +3359,7 @@ async function doLogout() {
   window.currentUser = null; // تنظيف للوحدات الخارجية
   // FCM cleanup
   if (_fcmNotifsUnsub) { try { _fcmNotifsUnsub(); } catch(e){} _fcmNotifsUnsub = null; }
+  window.qnStopListening?.(); // إيقاف مستمع الإخطار السريع قبل إبطال الجلسة (quick-notifications.js)
   await signOut(auth);
   document.getElementById("settingsModal")?.classList.remove("open");
   document.body.style.overflow = "";
@@ -3579,6 +3580,7 @@ onAuthStateChanged(auth, async (user) => {
   window.currentUser = user;
   window._dmsGuardUser?.(user.uid); // لو تغيّر الحساب: أوقف مستمعات/بيانات قائمة الـDM للحساب السابق فوراً
   if (!window.db) window.db = db;
+  window.qnStartListening?.(); // بدء/إعادة بدء مستمع الإخطار السريع بعد تأكيد الجلسة (quick-notifications.js)
   showPage("page-home");
   goTab("tab-home");
   window.checkAttendancePopup?.().catch(() => {});
