@@ -58,6 +58,16 @@
   let _docs    = {};       // docId -> record (المالك فقط يحمّلها كاملة)
   let _draft   = null;     // نموذج المالك
   let _pick    = { year: "" }; // اختيار الطالب المؤقت (لا يُحفظ في Firestore)
+  let _studentUnsub = null; // دالة إلغاء اشتراك onSnapshot الخاصة بشاشة نتيجة الطالب فقط
+
+  // ✅ يوقف أي اشتراك onSnapshot سابق خاص بشاشة الطالب، ويمنع تراكم أكثر
+  // من listener واحد لنفس الشاشة (إعادة فتح/ضغط متكرر/مغادرة الشاشة).
+  function _stopStudentListener() {
+    if (typeof _studentUnsub === "function") {
+      try { _studentUnsub(); } catch (e) {}
+    }
+    _studentUnsub = null;
+  }
 
   function _root() { return document.getElementById("tuition-app-root"); }
   function _body() { return document.getElementById("tfBody"); }
@@ -88,6 +98,7 @@
 
   /* ═══════════ جهة الطالب: استعلام حر، بلا حفظ اختيار ═══════════ */
   function _studentPick() {
+    _stopStudentListener(); // ✅ أي رجوع لشاشة الاختيار يوقف أي listener سابق كان شغالاً
     _view = "student-pick";
     _setTitle("مصروفات السنة الدراسية");
     let last = {};
@@ -119,10 +130,22 @@
     _setTitle(`مصروفات ${year}`);
     const body = _body();
     if (body) body.innerHTML = `<div class="tf-loading"><div class="tf-spin"></div></div>`;
+    _stopStudentListener(); // ✅ يمنع تراكم أكثر من listener لو تكرر الضغط على زر البحث
     try {
-      const { db, doc, getDoc } = await _fs();
-      const snap = await getDoc(doc(db, COL, _docId(worldId, year)));
-      _renderStudentResult(snap.exists() ? snap.data() : null);
+      const { db, doc, onSnapshot } = await _fs();
+      _studentUnsub = onSnapshot(
+        doc(db, COL, _docId(worldId, year)),
+        (snap) => {
+          // ✅ لو الشاشة اتغيرت (المستخدم رجع لمكان تاني) قبل ما يوصل أي تحديث لاحق، تجاهله
+          if (_view !== "student-view") return;
+          _renderStudentResult(snap.exists() ? snap.data() : null);
+        },
+        (err) => {
+          if (_view !== "student-view") return;
+          const b = _body();
+          if (b) b.innerHTML = `<div class="tf-empty"><div class="tf-empty-title">تعذّر تحميل المصروفات</div></div>`;
+        }
+      );
     } catch (e) {
       if (body) body.innerHTML = `<div class="tf-empty"><div class="tf-empty-title">تعذّر تحميل المصروفات</div></div>`;
     }
@@ -414,6 +437,7 @@
   };
 
   window.TuitionModule.close = function () {
+    _stopStudentListener(); // ✅ إغلاق الوحدة بالكامل يجب أن يوقف أي listener شغال أيضًا
     const root = _root();
     if (!root) return;
     root.classList.remove("tuition-open");
