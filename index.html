@@ -3986,7 +3986,7 @@ window.openDirectChat = async function(toUid, toUser) {
   // (الـOwner مستثنى). المصدر الوحيد: users/{uid}.worldId من الخادم عبر
   // _getUser() — وليس أي قيمة ممرَّرة من الواجهة (toUser قد لا تحمل worldId
   // لو جاءت من كائن مبني جزئيًا في مكان آخر).
-  if (!isOwner()) {
+  if (!isOwner() && toUid !== window.OWNER_UID) {
     const _myWorld = window.currentUserWorldId?.();
     const _toUserSrc = await _getUser(toUid);
     if (myToken !== _dcReqToken) return;
