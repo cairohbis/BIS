@@ -30,6 +30,7 @@ import {
   var _queue = [];        // إخطارات لسه منتظرة تتعرض للمستخدم الحالي
   var _showing = false;   // فيه نافذة معروضة دلوقتي؟
   var _seenIds = {};      // منع تكرار نفس الإخطار في نفس الجلسة
+  var _unsub = null;      // دالة إلغاء اشتراك onSnapshot الحالية، أو null لو مفيش listener شغال دلوقتي
 
   function _qnRef(id) {
     return doc(window.db, "quickNotifications", id);
@@ -150,10 +151,15 @@ import {
     _enqueue({ id: docSnap.id, title: d.title, body: d.body, mascotImage: d.mascotImage });
   }
 
+  // ✅ Lifecycle: يمنع أكثر من listener شغال في نفس الوقت (Logout بدون
+  // إيقاف صريح، أو استدعاء متكرر) — ولا يبدأ إلا لو فيه مستخدم مسجّل
+  // دخول فعليًا وwindow.db متاح، حتى لا يبدأ باكر جدًا.
   function _startListening() {
+    if (_unsub) return; // listener شغال بالفعل — لا تنشئ نسخة تانية
+    if (!window.currentUser || !window.db) return;
     try {
       var q = query(collection(window.db, "quickNotifications"), orderBy("createdAt", "desc"), limit(10));
-      onSnapshot(q, function (snap) {
+      _unsub = onSnapshot(q, function (snap) {
         snap.docChanges().forEach(function (change) {
           if (change.type === "added" || change.type === "modified") {
             _checkNotification(change.doc);
@@ -167,16 +173,20 @@ import {
     }
   }
 
-  // نبدأ الاستماع بس بعد ما يكون فيه مستخدم مسجّل دخول (currentUser بيتظبط
-  // بعد onAuthStateChanged في index.html) — نستنى شوية ونتأكد
-  function _waitForUserThenStart() {
-    if (window.currentUser && window.db) {
-      _startListening();
-    } else {
-      setTimeout(_waitForUserThenStart, 400);
+  // ✅ يوقف الاشتراك الحالي (إن وُجد) ويصفّر المرجع — يُستدعى عند Logout
+  // قبل إبطال الجلسة، لمنع "Missing or insufficient permissions" على
+  // listener قديم بعد تسجيل الخروج.
+  function _stopListening() {
+    if (typeof _unsub === "function") {
+      try { _unsub(); } catch (e) {}
     }
+    _unsub = null;
   }
-  _waitForUserThenStart();
+
+  // ✅ تُستدعى من نقطة الـAuth المركزية في index.html (onAuthStateChanged)
+  // بدل الاعتماد على polling داخلي — بدء عند تسجيل الدخول، إيقاف عند الخروج.
+  window.qnStartListening = _startListening;
+  window.qnStopListening  = _stopListening;
 
   // ────────────────────────────────────────────
   // دالة النشر — بتتنادى من لوحة الأونر/الأدمن
