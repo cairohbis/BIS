@@ -75,7 +75,7 @@ async function ensurePrivateChatDoc(otherUid) {
   // قيمة ممرَّرة من الواجهة. هذا يغطي كل مسارات الإنشاء (openDirectChat،
   // forwardMsgTo، وأي استدعاء مباشر لـ selectChat/startChatListener) لأن
   // ensurePrivateChatDoc هي نقطة الإنشاء الحقيقية الوحيدة في المشروع.
-  if (!(window.isOwner && window.isOwner())) {
+  if (!(window.isOwner && window.isOwner()) && otherUid !== window.OWNER_UID) {
     const _myWorld = window.currentUserWorldId?.();
     let _toWorld = null;
     try {
