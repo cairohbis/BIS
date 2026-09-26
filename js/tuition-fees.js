@@ -411,11 +411,17 @@
   window.TuitionModule._delete = async function (id) {
     if (!_isOwner()) return;
     const worldId = _worldId();
-    if (!worldId || !id.startsWith(worldId + "__")) { window.toast?.("غير مصرح بحذف بيانات هذا العالم", "error"); return; }
-    if (!window.confirm("حذف بيانات مصروفات هذه الفرقة نهائيًا؟")) return;
+    if (!worldId) { window.toast?.("غير مصرح بحذف بيانات هذا العالم", "error"); return; }
     try {
-      const { db, doc, deleteDoc } = await _fs();
-      await deleteDoc(doc(db, COL, id));
+      const { db, doc, getDoc, deleteDoc } = await _fs();
+      const ref = doc(db, COL, id);
+      const snap = await getDoc(ref);
+      if (!snap.exists() || snap.data()?.worldId !== worldId) {
+        window.toast?.("غير مصرح بحذف بيانات هذا العالم", "error");
+        return;
+      }
+      if (!window.confirm("حذف بيانات مصروفات هذه الفرقة نهائيًا؟")) return;
+      await deleteDoc(ref);
       window.toast?.("تم الحذف");
       _ownerList();
     } catch (e) { window.toast?.("فشل الحذف", "error"); }
