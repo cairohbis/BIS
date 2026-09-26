@@ -141,7 +141,10 @@
           // ✅ تجاهل أي نتيجة جايه من الكاش المحلي (قد تكون قديمة قبل الحذف/التعديل)،
           // وانتظار الرد الفعلي من الخادم فقط لعرضه (تظل شاشة التحميل ظاهرة لحين وصوله)
           if (snap.metadata && snap.metadata.fromCache) return;
-          _renderStudentResult(snap.exists() ? snap.data() : null);
+          if (snap.exists()) { _renderStudentResult(snap.data()); return; }
+          // ✅ Fallback: مستند قديم منقول (Document ID بدون بادئة worldId__)
+          // — يُطابَق فقط عبر worldId + year الفعليين داخل البيانات، وليس شكل الـID.
+          _studentLegacyFallback(worldId, year);
         },
         (err) => {
           if (_view !== "student-view") return;
@@ -153,6 +156,28 @@
       if (body) body.innerHTML = `<div class="tf-empty"><div class="tf-empty-title">تعذّر تحميل المصروفات</div></div>`;
     }
   };
+
+  // ✅ يُستدعى فقط عندما لا يوجد مستند بالـDocument ID الجديد (worldId__year).
+  // يبحث عن مستند قديم يطابق نفس العالم النشط ونفس السنة بالضبط عبر حقول
+  // البيانات نفسها (worldId, year) — لا يعتمد إطلاقًا على شكل الـID، ولا يمكن
+  // أن يُرجع مستندًا من عالم آخر لأن الشرطين where() يُطبَّقان على الخادم.
+  async function _studentLegacyFallback(worldId, year) {
+    try {
+      const { db, collection, query, where, getDocs } = await _fs();
+      const snap = await getDocs(query(
+        collection(db, COL),
+        where("worldId", "==", worldId),
+        where("year", "==", year)
+      ));
+      if (_view !== "student-view") return; // الشاشة اتغيرت أثناء الانتظار
+      if (snap.empty || snap.size > 1) { _renderStudentResult(null); return; } // لا تخمين عند عدم وجود تطابق واحد وحيد
+      _renderStudentResult(snap.docs[0].data());
+    } catch (e) {
+      if (_view !== "student-view") return;
+      const b = _body();
+      if (b) b.innerHTML = `<div class="tf-empty"><div class="tf-empty-title">تعذّر تحميل المصروفات</div></div>`;
+    }
+  }
 
   function _renderStudentResult(d) {
     const body = _body();
