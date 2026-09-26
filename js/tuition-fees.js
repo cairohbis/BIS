@@ -138,6 +138,9 @@
         (snap) => {
           // ✅ لو الشاشة اتغيرت (المستخدم رجع لمكان تاني) قبل ما يوصل أي تحديث لاحق، تجاهله
           if (_view !== "student-view") return;
+          // ✅ تجاهل أي نتيجة جايه من الكاش المحلي (قد تكون قديمة قبل الحذف/التعديل)،
+          // وانتظار الرد الفعلي من الخادم فقط لعرضه (تظل شاشة التحميل ظاهرة لحين وصوله)
+          if (snap.metadata && snap.metadata.fromCache) return;
           _renderStudentResult(snap.exists() ? snap.data() : null);
         },
         (err) => {
