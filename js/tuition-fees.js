@@ -1,22 +1,31 @@
 /**
  * ══════════════════════════════════════════
- *   مصروفاتي — مصروفات السنة الدراسية
- *   المالك: إضافة/تعديل/حذف بيانات مصروفات كل فرقة
- *   الطالب: استعلام عن أي فرقة يريدها، في كل مرة — بدون قفل أو حفظ اختياره
- *   (كل المستخدمين على نفس التخصص، فلا داعي لحقل تخصص منفصل)
+ *   مصروفاتي — مصروفات السنة الدراسية (World-Direct)
+ *   كل World من الـ16 يمثّل فرقة دراسية كاملة بذاته (قسم + سنة)،
+ *   وله مستند واحد فقط — لا يوجد اختيار سنة يدوي من أي طرف.
+ *
+ *   المالك: يرى الـ16 World دائمًا، ويضيف/يعدّل/يحذف بيانات أي منها مباشرة.
+ *   الطالب: لا يختار شيئًا — يرى بيانات عالمه (worldId الخاص بحسابه) فورًا.
  *
  *   ▸ مستقلة تمامًا عن درجاتي: لا قراءة ولا اعتماد على grades/ إطلاقًا
  *   ▸ لا تُضاف أو تُعدَّل أي بيانات في users/{uid}
- *   ▸ المصدر الوحيد: tuitionFees/{docId}
- *       { year, cash, installments:[{label,amount}], updatedAt, updatedBy, worldId }
- *     docId = worldId__year (World Isolation) لضمان مستند واحد لكل فرقة لكل عالم
+ *   ▸ المصدر الوحيد: tuitionFees/{worldId}
+ *       { worldId, year, cash, installments:[{label,amount}], updatedAt, updatedBy }
+ *     docId === worldId مباشرة (مثال: tuitionFees/th_1) — لا بادئة ولا سنة في الـID.
+ *     "year" حقل مشتق تلقائيًا من worldId (انظر _worldParts) وليس اختيارًا حرًا.
  *   ▸ يُمنع الحفظ إذا مجموع الأقساط ≠ الكاش
  *
- *   ▸ القواعد المطلوبة في Firestore Rules (إضافة فقط):
+ *   ▸ Firestore Rules الحالية (بدون تعديل — متوافقة تمامًا مع هذا الشكل
+ *     لأنها تعتمد على resource.data.worldId وليس على شكل الـDocument ID):
  *       match /tuitionFees/{docId} {
- *         allow read: if isSignedIn() && resource.data.worldId == myWorldId();
- *         allow create: if isOwner() && request.resource.data.worldId is string;
- *         allow update, delete: if isOwner() && resource.data.worldId == request.resource.data.worldId;
+ *         allow read: if isSignedIn() &&
+ *           (resource == null || isOwner() ||
+ *            (('worldId' in resource.data) && resource.data.worldId == myWorldId()));
+ *         allow create: if isOwner() && request.resource.data.worldId is string
+ *           && request.resource.data.worldId.size() > 0;
+ *         allow update: if isOwner() && ('worldId' in resource.data)
+ *           && request.resource.data.worldId == resource.data.worldId;
+ *         allow delete: if isOwner() && ('worldId' in resource.data);
  *       }
  * ══════════════════════════════════════════
  */
@@ -28,24 +37,21 @@
 
   const _FB  = "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
   const COL  = "tuitionFees";
-  const YEARS = ["الفرقة الأولى", "الفرقة الثانية", "الفرقة الثالثة", "الفرقة الرابعة"];
-  const LAST_KEY = "bis_tuition_last_choice"; // localStorage فقط — لا علاقة له بـ Firestore أو users
+
+  // ✅ منطق مركزي وحيد لتحويل worldId إلى (قسم + فرقة) — لا مكان آخر
+  // في الملف يجب أن يحسب هذا التحويل بشكل منفصل.
+  const SECTIONS = { is: "نظم معلومات", lt: "لغات وترجمة", th: "سياحة وفنادق", ba: "إدارة أعمال" };
+  const YEAR_BY_SUFFIX = { "1": "الفرقة الأولى", "2": "الفرقة الثانية", "3": "الفرقة الثالثة", "4": "الفرقة الرابعة" };
+  function _worldParts(worldId) {
+    const m = /^([a-z]+)_([1-4])$/.exec(worldId || "");
+    return m ? { section: SECTIONS[m[1]] || m[1], year: YEAR_BY_SUFFIX[m[2]] } : null;
+  }
+  function _worldYear(worldId) { const p = _worldParts(worldId); return p ? p.year : ""; }
+  function _worldLabel(worldId) { const p = _worldParts(worldId); return p ? `${p.section} — ${p.year}` : (worldId || ""); }
 
   async function _fs() {
     if (!window.db) throw new Error("Firebase غير متاح");
     return { db: window.db, ...(await import(_FB)) };
-  }
-  function _key(year) {
-    return year.replace(/\s+/g, "_").replace(/[^a-zA-Z0-9_\u0600-\u06FF]/g, "");
-  }
-  // ✅ World Isolation: docId = worldId__year — يفصل بيانات كل عالم عن الآخر
-  // فعليًا على مستوى الـdocId نفسه (وليس فلترة عرض فقط).
-  function _docId(worldId, year) { return `${worldId}__${_key(year)}`; }
-  // المصدر الموحّد للعالم الحالي: نفس activeWorldContext() المستخدمة في
-  // باقي المشروع (rooms/messages) — بترجع عالم الأونر النشط، أو عالم
-  // المستخدم العادي الثابت، ولا تفترض أي قيمة افتراضية عند غياب العالم.
-  function _worldId() {
-    return (typeof window.activeWorldContext === "function") ? window.activeWorldContext() : null;
   }
   function _esc(s) {
     return String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -55,13 +61,12 @@
   function _money(n) { return _num(n).toLocaleString("ar-EG"); }
 
   let _view    = "home";   // home | owner-form | student-view
-  let _docs    = {};       // docId -> record (المالك فقط يحمّلها كاملة)
+  let _docs    = {};       // worldId -> record (المالك فقط يحمّلها كاملة، لكل الـ16 عالم)
   let _draft   = null;     // نموذج المالك
-  let _pick    = { year: "" }; // اختيار الطالب المؤقت (لا يُحفظ في Firestore)
   let _studentUnsub = null; // دالة إلغاء اشتراك onSnapshot الخاصة بشاشة نتيجة الطالب فقط
 
   // ✅ يوقف أي اشتراك onSnapshot سابق خاص بشاشة الطالب، ويمنع تراكم أكثر
-  // من listener واحد لنفس الشاشة (إعادة فتح/ضغط متكرر/مغادرة الشاشة).
+  // من listener واحد لنفس الشاشة (إعادة فتح/مغادرة الشاشة).
   function _stopStudentListener() {
     if (typeof _studentUnsub === "function") {
       try { _studentUnsub(); } catch (e) {}
@@ -93,60 +98,36 @@
   function _home() {
     _view = "home"; _draft = null;
     _setTitle("مصروفاتي");
-    if (_isOwner()) _ownerList(); else _studentPick();
-  }
-
-  /* ═══════════ جهة الطالب: استعلام حر، بلا حفظ اختيار ═══════════ */
-  function _studentPick() {
-    _stopStudentListener(); // ✅ أي رجوع لشاشة الاختيار يوقف أي listener سابق كان شغالاً
-    _view = "student-pick";
-    _setTitle("مصروفات السنة الدراسية");
-    let last = {};
-    try { last = JSON.parse(localStorage.getItem(LAST_KEY) || "{}"); } catch (e) {}
-    const body = _body();
-    if (!body) return;
-    body.innerHTML = `
-      <div class="tf-pick">
-        <div class="tf-hint">اختر الفرقة لعرض مصروفات السنة الدراسية</div>
-        <label class="tf-label">الفرقة الدراسية</label>
-        <select class="tf-select" id="tfPickYear">
-          <option value="">— اختر الفرقة —</option>
-          ${YEARS.map(y => `<option value="${_esc(y)}" ${last.year === y ? "selected" : ""}>${_esc(y)}</option>`).join("")}
-        </select>
-        <button class="tf-btn-primary" onclick="window.TuitionModule._studentSearch()"><i class="fa-solid fa-magnifying-glass"></i> عرض المصروفات</button>
-      </div>`;
+    if (_isOwner()) _ownerList(); else _studentView();
   }
 
   window.TuitionModule = window.TuitionModule || {};
 
-  window.TuitionModule._studentSearch = async function () {
-    const year  = (document.getElementById("tfPickYear")?.value || "").trim();
-    if (!year)  { window.toast?.("اختر الفرقة الدراسية", "error"); return; }
-    const worldId = _worldId();
-    if (!worldId) { window.toast?.("لا يوجد عالم صالح لعرض المصروفات", "error"); return; }
-    try { localStorage.setItem(LAST_KEY, JSON.stringify({ year })); } catch (e) {}
-    _pick = { year };
+  /* ═══════════ جهة الطالب: عرض مباشر لعالمه فقط، بلا أي اختيار ═══════════ */
+  async function _studentView() {
+    _stopStudentListener();
     _view = "student-view";
-    _setTitle(`مصروفات ${year}`);
+    const worldId = (typeof window.currentUserWorldId === "function") ? window.currentUserWorldId() : null;
+    if (!worldId) {
+      _setTitle("مصروفات السنة الدراسية");
+      const body = _body();
+      if (body) body.innerHTML = `<div class="tf-empty"><div class="tf-empty-icon"><i class="fa-solid fa-triangle-exclamation"></i></div><div class="tf-empty-title">لا يوجد عالم صالح لعرض المصروفات</div></div>`;
+      return;
+    }
+    _setTitle(`مصروفات ${_worldLabel(worldId)}`);
     const body = _body();
     if (body) body.innerHTML = `<div class="tf-loading"><div class="tf-spin"></div></div>`;
-    _stopStudentListener(); // ✅ يمنع تراكم أكثر من listener لو تكرر الضغط على زر البحث
     try {
       const { db, doc, onSnapshot } = await _fs();
       _studentUnsub = onSnapshot(
-        doc(db, COL, _docId(worldId, year)),
+        doc(db, COL, worldId),
         (snap) => {
-          // ✅ لو الشاشة اتغيرت (المستخدم رجع لمكان تاني) قبل ما يوصل أي تحديث لاحق، تجاهله
+          // ✅ لو الشاشة اتغيرت (المستخدم رجع/أغلق) قبل ما يوصل أي تحديث لاحق، تجاهله
           if (_view !== "student-view") return;
-          // ✅ نعرض أول snapshot يصل فورًا (من الكاش أو الخادم) بدل انتظار
-          // تأكيد الخادم حصريًا — إعادة الاشتراك على نفس المستند (بعد الرجوع
-          // ثم استعلام مطابق) قد لا يُسلّم أي حدث تالٍ إن لم يتغيّر شيء على
-          // الخادم، فكان الانتظار الحصري يُعلّق الشاشة على spinner للأبد.
-          // أي تحديث لاحق فعلي من الخادم سيُحدّث العرض تلقائيًا بنفس الـlistener.
-          if (snap.exists()) { _renderStudentResult(snap.data()); return; }
-          // ✅ Fallback: مستند قديم منقول (Document ID بدون بادئة worldId__)
-          // — يُطابَق فقط عبر worldId + year الفعليين داخل البيانات، وليس شكل الـID.
-          _studentLegacyFallback(worldId, year);
+          // ✅ نعرض أول snapshot يصل فورًا (من الكاش أو الخادم) — لا داعي لانتظار
+          // تأكيد الخادم حصريًا (إعادة الاشتراك على نفس المستند قد لا يُسلّم حدثًا
+          // تاليًا إن لم يتغيّر شيء، فينتج عنه تعليق أبدي على شاشة التحميل).
+          _renderStudentResult(snap.exists() ? snap.data() : null);
         },
         (err) => {
           if (_view !== "student-view") return;
@@ -156,28 +137,6 @@
       );
     } catch (e) {
       if (body) body.innerHTML = `<div class="tf-empty"><div class="tf-empty-title">تعذّر تحميل المصروفات</div></div>`;
-    }
-  };
-
-  // ✅ يُستدعى فقط عندما لا يوجد مستند بالـDocument ID الجديد (worldId__year).
-  // يبحث عن مستند قديم يطابق نفس العالم النشط ونفس السنة بالضبط عبر حقول
-  // البيانات نفسها (worldId, year) — لا يعتمد إطلاقًا على شكل الـID، ولا يمكن
-  // أن يُرجع مستندًا من عالم آخر لأن الشرطين where() يُطبَّقان على الخادم.
-  async function _studentLegacyFallback(worldId, year) {
-    try {
-      const { db, collection, query, where, getDocs } = await _fs();
-      const snap = await getDocs(query(
-        collection(db, COL),
-        where("worldId", "==", worldId),
-        where("year", "==", year)
-      ));
-      if (_view !== "student-view") return; // الشاشة اتغيرت أثناء الانتظار
-      if (snap.empty || snap.size > 1) { _renderStudentResult(null); return; } // لا تخمين عند عدم وجود تطابق واحد وحيد
-      _renderStudentResult(snap.docs[0].data());
-    } catch (e) {
-      if (_view !== "student-view") return;
-      const b = _body();
-      if (b) b.innerHTML = `<div class="tf-empty"><div class="tf-empty-title">تعذّر تحميل المصروفات</div></div>`;
     }
   }
 
@@ -189,7 +148,6 @@
         <div class="tf-empty">
           <div class="tf-empty-icon"><i class="fa-solid fa-circle-info"></i></div>
           <div class="tf-empty-title">لم تُضَف بيانات مصروفات لهذه الفرقة بعد</div>
-          <button class="tf-btn-cancel" onclick="window.TuitionModule._studentPickBack()">بحث آخر</button>
         </div>`;
       return;
     }
@@ -221,7 +179,6 @@
             <div class="tf-inst-total"><span>الإجمالي</span><span>${_money(d.cash)} جنيه</span></div>
           ` : `<div class="tf-empty-sub">لا يوجد نظام تقسيط لهذه البيانات</div>`}
         </div>
-        <button class="tf-btn-cancel tf-full" onclick="window.TuitionModule._studentPickBack()"><i class="fa-solid fa-arrow-right-arrow-left"></i> بحث عن فرقة أخرى</button>
       </div>`;
   }
 
@@ -232,23 +189,17 @@
     if (inst) inst.style.display = t === "inst" ? "" : "none";
   };
 
-  window.TuitionModule._studentPickBack = function () { _studentPick(); };
-
-  /* ═══════════ جهة المالك: إدارة كاملة ═══════════ */
+  /* ═══════════ جهة المالك: إدارة الـ16 World دائمًا ═══════════ */
   async function _ownerList() {
     _view = "owner-list";
     _setTitle("مصروفات السنة الدراسية");
     const body = _body();
     if (body) body.innerHTML = `<div class="tf-loading"><div class="tf-spin"></div></div>`;
-    const worldId = _worldId();
-    if (!worldId) {
-      _docs = {};
-      if (body) body.innerHTML = `<div class="tf-empty"><div class="tf-empty-icon"><i class="fa-solid fa-triangle-exclamation"></i></div><div class="tf-empty-title">لا يوجد عالم نشط صالح</div></div>`;
-      return;
-    }
     try {
-      const { db, collection, getDocs, query, where } = await _fs();
-      const snap = await getDocs(query(collection(db, COL), where("worldId","==",worldId)));
+      // ✅ المالك يرى كل الـ16 عالم دائمًا (isOwner() في الـRule يتجاوز شرط
+      // تطابق worldId) — لا فلترة بـactiveWorldContext() هنا إطلاقًا.
+      const { db, collection, getDocs } = await _fs();
+      const snap = await getDocs(collection(db, COL));
       _docs = {};
       snap.docs.forEach(d => { _docs[d.id] = d.data(); });
     } catch (e) { _docs = {}; }
@@ -258,42 +209,39 @@
   function _renderOwnerList() {
     const body = _body();
     if (!body) return;
-    const list = Object.entries(_docs).sort((a, b) => YEARS.indexOf(a[1].year) - YEARS.indexOf(b[1].year));
+    const worlds = Array.isArray(window.WORLDS) ? window.WORLDS : [];
     body.innerHTML = `
-      <div class="tf-owner-top">
-        <button class="tf-btn-primary tf-full" onclick="window.TuitionModule._openForm()"><i class="fa-solid fa-plus"></i> إضافة مصروفات سنة دراسية</button>
-      </div>
-      ${!list.length ? `
-        <div class="tf-empty">
-          <div class="tf-empty-icon"><i class="fa-solid fa-sack-dollar"></i></div>
-          <div class="tf-empty-title">لا توجد بيانات مصروفات بعد</div>
-          <div class="tf-empty-sub">اضغط الزر بالأعلى لإضافة أول فرقة وتخصص</div>
-        </div>` : `
-        <div class="tf-owner-list">
-          ${list.map(([id, d]) => `
+      <div class="tf-owner-list">
+        ${worlds.map(wid => {
+          const d = _docs[wid];
+          return `
             <div class="tf-owner-card">
               <div class="tf-owner-card-info">
-                <div class="tf-owner-card-year">${_esc(d.year)}</div>
-                <div class="tf-owner-card-cash">${_money(d.cash)} جنيه${(d.installments || []).length ? ` · ${d.installments.length} أقساط` : " · كاش فقط"}</div>
+                <div class="tf-owner-card-year">${_esc(_worldLabel(wid))}</div>
+                <div class="tf-owner-card-cash">${d
+                  ? `${_money(d.cash)} جنيه${(d.installments || []).length ? ` · ${d.installments.length} أقساط` : " · كاش فقط"}`
+                  : "لا توجد بيانات بعد"}</div>
               </div>
               <div class="tf-owner-card-actions">
-                <button class="tf-mini-btn" title="تعديل" onclick="window.TuitionModule._openForm('${_esc(id)}')"><i class="fa-solid fa-pen"></i></button>
-                <button class="tf-mini-btn tf-danger" title="حذف" onclick="window.TuitionModule._delete('${_esc(id)}')"><i class="fa-solid fa-trash"></i></button>
+                ${d
+                  ? `<button class="tf-mini-btn" title="تعديل" onclick="window.TuitionModule._openForm('${_esc(wid)}')"><i class="fa-solid fa-pen"></i></button>
+                     <button class="tf-mini-btn tf-danger" title="حذف" onclick="window.TuitionModule._delete('${_esc(wid)}')"><i class="fa-solid fa-trash"></i></button>`
+                  : `<button class="tf-mini-btn" title="إضافة" onclick="window.TuitionModule._openForm('${_esc(wid)}')"><i class="fa-solid fa-plus"></i></button>`}
               </div>
-            </div>`).join("")}
-        </div>`}
+            </div>`;
+        }).join("")}
+      </div>
     `;
   }
 
-  window.TuitionModule._openForm = function (id) {
-    if (!_isOwner()) return;
-    if (!_worldId()) { window.toast?.("لا يوجد عالم نشط — تعذّرت الإضافة/التعديل", "error"); return; }
-    const existing = id && _docs[id];
+  window.TuitionModule._openForm = function (worldId) {
+    if (!_isOwner() || !worldId) return;
+    const existing = _docs[worldId];
     _draft = existing
-      ? { id, year: existing.year, cash: String(existing.cash ?? ""), installments: (existing.installments || []).map(x => ({ label: x.label || "", amount: String(x.amount ?? "") })) }
-      : { id: null, year: "", cash: "", installments: [] };
+      ? { worldId, cash: String(existing.cash ?? ""), installments: (existing.installments || []).map(x => ({ label: x.label || "", amount: String(x.amount ?? "") })) }
+      : { worldId, cash: "", installments: [] };
     _view = "owner-form";
-    _setTitle(existing ? "تعديل مصروفات السنة" : "إضافة مصروفات سنة دراسية");
+    _setTitle(existing ? `تعديل مصروفات ${_worldLabel(worldId)}` : `إضافة مصروفات ${_worldLabel(worldId)}`);
     _renderForm();
   };
 
@@ -314,11 +262,7 @@
     body.innerHTML = `
       <div class="tf-form">
         <label class="tf-label">الفرقة الدراسية</label>
-        <select class="tf-select" id="tfFYear" ${_draft.id ? "disabled" : ""} onchange="window.TuitionModule._setField('year', this.value)">
-          <option value="">— اختر الفرقة —</option>
-          ${YEARS.map(y => `<option value="${_esc(y)}" ${_draft.year === y ? "selected" : ""}>${_esc(y)}</option>`).join("")}
-        </select>
-        ${_draft.id ? `<div class="tf-note"><i class="fa-solid fa-lock"></i> لتغيير الفرقة، احذف هذا السجل وأنشئ سجلاً جديدًا</div>` : ""}
+        <div class="tf-note"><i class="fa-solid fa-lock"></i> ${_esc(_worldLabel(_draft.worldId))}</div>
 
         <label class="tf-label">المبلغ كاش (جنيه)</label>
         <input class="tf-select" id="tfFCash" type="number" inputmode="numeric" min="0" placeholder="مثال: 25000" value="${_esc(_draft.cash)}"
@@ -393,13 +337,9 @@
 
   window.TuitionModule._save = async function () {
     if (!_isOwner() || !_draft) return;
-    const worldId = _worldId();
-    if (!worldId) { window.toast?.("لا يوجد عالم نشط — تعذّر الحفظ", "error"); return; }
-    const year = (_draft.year || "").trim();
+    const worldId = _draft.worldId;
+    if (!worldId) { window.toast?.("عالم غير صالح — تعذّر الحفظ", "error"); return; }
     const cash = _num(_draft.cash);
-    if (!_draft.id) {
-      if (!year)  { window.toast?.("اختر الفرقة الدراسية", "error"); return; }
-    }
     if (cash <= 0) { window.toast?.("اكتب المبلغ كاش", "error"); return; }
     const installments = _draft.installments
       .map(i => ({ label: (i.label || "").trim(), amount: _num(i.amount) }))
@@ -409,19 +349,14 @@
       window.toast?.(`مجموع الأقساط (${_money(sum)}) لا يساوي الكاش (${_money(cash)})`, "error");
       return;
     }
-    const id = _draft.id || _docId(worldId, year);
-    if (!_draft.id && _docs[id]) {
-      window.toast?.("هذه الفرقة مضافة بالفعل — استخدم زر التعديل بدل الإضافة", "error");
-      return;
-    }
     const btn = document.getElementById("tfSaveBtn");
     if (btn) btn.disabled = true;
     try {
       const { db, doc, setDoc, serverTimestamp } = await _fs();
-      await setDoc(doc(db, COL, id), {
-        year: _draft.id ? _docs[id]?.year : year,
-        cash, installments,
+      await setDoc(doc(db, COL, worldId), {
         worldId,
+        year: _worldYear(worldId), // ✅ مُشتق تلقائيًا من worldId — ليس اختيارًا حرًا
+        cash, installments,
         updatedAt: serverTimestamp(),
         updatedBy: window.currentUser?.uid || ""
       }, { merge: false });
@@ -435,19 +370,19 @@
 
   window.TuitionModule._cancelForm = function () { _ownerList(); };
 
-  window.TuitionModule._delete = async function (id) {
-    if (!_isOwner()) return;
-    const worldId = _worldId();
-    if (!worldId) { window.toast?.("غير مصرح بحذف بيانات هذا العالم", "error"); return; }
+  window.TuitionModule._delete = async function (worldId) {
+    if (!_isOwner() || !worldId) return;
     try {
       const { db, doc, getDoc, deleteDoc } = await _fs();
-      const ref = doc(db, COL, id);
+      const ref = doc(db, COL, worldId);
       const snap = await getDoc(ref);
-      if (!snap.exists() || snap.data()?.worldId !== worldId) {
-        window.toast?.("غير مصرح بحذف بيانات هذا العالم", "error");
+      // ✅ نفس شرط الـRule بالضبط (isOwner() && 'worldId' in resource.data) —
+      // بدون أي مقارنة بعالم نشط، لأن المالك يدير الـ16 عالم كلهم بالتساوي.
+      if (!snap.exists() || !snap.data()?.worldId) {
+        window.toast?.("لا توجد بيانات لحذفها", "error");
         return;
       }
-      if (!window.confirm("حذف بيانات مصروفات هذه الفرقة نهائيًا؟")) return;
+      if (!window.confirm(`حذف بيانات مصروفات ${_worldLabel(worldId)} نهائيًا؟`)) return;
       await deleteDoc(ref);
       window.toast?.("تم الحذف");
       _ownerList();
@@ -459,7 +394,6 @@
   ───────────────────────────────────────── */
   window.TuitionModule._back = function () {
     if (_view === "owner-form") { _ownerList(); return; }
-    if (_view === "student-view") { _studentPick(); return; }
     window.TuitionModule.close();
   };
 
@@ -479,6 +413,6 @@
     root.classList.remove("tuition-open");
     root.style.display = "none";
     root.innerHTML = "";
-    _view = "home"; _draft = null; _docs = {}; _pick = { year: "" };
+    _view = "home"; _draft = null; _docs = {};
   };
 })();
