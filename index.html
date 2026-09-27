@@ -3585,6 +3585,7 @@ onAuthStateChanged(auth, async (user) => {
   currentUser = user;
   window.currentUser = user;
   window._dmsGuardUser?.(user.uid); // لو تغيّر الحساب: أوقف مستمعات/بيانات قائمة الـDM للحساب السابق فوراً
+  window._sheetatyGuardUser?.(user.uid); // لو تغيّر الحساب: صفّر كاش شيتاتي (subjects/sheets/completions) للحساب السابق فوراً
   if (!window.db) window.db = db;
   window.qnStartListening?.(); // بدء/إعادة بدء مستمع الإخطار السريع بعد تأكيد الجلسة (quick-notifications.js)
   showPage("page-home");
