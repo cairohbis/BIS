@@ -61,6 +61,7 @@
   let _sheets = [];          // شيتات المادة المفتوحة حاليًا
   let _completions = {};     // sheetId -> {completed, completedAt}
   let _loaded = false;
+  let _loadedUid = null;      // الحساب اللي اتحمّلت بياناته آخر مرة — لحماية تبديل الحساب/الـWorld
   let _currentSubjectId = null;
   let _draftSubject = null;  // {id?, name, code}
   let _draftSheet = null;    // {id?, page, dueDate, note, image, _file}
@@ -99,6 +100,7 @@
       _subjects = [];
       snap.forEach((d) => { const data = d.data(); if (wid && data.worldId === wid) _subjects.push({ id: d.id, ...data }); });
       _loaded = true;
+      _loadedUid = _uid();
       _renderHome();
     } catch (e) {
       if (body) body.innerHTML = `<div class="sht-empty"><div class="sht-empty-title">تعذّر تحميل شيتاتي</div></div>`;
@@ -511,5 +513,24 @@
     root.style.display = "none";
     root.innerHTML = "";
     _view = "home"; _currentSubjectId = null; _draftSubject = null; _draftSheet = null;
+  };
+
+  /* ─────────────────────────────────────────
+     حارس تبديل الحساب — نفس نمط window._dmsGuardUser
+     (js/dms-page.js): لو الحساب اتغيّر عن الحساب اللي
+     الكاش الحالي محمّل عليه، صفّر كل حالة الموديول وأغلقه
+     لو كان مفتوحًا، عشان منمنعش render لبيانات World قديم.
+  ───────────────────────────────────────── */
+  window.SheetatyModule._resetState = function () {
+    const root = _root();
+    const wasOpen = !!(root && root.classList.contains("sht-open"));
+    if (wasOpen) window.SheetatyModule.close();
+    _loaded = false; _loadedUid = null;
+    _subjects = []; _sheets = []; _completions = {};
+    _view = "home"; _tab = "active";
+    _currentSubjectId = null; _draftSubject = null; _draftSheet = null;
+  };
+  window._sheetatyGuardUser = function (uid) {
+    if (_loadedUid && _loadedUid !== uid) window.SheetatyModule._resetState();
   };
 })();
