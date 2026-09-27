@@ -3,20 +3,25 @@
    ══════════════════════════════════════════
    نظام مستقل بالكامل عن نظام الأخبار (news):
      • مجموعة Firestore: quickNotifications/{id}
-         { title, body, mascotImage, createdAt, active }
+         World-scoped:  { title, body, mascotImage, createdAt, active, worldId }
+         Global (جديد): { title, body, mascotImage, createdAt, active, audience: "global" }
+         قديم (قبل هذا التعديل، بلا worldId وبلا audience): يبقى Global كما كان،
+         لكنه لم يعد يصل عبر الاستماع الحي الجديد (انظر تقرير التنفيذ — Firestore
+         لا يمكنها استعلام "حقل غير موجود" بدون Migration؛ القراءة المباشرة بالـID
+         لا تزال تعمل له عبر الـRule فقط).
      • حالة كل مستخدم: users/{uid}/quickNotificationStates/{id}
          { dismissed: true }  ← لو موجودة، مايتعرضش تاني خالص
          (عدم وجود المستند = لسه معلّق/"ذكرني" = لازم يتعرض)
 
    السلوك:
-     - Online: onSnapshot بيمسك أي إخطار جديد فورًا وهو المستخدم فاتح الموقع
-     - Offline: أول تحميل للصفحة، الفحص الأول بيجيب كل الإخطارات النشطة
-       ويعرض أي واحد لسه مش "dismissed" لهذا المستخدم
+     - Online: onSnapshot (استماعان منفصلان: World + Global) بيمسك أي إخطار
+       جديد فورًا وهو المستخدم فاتح الموقع، ومقيّد فعليًا على مستوى الـQuery
+       نفسه (where) بحيث لا يصل مستند عالم آخر إطلاقًا من Firestore.
      - "ذكرني": يقفل النافذة بس من غير ما يسجل حاجة → هيظهر تاني المرة الجاية
      - "إخفاء": يسجل dismissed:true → مايتعرضش تاني أبدًا
    ══════════════════════════════════════════ */
 import {
-  collection, query, orderBy, limit, onSnapshot,
+  collection, query, where, orderBy, limit, onSnapshot,
   doc, getDoc, setDoc, addDoc, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
@@ -30,7 +35,10 @@ import {
   var _queue = [];        // إخطارات لسه منتظرة تتعرض للمستخدم الحالي
   var _showing = false;   // فيه نافذة معروضة دلوقتي؟
   var _seenIds = {};      // منع تكرار نفس الإخطار في نفس الجلسة
-  var _unsub = null;      // دالة إلغاء اشتراك onSnapshot الحالية، أو null لو مفيش listener شغال دلوقتي
+  var _unsubWorld  = null; // اشتراك onSnapshot الخاص بإخطارات عالم المستخدم فقط
+  var _unsubGlobal = null; // اشتراك onSnapshot الخاص بالإخطارات العامة (audience=="global") فقط
+  var _listening   = false; // true بين qnStartListening وqnStopListening — يمنع أي محاولة بدء بعد إيقاف صريح
+  var _worldRetryTries = 0; // عدّاد محاولات محدود لبدء استماع العالم لو currentUserWorldId() لسه null (فجوة توقيت بعد Login)
 
   function _qnRef(id) {
     return doc(window.db, "quickNotifications", id);
@@ -151,36 +159,71 @@ import {
     _enqueue({ id: docSnap.id, title: d.title, body: d.body, mascotImage: d.mascotImage });
   }
 
+  function _attachSnapshot(q) {
+    return onSnapshot(q, function (snap) {
+      snap.docChanges().forEach(function (change) {
+        if (change.type === "added" || change.type === "modified") {
+          _checkNotification(change.doc);
+        }
+      });
+    }, function (err) {
+      console.error("[QuickNotif] خطأ في الاستماع:", err);
+    });
+  }
+
+  // ✅ World Isolation حقيقي على مستوى Firestore: الاستعلام نفسه مقيّد بـ
+  // where("worldId","==", myWorld) — لا يوجد شكل من أشكال الكود يمكن أن
+  // يطلب أو يستلم مستند عالم آخر، والـRule ترفض أي محاولة مخالفة من الأساس.
+  // تُنفَّذ بإعادة محاولة محدودة فقط لأن currentUserWorldId() قد يرجع null
+  // لحظيًا بعد Login (قبل اكتمال تحميل window._currentUserData) — وهذا ليس
+  // polling عام لبدء الوحدة (ذاك أُلغي سابقًا)، بل حارس ضيّق ضد فقدان إشعار
+  // عالم صحيح بسبب هذه الفجوة الزمنية المعروفة فقط.
+  function _tryAttachWorldListener() {
+    if (!_listening || _unsubWorld) return;
+    var worldId = (typeof window.currentUserWorldId === "function") ? window.currentUserWorldId() : null;
+    if (!worldId) {
+      if (_worldRetryTries++ < 15) setTimeout(_tryAttachWorldListener, 400);
+      return;
+    }
+    try {
+      var qWorld = query(collection(window.db, "quickNotifications"),
+        where("worldId", "==", worldId), orderBy("createdAt", "desc"), limit(10));
+      _unsubWorld = _attachSnapshot(qWorld);
+    } catch (e) {
+      console.error("[QuickNotif] تعذّر بدء استماع العالم:", e);
+    }
+  }
+
   // ✅ Lifecycle: يمنع أكثر من listener شغال في نفس الوقت (Logout بدون
   // إيقاف صريح، أو استدعاء متكرر) — ولا يبدأ إلا لو فيه مستخدم مسجّل
   // دخول فعليًا وwindow.db متاح، حتى لا يبدأ باكر جدًا.
   function _startListening() {
-    if (_unsub) return; // listener شغال بالفعل — لا تنشئ نسخة تانية
+    if (_listening) return; // شغّال بالفعل — لا تنشئ نسخة تانية
     if (!window.currentUser || !window.db) return;
+    _listening = true;
+    _worldRetryTries = 0;
     try {
-      var q = query(collection(window.db, "quickNotifications"), orderBy("createdAt", "desc"), limit(10));
-      _unsub = onSnapshot(q, function (snap) {
-        snap.docChanges().forEach(function (change) {
-          if (change.type === "added" || change.type === "modified") {
-            _checkNotification(change.doc);
-          }
-        });
-      }, function (err) {
-        console.error("[QuickNotif] خطأ في الاستماع:", err);
-      });
+      // ✅ استماع الإخطارات العامة — مقيّد بـ where(audience=="global")،
+      // مقتصر على الإخطارات الجديدة الموسومة صراحةً (انظر qnPublish).
+      var qGlobal = query(collection(window.db, "quickNotifications"),
+        where("audience", "==", "global"), orderBy("createdAt", "desc"), limit(10));
+      _unsubGlobal = _attachSnapshot(qGlobal);
     } catch (e) {
-      console.error("[QuickNotif] تعذّر بدء الاستماع:", e);
+      console.error("[QuickNotif] تعذّر بدء استماع Global:", e);
     }
+    _tryAttachWorldListener();
   }
 
-  // ✅ يوقف الاشتراك الحالي (إن وُجد) ويصفّر المرجع — يُستدعى عند Logout
-  // قبل إبطال الجلسة، لمنع "Missing or insufficient permissions" على
-  // listener قديم بعد تسجيل الخروج.
+  // ✅ يوقف كلا الاشتراكين (إن وُجدا) ويصفّر كل المراجع — يُستدعى عند
+  // Logout قبل إبطال الجلسة، لمنع "Missing or insufficient permissions"
+  // على listener قديم بعد تسجيل الخروج. تصفير _listening يمنع أيضًا أي
+  // محاولة retry معلّقة من _tryAttachWorldListener من إنشاء اشتراك متأخر.
   function _stopListening() {
-    if (typeof _unsub === "function") {
-      try { _unsub(); } catch (e) {}
-    }
-    _unsub = null;
+    _listening = false;
+    if (typeof _unsubWorld === "function") { try { _unsubWorld(); } catch (e) {} }
+    if (typeof _unsubGlobal === "function") { try { _unsubGlobal(); } catch (e) {} }
+    _unsubWorld = null;
+    _unsubGlobal = null;
   }
 
   // ✅ تُستدعى من نقطة الـAuth المركزية في index.html (onAuthStateChanged)
@@ -193,22 +236,26 @@ import {
   // ────────────────────────────────────────────
   window.qnPublish = async function (title, body) {
     if (!title || !title.trim()) { window.toast && window.toast("اكتب عنوان الإخطار", "error"); return; }
-    // ✅ Admin Isolation: الأونر ينشر Global كالمعتاد (بلا worldId) — الأدمن
-    // العادي يُختم إخطاره بعالمه الحالي، ولا يُسمح له بالنشر بدون عالم صالح.
+    // ✅ Admin Isolation + World Isolation: كل إخطار جديد له Audience صريح
+    // واحد فقط — الأونر ينشر audience:"global" (يصل للجميع فعليًا عبر
+    // Firestore Rule)، والأدمن العادي يُختم إخطاره بـworldId عالمه النشط
+    // فقط (لا يُسمح له بالنشر بدون عالم صالح)، ولا تُنشأ أي وثيقة بدون
+    // أحد الحقلين — هذا هو ما يجعل عزل الاستماع لاحقًا مضمونًا.
     var _isOwnerNow = !!(window.isOwner && window.isOwner());
-    var _worldId = null;
-    if (!_isOwnerNow) {
-      _worldId = (typeof window.activeWorldContext === "function") ? window.activeWorldContext() : null;
+    var _payload = {
+      title: title.trim(),
+      body: (body || "").trim(),
+      active: true,
+      createdAt: serverTimestamp()
+    };
+    if (_isOwnerNow) {
+      _payload.audience = "global";
+    } else {
+      var _worldId = (typeof window.activeWorldContext === "function") ? window.activeWorldContext() : null;
       if (!_worldId) { window.toast && window.toast("لا يوجد عالم نشط حاليًا — لا يمكن نشر الإخطار", "error"); return; }
+      _payload.worldId = _worldId;
     }
     try {
-      var _payload = {
-        title: title.trim(),
-        body: (body || "").trim(),
-        active: true,
-        createdAt: serverTimestamp()
-      };
-      if (_worldId) _payload.worldId = _worldId;
       await addDoc(collection(window.db, "quickNotifications"), _payload);
       window.toast && window.toast("تم نشر الإخطار للجميع", "success");
     } catch (e) {
