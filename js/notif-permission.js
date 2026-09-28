@@ -17,7 +17,7 @@
      initFCM(user.uid, { app, db, getCurrentChatId: () => _currentChatId });
 ══════════════════════════════════════════ */
 
-import { doc, getDoc, updateDoc } from "./firestore-safe.js";
+import { doc, getDoc, setDoc, serverTimestamp } from "./firestore-safe.js";
 
 const FCM_VAPID       = "LxeNAGikuTGV_F8cdINPwYTabqXKNyEFXSQtd57RmoU";
 const ANDROID_PACKAGE = "com.bariq.app";
@@ -65,10 +65,10 @@ async function _registerFcmToken(uid, fcmMod, swReg) {
     const token = await fcmMod.getToken(_fcmMessaging, { vapidKey: FCM_VAPID, serviceWorkerRegistration: swReg });
     if (!token) return;
     _fcmToken = token;
-    const userRef = doc(_fcmDb, "users", uid);
-    const snap    = await getDoc(userRef);
-    const saved   = snap.exists() ? snap.data().fcmToken : null;
-    if (saved !== token) await updateDoc(userRef, { fcmToken: token }).catch(() => {});
+    const tokRef = doc(_fcmDb, "users", uid, "private", "fcmToken");
+    const snap   = await getDoc(tokRef);
+    const saved  = snap.exists() ? snap.data().token : null;
+    if (saved !== token) await setDoc(tokRef, { token, updatedAt: serverTimestamp() }).catch(() => {});
     fcmMod.onMessage(_fcmMessaging, (payload) => {
       const notif = payload.notification || {};
       const data  = payload.data || {};
