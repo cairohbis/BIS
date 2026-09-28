@@ -158,7 +158,7 @@
     if (body) body.innerHTML = `<div class="sht-loading"><div class="sht-spin"></div></div>`;
     try {
       const { db, collection, getDocs, query, where, orderBy } = await _fs();
-      const sheetsSnap = await getDocs(query(collection(db, COL_SHEETS), where("subjectId", "==", subjectId), orderBy("order")));
+      const sheetsSnap = await getDocs(query(collection(db, COL_SHEETS), where("subjectId", "==", subjectId), where("worldId", "==", subj.worldId), orderBy("order")));
       _sheets = [];
       sheetsSnap.forEach((d) => _sheets.push({ id: d.id, ...d.data() }));
 
