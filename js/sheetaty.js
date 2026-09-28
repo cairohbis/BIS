@@ -229,7 +229,7 @@
         </div>
         <div class="sht-sheet-side">
           <button class="sht-check ${done ? "on" : ""}" title="اتعمل" onclick="window.SheetatyModule._toggleDone('${sh.id}','${sh.subjectId}')">
-            ${done ? `<i class="fa-solid fa-check"></i>` : ""}
+            <i class="${done ? "fa-solid fa-square-check" : "fa-regular fa-square"}"></i><span>اتعمل</span>
           </button>
           ${admin ? `
             <div class="sht-sheet-admin-actions">
