@@ -30,6 +30,7 @@ let _fcmModRef          = null;
 let _fcmUidPending      = null;
 let _fcmDb              = null;
 let _getCurrentChatIdRef = null;
+let _fcmOnMessageBound   = false;
 
 // ── فحص دعم المتصفح الكامل ──
 export function fcmSupported() {
@@ -69,14 +70,16 @@ async function _registerFcmToken(uid, fcmMod, swReg) {
     const snap   = await getDoc(tokRef);
     const saved  = snap.exists() ? snap.data().token : null;
     if (saved !== token) await setDoc(tokRef, { token, updatedAt: serverTimestamp() }).catch(() => {});
-    fcmMod.onMessage(_fcmMessaging, (payload) => {
-      const notif = payload.notification || {};
-      const data  = payload.data || {};
-      if (data.senderUid && data.senderUid === window.currentUser?.uid) return;
-      const curChat = _getCurrentChatIdRef ? _getCurrentChatIdRef() : null;
-      if (data.chatType === "private" && data.senderUid === curChat) return;
-      showForegroundNotif(notif.title || "نظام الجامعة", notif.body || "", data);
-    });
+    if (!_fcmOnMessageBound) {
+      _fcmOnMessageBound = true;
+      fcmMod.onMessage(_fcmMessaging, (payload) => {
+        const data = payload.data || {};
+        if (data.senderUid && data.senderUid === window.currentUser?.uid) return;
+        const curChat = _getCurrentChatIdRef ? _getCurrentChatIdRef() : null;
+        if (data.chatType === "private" && data.senderUid === curChat) return;
+        showForegroundNotif(data.title || "نظام الجامعة", data.body || "", data);
+      });
+    }
   } catch (e) { /* silently ignore token/registration failures */ }
 }
 
