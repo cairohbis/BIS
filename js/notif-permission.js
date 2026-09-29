@@ -19,7 +19,7 @@
 
 import { doc, getDoc, setDoc, serverTimestamp } from "./firestore-safe.js";
 
-const FCM_VAPID       = "LxeNAGikuTGV_F8cdINPwYTabqXKNyEFXSQtd57RmoU";
+const FCM_VAPID       = "BI5GZ9V3E1csXJYTFQ56brgqfZFLRJl8VksaJWVRhzHKWz1xdZ8_pe1uVwPebJsKxx4Qsx1izurSPJVT_d4ESFw";
 const ANDROID_PACKAGE = "com.bariq.app";
 
 let _fcmMessaging       = null;
