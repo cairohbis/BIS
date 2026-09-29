@@ -2047,11 +2047,19 @@ async function _sendNotification(recipientUid, title, body, data) {
         if (prefSnap.exists() && prefSnap.data()[type] === false) return;
       } catch(e2) {}
     }
-    await addDoc(collection(db, "fcmNotifications"), {
+    const docRef = await addDoc(collection(db, "fcmNotifications"), {
       recipientUid, title, body,
       data: Object.assign({}, data || {}, { senderUid: currentUser?.uid || "" }),
       createdAt: serverTimestamp(), read: false,
     });
+    try {
+      const idToken = await currentUser.getIdToken();
+      await fetch("https://falling-sea-c753.mrn57907.workers.dev/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${idToken}` },
+        body: JSON.stringify({ docId: docRef.id }),
+      });
+    } catch (e) { console.warn("DM push trigger failed:", e); }
   } catch(e) {}
 }
 
