@@ -28,16 +28,16 @@ const messaging = firebase.messaging();
 
 // Background message handler (app in background or tab closed)
 messaging.onBackgroundMessage(function(payload) {
-  const notif = payload.notification || {};
-  const title = notif.title || 'نظام الجامعة';
+  const data  = payload.data || {};
+  const title = data.title || 'نظام الجامعة';
   const options = {
-    body:               notif.body  || '',
-    icon:               notif.icon  || '/favicon.ico',
-    badge:              notif.icon  || '/favicon.ico',
-    data:               payload.data || {},
+    body:               data.body || '',
+    icon:               '/favicon.ico',
+    badge:              '/favicon.ico',
+    data:               data,
     dir:                'rtl',
     lang:               'ar',
-    tag:                (payload.data && payload.data.tag) ? payload.data.tag : 'uni-bg',
+    tag:                data.tag || 'uni-bg',
     requireInteraction: false,
   };
   return self.registration.showNotification(title, options);
