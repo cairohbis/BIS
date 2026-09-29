@@ -114,22 +114,43 @@ export async function initFCM(uid, { app, db, getCurrentChatId } = {}) {
       return;
     }
 
-    // ── اتسأل قبل كده (وافق أو رفض أو اتحول للإعدادات) — مانسألش تاني نهائيًا ──
-    if (_fcmPermAsked === "denied" || _fcmPermAsked === "redirected") return;
+    // ── اتسأل قبل كده ورفض صراحةً من نافذة الإذن نفسها — مانسألش تاني نهائيًا.
+    //    (حالة "redirected" القديمة مش نهائية: كانت توقف المسار هنا من غير
+    //    ما يتحقق الإذن فعليًا أبدًا، فبنسيبها تكمل تحت وتاخد فرصة حقيقية) ──
+    if (_fcmPermAsked === "denied") return;
 
     // ── أول مرة بس: نافذة توضيحية بتصميم التطبيق (مش نافذة المتصفح
     //    الأصلية اللي مش بتوصل صح لنظام أندرويد جوه تطبيق TWA)، ولو
-    //    وافق نوديه على طول لصفحة إذن الإشعارات جوه إعدادات التطبيق ──
-    const agreed = await window._appConfirm(
-      "تفعيل الإشعارات 🔔",
-      "عشان توصلك الرسائل والتنبيهات الجديدة أول بأول، لازم تفعّل إذن الإشعارات. دوس \"تأكيد\" وهنوديك لصفحة إعدادات التطبيق مباشرة — فعّل مفتاح الإشعارات من هناك."
-    );
+    //    وافق نستدعي إذن الإشعارات الحقيقي (Notification.requestPermission)
+    //    أولاً — ده اللي فعليًا بيغيّر Notification.permission، والتحويل
+    //    لإعدادات أندرويد كان ناقصها من الأساس ──
+    if (_fcmPermAsked !== "redirected") {
+      const agreed = await window._appConfirm(
+        "تفعيل الإشعارات 🔔",
+        "عشان توصلك الرسائل والتنبيهات الجديدة أول بأول، لازم تفعّل إذن الإشعارات. دوس \"تأكيد\" عشان تفعّله."
+      );
+      if (!agreed) return;
+    }
+
+    const permission = await Notification.requestPermission();
+    if (permission === "granted") {
+      _fcmPermAsked = "granted";
+      localStorage.setItem("_fcmPermAsked", "granted");
+      await _registerFcmToken(uid, fcmMod, swReg);
+      return;
+    }
+    if (permission === "denied") {
+      _fcmPermAsked = "denied";
+      localStorage.setItem("_fcmPermAsked", "denied");
+      return;
+    }
+
+    // ── لسه "default" (المستخدم قفل نافذة الإذن من غير اختيار) — نفس
+    //    التحويل الاحتياطي القديم لإعدادات التطبيق كخطوة إضافية ──
     _fcmPermAsked = "redirected";
     localStorage.setItem("_fcmPermAsked", "redirected");
-    if (agreed) {
-      window.location.href =
-        `intent:#Intent;action=android.settings.APP_NOTIFICATION_SETTINGS;S.android.provider.extra.APP_PACKAGE=${ANDROID_PACKAGE};end`;
-    }
+    window.location.href =
+      `intent:#Intent;action=android.settings.APP_NOTIFICATION_SETTINGS;S.android.provider.extra.APP_PACKAGE=${ANDROID_PACKAGE};end`;
   } catch (e) { /* silently ignore unsupported or SW-missing environments */ }
 }
 
