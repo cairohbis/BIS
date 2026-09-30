@@ -82,6 +82,7 @@ if ("serviceWorker" in navigator) {
 <link rel="stylesheet" href="css/bubble-color.css">
 <link rel="stylesheet" href="css/bubble-blur.css">
 <link rel="stylesheet" href="css/theme-toggle.css">
+<link rel="stylesheet" href="css/site-design.css">
 <link rel="stylesheet" href="css/admin-redesign.css">
 <link rel="stylesheet" href="css/attendance.css">
 <link rel="stylesheet" href="css/mascot.css">
@@ -1594,6 +1595,26 @@ if ("serviceWorker" in navigator) {
         <button class="chat-bg-remove-btn" id="chatBgRemoveBtn" onclick="removeChatBg()"><i class="fa-solid fa-trash"></i> إزالة الخلفية الحالية</button>
       </div>
     </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ قسم: تصميم موقع ══ -->
+      <div class="owner-collapse-item" id="siteDesignItem" style="display:none">
+        <div class="owner-collapse-header" onclick="ownerToggleSection(this)">
+          <div class="owner-collapse-icon-wrap"><i class="fa-solid fa-palette"></i></div>
+          <div class="owner-collapse-body-text">
+            <div class="owner-collapse-title">تصميم موقع</div>
+            <div class="owner-collapse-sub">ألوان الخلفيات ودرجة الشفافية لكل الموقع</div>
+          </div>
+          <i class="fa-solid fa-chevron-down owner-collapse-arrow"></i>
+        </div>
+        <div class="owner-collapse-panel">
+          <div class="owner-collapse-inner">
+            <div class="panel-sec" id="siteDesignSec">
+              <div class="panel-sec-title"><i class="fa-solid fa-palette"></i> تصميم موقع</div>
+              <button class="btn" onclick="openSiteDesign()"><i class="fa-solid fa-sliders"></i> فتح نافذة التصميم</button>
+            </div>
           </div>
         </div>
       </div>
@@ -3219,7 +3240,7 @@ function _showCompleteProfile(user) {
   if (document.getElementById("completeProfileOverlay")) return;
   const ov = document.createElement("div");
   ov.id = "completeProfileOverlay";
-  ov.style.cssText = "position:fixed;inset:0;z-index:99999;background:rgba(20,20,22,0.72);display:flex;align-items:center;justify-content:center;padding:20px;overflow:auto;";
+  ov.style.cssText = "position:fixed;inset:0;z-index:99999;background:rgba(var(--t-bg-rgb),var(--glass-a));display:flex;align-items:center;justify-content:center;padding:20px;overflow:auto;";
   ov.innerHTML = `
     <div style="width:100%;max-width:380px;background:var(--card);border:1px solid var(--border);border-radius:16px;padding:22px;display:flex;flex-direction:column;gap:10px;direction:rtl;color:var(--text);">
       <div style="font-weight:800;font-size:17px;">كمّل بيانات حسابك</div>
@@ -9297,6 +9318,7 @@ try { window._listenPinnedMsg?.(); } catch(e) {}
 <script src="js/qr-share.js"></script>
 <script type="module" src="js/settings-modal.js"></script>
 <script type="module" src="js/theme-toggle.js"></script>
+<script type="module" src="js/site-design.js"></script>
 
 <!-- ══════════════════════════════════════════
      LANGUAGE LAYER — إضافية بالكامل (Default / Egyptian / English)
