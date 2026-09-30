@@ -13,7 +13,7 @@
   align-items: center;
   justify-content: center;
   padding: calc(16px + env(safe-area-inset-top, 0px)) 16px calc(16px + env(safe-area-inset-bottom, 0px));
-  background: rgba(20, 20, 22, 0.72);
+  background: rgba(var(--t-bg-rgb),var(--glass-a));
   backdrop-filter: blur(18px) saturate(160%);
   -webkit-backdrop-filter: blur(18px) saturate(160%);
   opacity: 0;
@@ -33,7 +33,7 @@
   max-width: 560px;
   max-height: 88vh;
   max-height: 88dvh;
-  background: rgba(28, 28, 30, 0.72);
+  background: rgba(var(--t-card-rgb),var(--glass-a));
   backdrop-filter: blur(24px) saturate(170%);
   -webkit-backdrop-filter: blur(24px) saturate(170%);
   border: 1px solid rgba(255,255,255,0.12);
@@ -84,7 +84,7 @@
   flex: 0 0 auto;
   padding: 14px 22px calc(18px + env(safe-area-inset-bottom, 0px));
   border-top: 1px solid rgba(255,255,255,0.08);
-  background: rgba(20, 20, 22, 0.72);
+  background: rgba(var(--t-bg-rgb),var(--glass-a));
 }
 
 .dc-error{

@@ -33,7 +33,7 @@
   position: fixed;
   inset: 0;
   z-index: 99990;
-  background: #0d0d0f;
+  background: var(--t-deep);
   padding: 0;
 }
 

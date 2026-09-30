@@ -11,11 +11,28 @@ html {
 }
 
 :root {
-  --bg:      #141416;
-  --bg2:     #18181a;
-  --card:    #1c1c1e;
-  --card2:   #1a1a1c;
-  --border:  #242426;
+  --bg:      var(--t-bg);
+  --bg2:     var(--t-bg2);
+  --card:    var(--t-card);
+  --card2:   var(--t-card2);
+  --border:  var(--t-border);
+  --t-bg: #141416;
+  --t-bg2: #18181a;
+  --t-card: #1c1c1e;
+  --t-card2: #1a1a1c;
+  --t-border: #242426;
+  --t-hover: #212123;
+  --t-hover-border: #2c2c2e;
+  --t-deep: #0d0d0f;
+  --t-bg-rgb: 20,20,22;
+  --t-bg2-rgb: 24,24,26;
+  --t-card-rgb: 28,28,30;
+  --t-card2-rgb: 26,26,28;
+  --t-border-rgb: 36,36,38;
+  --t-hover-rgb: 33,33,35;
+  --t-hover-border-rgb: 44,44,46;
+  --t-deep-rgb: 13,13,15;
+  --glass-a: .72;
   --text:    #e8edf5;
   --muted:   #5a7499;
 
@@ -88,7 +105,7 @@ body {
 }
 .ian {
   display: flex; align-items: flex-start; gap: 12px;
-  background: rgba(24,24,26,0.72);
+  background: rgba(var(--t-bg2-rgb),var(--glass-a));
   backdrop-filter: blur(36px) saturate(200%) brightness(1.1);
   -webkit-backdrop-filter: blur(36px) saturate(200%) brightness(1.1);
   border: 1px solid rgba(255,255,255,.16);
@@ -218,7 +235,7 @@ body {
 }
 .login-card {
   width: 100%; max-width: 390px;
-  background: rgba(28,28,30,0.72); backdrop-filter: blur(20px);
+  background: rgba(var(--t-card-rgb),var(--glass-a)); backdrop-filter: blur(20px);
   border: 1.5px solid var(--border); border-radius: 28px;
   padding: 34px 28px; display: flex; flex-direction: column; gap: 14px;
   box-shadow: 0 24px 64px rgba(0,0,0,.65), 0 0 0 1px rgba(201,169,110,.08);
@@ -324,7 +341,7 @@ body {
   transition: background .2s; white-space:nowrap;
   display:inline-flex; align-items:center; gap:5px;
 }
-.icon-btn:hover { background: #212123; }
+.icon-btn:hover { background: var(--t-hover); }
 
 #ownerBtn, #adminBtn { display: none; }
 #ownerBtn { background: linear-gradient(135deg, var(--gold), var(--goldL)); color: #060d1a; border-color: transparent; font-weight: 900; }
@@ -444,7 +461,7 @@ body {
   background: var(--card); border: 1.5px solid var(--border);
   border-radius: 20px; padding: 18px; transition: border-color .2s;
 }
-.card:hover { border-color: #2c2c2e; }
+.card:hover { border-color: var(--t-hover-border); }
 .card-icon  { font-size: 26px; margin-bottom: 8px; display:flex; align-items:center; color:var(--gold); }
 .card-title { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
 .card-sub   { font-size: 13px; color: var(--muted); }
@@ -634,7 +651,7 @@ body {
   transition: border-color .2s;
   animation: pop .2s ease;
 }
-.lib-item-card:hover { border-color: #2c2c2e; }
+.lib-item-card:hover { border-color: var(--t-hover-border); }
 
 .lib-item-hdr {
   display: flex; align-items: flex-start; justify-content: space-between; gap: 8px;
@@ -2940,7 +2957,7 @@ html.theme-light .pinned-bar-text { color: #1a2d47; }
   position: fixed; bottom: 90px; left: 50%;
   transform: translateX(-50%) translateY(20px);
   width: min(340px, 92vw);
-  background: linear-gradient(135deg, #1c1c1e, #1a1a1c);
+  background: linear-gradient(135deg, var(--t-card), var(--t-card2));
   border: 1px solid rgba(59,130,246,.45);
   border-radius: 18px; padding: 14px 16px;
   z-index: 8500; opacity: 0; pointer-events: none;
@@ -2998,7 +3015,7 @@ html.theme-light .pinned-bar-text { color: #1a2d47; }
   font-family:inherit; font-size:14px; font-weight:600;
   padding:8px 14px; cursor:pointer;
 }
-.back-btn:hover { background:#212123; }
+.back-btn:hover { background:var(--t-hover); }
 
 .panel-body { padding:16px; display:flex; flex-direction:column; gap:16px; }
 .panel-sec {
@@ -3086,7 +3103,7 @@ html.theme-light .pinned-bar-text { color: #1a2d47; }
   overflow: hidden;
   transition: border-color .2s;
 }
-.owner-collapse-item:hover { border-color: #2c2c2e; }
+.owner-collapse-item:hover { border-color: var(--t-hover-border); }
 .owner-collapse-header {
   display: flex; align-items: center; gap: 13px;
   padding: 14px 16px;
@@ -4233,7 +4250,7 @@ html.theme-light .skel-base {
 
 /* ══ صندوق تسجيل الدخول ══ */
 .lp-box {
-  background: rgba(28,28,30,0.72);
+  background: rgba(var(--t-card-rgb),var(--glass-a));
   border: 1.5px solid rgba(201,169,110,.22);
   border-radius: 24px;
   padding: 36px 28px;
@@ -4405,7 +4422,7 @@ html.theme-light .skel-base {
 .pvm-status-dot {
   position: absolute; bottom: 4px; right: 4px;
   width: 15px; height: 15px; border-radius: 50%;
-  border: 2.5px solid rgba(20,20,22,0.72);
+  border: 2.5px solid rgba(var(--t-bg-rgb),var(--glass-a));
 }
 .pvm-status-dot.online  { background: #22c55e; box-shadow: 0 0 8px rgba(34,197,94,.6); }
 .pvm-status-dot.offline { background: #4b6280; }
@@ -4632,7 +4649,7 @@ html.theme-light .skel-base {
   cursor: pointer; display: flex; align-items: center; justify-content: center;
   flex-shrink: 0; transition: background .15s;
 }
-.um-close-btn:hover { background: #212123; }
+.um-close-btn:hover { background: var(--t-hover); }
 .um-header-info { flex: 1; }
 .um-header-title {
   font-size: 15px; font-weight: 800;
@@ -4649,14 +4666,14 @@ html.theme-light .skel-base {
   cursor: pointer; display: flex; align-items: center; justify-content: center;
   flex-shrink: 0; transition: all .15s;
 }
-.um-refresh-btn:hover { background: #212123; }
+.um-refresh-btn:hover { background: var(--t-hover); }
 .um-refresh-btn:active { transform: rotate(180deg); }
 
 /* Search */
 .um-search-wrap {
   padding: 10px 16px 8px;
   border-bottom: 1px solid rgba(255,255,255,.15);
-  background: rgba(20,20,22,0.72);
+  background: rgba(var(--t-bg-rgb),var(--glass-a));
   flex-shrink: 0;
 }
 .um-search-inner { position: relative; }
@@ -4667,7 +4684,7 @@ html.theme-light .skel-base {
 }
 .um-search-inp {
   width: 100%; padding: 9px 36px 9px 14px;
-  border-radius: 22px; border: 1.5px solid rgba(36,36,38,0.72);
+  border-radius: 22px; border: 1.5px solid rgba(var(--t-border-rgb),var(--glass-a));
   background: rgba(255,255,255,.05); color: var(--text);
   font-family: inherit; font-size: 13px; outline: none;
   transition: border-color .2s, background .2s;
@@ -4692,7 +4709,7 @@ html.theme-light .skel-base {
   position: fixed;
   top: 0; left: 0; right: 0;
   z-index: 9999;
-  background: linear-gradient(90deg, rgba(255,255,255,0.07), rgba(28,28,30,0.72));
+  background: linear-gradient(90deg, rgba(255,255,255,0.07), rgba(var(--t-card-rgb),var(--glass-a)));
   border-bottom: 1.5px solid rgba(201,169,110,.35);
   padding: 0 16px;
   height: 48px;
@@ -4933,7 +4950,7 @@ body.avm-active #chatVoiceBtn { pointer-events: none; opacity: .4; }
 }
 
 .um-search-wrap {
-  background: rgba(19, 19, 21, 0.72) !important;
+  background: rgba(var(--t-bg-rgb),var(--glass-a)) !important;
   backdrop-filter: blur(12px) !important;
   -webkit-backdrop-filter: blur(12px) !important;
   border-bottom: 1px solid rgba(255,255,255,.05) !important;
@@ -4941,7 +4958,7 @@ body.avm-active #chatVoiceBtn { pointer-events: none; opacity: .4; }
 
 /* UM full backdrop — translucent instead of solid */
 .um-backdrop {
-  background: rgba(15, 15, 17, 0.72) !important;
+  background: rgba(var(--t-deep-rgb),var(--glass-a)) !important;
   backdrop-filter: blur(6px) !important;
   -webkit-backdrop-filter: blur(6px) !important;
 }
@@ -4956,7 +4973,7 @@ body.avm-active #chatVoiceBtn { pointer-events: none; opacity: .4; }
 }
 
 .modal {
-  background: rgba(25, 25, 27, 0.72) !important;
+  background: rgba(var(--t-bg2-rgb),var(--glass-a)) !important;
   backdrop-filter: var(--glass-blur-heavy) !important;
   -webkit-backdrop-filter: var(--glass-blur-heavy) !important;
   border: 1px solid var(--glass-border) !important;
@@ -4970,7 +4987,7 @@ body.avm-active #chatVoiceBtn { pointer-events: none; opacity: .4; }
    REQUEST POPUP — Glass Float
 ══════════════════════════════════════════ */
 .req-popup {
-  background: rgba(24, 24, 26, 0.72) !important;
+  background: rgba(var(--t-bg2-rgb),var(--glass-a)) !important;
   backdrop-filter: var(--glass-blur-heavy) !important;
   -webkit-backdrop-filter: var(--glass-blur-heavy) !important;
   border: 1px solid rgba(59, 130, 246, 0.3) !important;
@@ -4984,7 +5001,7 @@ body.avm-active #chatVoiceBtn { pointer-events: none; opacity: .4; }
    TOAST — Glass Pill
 ══════════════════════════════════════════ */
 .toast {
-  background: rgba(25, 25, 27, 0.72) !important;
+  background: rgba(var(--t-bg2-rgb),var(--glass-a)) !important;
   backdrop-filter: var(--glass-blur) !important;
   -webkit-backdrop-filter: var(--glass-blur) !important;
   border: 1px solid var(--glass-border) !important;
@@ -5000,7 +5017,7 @@ body.avm-active #chatVoiceBtn { pointer-events: none; opacity: .4; }
    ADMIN VIEW BAR — Glass Banner
 ══════════════════════════════════════════ */
 #adminViewBar {
-  background: rgba(22, 22, 24, 0.72) !important;
+  background: rgba(var(--t-bg-rgb),var(--glass-a)) !important;
   backdrop-filter: var(--glass-blur-heavy) !important;
   -webkit-backdrop-filter: var(--glass-blur-heavy) !important;
   border-bottom: 1px solid rgba(201,169,110,.2) !important;
@@ -5018,7 +5035,7 @@ body.avm-active #chatVoiceBtn { pointer-events: none; opacity: .4; }
 }
 
 .vip-assign-modal {
-  background: rgba(23, 23, 25, 0.72) !important;
+  background: rgba(var(--t-bg2-rgb),var(--glass-a)) !important;
   backdrop-filter: var(--glass-blur-heavy) !important;
   -webkit-backdrop-filter: var(--glass-blur-heavy) !important;
   border: 1px solid var(--glass-border-gold) !important;
@@ -5126,10 +5143,10 @@ body.avm-active #chatVoiceBtn { pointer-events: none; opacity: .4; }
     background: rgba(255,255,255,0.12) !important;
   }
   .modal {
-    background: rgba(25, 25, 27, 0.72) !important;
+    background: rgba(var(--t-bg2-rgb),var(--glass-a)) !important;
   }
   .req-popup {
-    background: rgba(24, 24, 26, 0.72) !important;
+    background: rgba(var(--t-bg2-rgb),var(--glass-a)) !important;
   }
 }
 
@@ -5162,7 +5179,7 @@ body.avm-active #chatVoiceBtn { pointer-events: none; opacity: .4; }
    OWNER RANK PANEL — Subtle Glass
 ══════════════════════════════════════════ */
 .owner-rank-panel {
-  background: rgba(21, 21, 23, 0.72) !important;
+  background: rgba(var(--t-bg-rgb),var(--glass-a)) !important;
   backdrop-filter: blur(16px) !important;
   -webkit-backdrop-filter: blur(16px) !important;
 }
@@ -5171,7 +5188,7 @@ body.avm-active #chatVoiceBtn { pointer-events: none; opacity: .4; }
    LOGIN CARD — Premium Glass
 ══════════════════════════════════════════ */
 .login-card {
-  background: rgba(27, 27, 29, 0.72) !important;
+  background: rgba(var(--t-card-rgb),var(--glass-a)) !important;
   backdrop-filter: saturate(180%) blur(28px) !important;
   -webkit-backdrop-filter: saturate(180%) blur(28px) !important;
   border: 1px solid rgba(255,255,255,.1) !important;
@@ -5545,7 +5562,7 @@ body.avm-active #chatVoiceBtn { pointer-events: none; opacity: .4; }
   width: 100%; max-width: 560px;
   max-height: 90vh;
   display: flex; flex-direction: column;
-  background: rgba(23, 23, 25, 0.72);
+  background: rgba(var(--t-bg2-rgb),var(--glass-a));
   backdrop-filter: saturate(200%) blur(40px);
   -webkit-backdrop-filter: saturate(200%) blur(40px);
   border: 1px solid rgba(255,255,255,0.13);

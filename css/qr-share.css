@@ -30,7 +30,7 @@
 
 .qrshare-card {
   width: 100%; max-width: 480px;
-  background: rgba(24,24,26,0.72);
+  background: rgba(var(--t-bg2-rgb),var(--glass-a));
   backdrop-filter: blur(24px) saturate(180%);
   -webkit-backdrop-filter: blur(24px) saturate(180%);
   border: 1px solid rgba(255,255,255,.13);
