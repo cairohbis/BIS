@@ -11,7 +11,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="نظام الجامعة">
-<meta name="theme-color" content="#060d1a">
+<meta name="theme-color" content="#141416">
 <link rel="apple-touch-icon" href="images/app-icon.png">
 <link rel="icon" href="images/app-icon.png">
 <script>
@@ -95,7 +95,7 @@ if ("serviceWorker" in navigator) {
 
 <!-- ══ Critical inline CSS — يُطبَّق فورًا بدون انتظار أي ملف خارجي، لعرض خلفية محايدة بدل الفراغ الأبيض/الفلاش قبل تحميل باقي الصفحة ══ -->
 <style>
-  html, body { background:#060d1a; margin:0; }
+  html, body { background:#141416; margin:0; }
 </style>
 </head>
 <body>
@@ -3219,7 +3219,7 @@ function _showCompleteProfile(user) {
   if (document.getElementById("completeProfileOverlay")) return;
   const ov = document.createElement("div");
   ov.id = "completeProfileOverlay";
-  ov.style.cssText = "position:fixed;inset:0;z-index:99999;background:rgba(6,13,26,.95);display:flex;align-items:center;justify-content:center;padding:20px;overflow:auto;";
+  ov.style.cssText = "position:fixed;inset:0;z-index:99999;background:rgba(20,20,22,0.72);display:flex;align-items:center;justify-content:center;padding:20px;overflow:auto;";
   ov.innerHTML = `
     <div style="width:100%;max-width:380px;background:var(--card);border:1px solid var(--border);border-radius:16px;padding:22px;display:flex;flex-direction:column;gap:10px;direction:rtl;color:var(--text);">
       <div style="font-weight:800;font-size:17px;">كمّل بيانات حسابك</div>
@@ -8656,9 +8656,9 @@ try { window._listenPinnedMsg?.(); } catch(e) {}
         <div class="smod-theme-grid">
           <button class="smod-theme-btn active" id="themeBtn-dark" onclick="applyTheme('dark')">
             <div class="smod-theme-preview dark">
-              <div class="smod-theme-bar" style="background:#1a2d47;width:80%"></div>
+              <div class="smod-theme-bar" style="background:#242426;width:80%"></div>
               <div class="smod-theme-bar" style="background:#c9a96e;width:55%"></div>
-              <div class="smod-theme-bar" style="background:#1a2d47;width:70%"></div>
+              <div class="smod-theme-bar" style="background:#242426;width:70%"></div>
             </div>
             <div class="smod-theme-btn-label">🌙 داكن</div>
             <div class="smod-theme-check"><i class="fa-solid fa-check"></i></div>
@@ -8673,10 +8673,10 @@ try { window._listenPinnedMsg?.(); } catch(e) {}
             <div class="smod-theme-check"><i class="fa-solid fa-check"></i></div>
           </button>
           <button class="smod-theme-btn" id="themeBtn-auto" onclick="applyTheme('auto')">
-            <div class="smod-theme-preview" style="background:linear-gradient(135deg,#0c1528 50%,#e8edf5 50%);">
-              <div class="smod-theme-bar" style="background:linear-gradient(90deg,#1a2d47 50%,#d0daea 50%);width:80%"></div>
+            <div class="smod-theme-preview" style="background:linear-gradient(135deg,#18181a 50%,#e8edf5 50%);">
+              <div class="smod-theme-bar" style="background:linear-gradient(90deg,#242426 50%,#d0daea 50%);width:80%"></div>
               <div class="smod-theme-bar" style="background:linear-gradient(90deg,#c9a96e 50%,#b08a3e 50%);width:55%"></div>
-              <div class="smod-theme-bar" style="background:linear-gradient(90deg,#1a2d47 50%,#d0daea 50%);width:70%"></div>
+              <div class="smod-theme-bar" style="background:linear-gradient(90deg,#242426 50%,#d0daea 50%);width:70%"></div>
             </div>
             <div class="smod-theme-btn-label">⚙️ تلقائي</div>
             <div class="smod-theme-check"><i class="fa-solid fa-check"></i></div>
