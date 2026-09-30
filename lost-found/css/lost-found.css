@@ -18,7 +18,7 @@
 
 .lf-sheet {
   position:relative; width:100%; height:100dvh; max-height:100dvh;
-  background:var(--bg2,#0c1528); border-radius:0; border-top:none;
+  background:var(--bg2,#18181a); border-radius:0; border-top:none;
   display:flex; flex-direction:column; overflow:hidden;
   animation:lf-slide-up .28s cubic-bezier(0.34,1.1,0.64,1);
 }
@@ -29,14 +29,14 @@
 @keyframes lf-spin     { to { transform:rotate(360deg); } }
 
 /* ─── Header ─── */
-.lf-header { display:flex; align-items:center; justify-content:space-between; padding:12px 16px; border-bottom:1px solid var(--border,#1a2d47); flex-shrink:0; }
+.lf-header { display:flex; align-items:center; justify-content:space-between; padding:12px 16px; border-bottom:1px solid var(--border,#242426); flex-shrink:0; }
 .lf-header h2 { margin:0; font-size:16px; font-weight:900; color:var(--gold,#c9a96e); }
 .lf-close-btn { background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.1); border-radius:12px; width:34px; height:34px; color:var(--muted,#5a7499); cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all .18s; }
 .lf-close-btn:hover { background:rgba(255,255,255,.12); color:var(--text,#e8edf5); }
 
 /* ─── Tabs ─── */
-.lf-tabs { display:flex; gap:8px; padding:10px 16px; border-bottom:1px solid var(--border,#1a2d47); flex-shrink:0; overflow-x:auto; }
-.lf-tab { flex-shrink:0; padding:8px 16px; border-radius:20px; border:1.5px solid var(--border,#1a2d47); background:var(--card,#101e33); color:var(--muted,#5a7499); font-family:inherit; font-size:13px; font-weight:700; cursor:pointer; transition:all .18s; white-space:nowrap; }
+.lf-tabs { display:flex; gap:8px; padding:10px 16px; border-bottom:1px solid var(--border,#242426); flex-shrink:0; overflow-x:auto; }
+.lf-tab { flex-shrink:0; padding:8px 16px; border-radius:20px; border:1.5px solid var(--border,#242426); background:var(--card,#1c1c1e); color:var(--muted,#5a7499); font-family:inherit; font-size:13px; font-weight:700; cursor:pointer; transition:all .18s; white-space:nowrap; }
 .lf-tab:hover { color:var(--text,#e8edf5); }
 .lf-tab.active { background:var(--gold,#c9a96e); color:#060d1a; border-color:transparent; font-weight:800; box-shadow:0 4px 12px rgba(201,169,110,.3); }
 
@@ -44,7 +44,7 @@
 .lf-toolbar { display:flex; gap:10px; padding:10px 16px; flex-shrink:0; }
 .lf-search-wrap { position:relative; flex:1; }
 .lf-search-wrap i { position:absolute; top:50%; right:14px; transform:translateY(-50%); color:var(--muted,#5a7499); font-size:13px; pointer-events:none; }
-.lf-search { width:100%; padding:11px 40px 11px 14px; border-radius:14px; border:1.5px solid var(--border,#1a2d47); background:var(--bg,#060d1a); color:var(--text,#e8edf5); font-family:inherit; font-size:13px; outline:none; box-sizing:border-box; direction:rtl; transition:border-color .2s; }
+.lf-search { width:100%; padding:11px 40px 11px 14px; border-radius:14px; border:1.5px solid var(--border,#242426); background:var(--bg,#141416); color:var(--text,#e8edf5); font-family:inherit; font-size:13px; outline:none; box-sizing:border-box; direction:rtl; transition:border-color .2s; }
 .lf-search:focus { border-color:var(--gold,#c9a96e); }
 .lf-new-post-btn { flex-shrink:0; padding:0 16px; border:none; border-radius:14px; background:var(--gold,#c9a96e); color:#060d1a; font-family:inherit; font-size:13px; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:6px; transition:opacity .15s; }
 .lf-new-post-btn:hover { opacity:.88; }
@@ -52,7 +52,7 @@
 /* ─── Content / Views ─── */
 .lf-content { flex:1; overflow-y:auto; overflow-x:hidden; padding:4px 16px 32px; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; }
 .lf-content::-webkit-scrollbar { width:3px; }
-.lf-content::-webkit-scrollbar-thumb { background:var(--border,#1a2d47); border-radius:3px; }
+.lf-content::-webkit-scrollbar-thumb { background:var(--border,#242426); border-radius:3px; }
 .lf-view { display:flex; flex-direction:column; gap:12px; }
 .lf-view[hidden] { display:none; }
 
@@ -82,7 +82,7 @@
 .lf-feed-list, .lf-found-list, .lf-admin-queue { display:flex; flex-direction:column; gap:12px; }
 
 .lf-post-card {
-  background:rgba(255,255,255,.03); border:1px solid var(--border,#1a2d47); border-radius:16px;
+  background:rgba(255,255,255,.03); border:1px solid var(--border,#242426); border-radius:16px;
   padding:14px; display:flex; flex-direction:column; gap:8px; cursor:pointer; transition:background .15s;
 }
 .lf-post-card:hover { background:rgba(255,255,255,.05); }
@@ -107,7 +107,7 @@
 
 .lf-modal {
   position:relative; width:100%; max-height:90dvh; overflow-y:auto;
-  background:var(--card,#101e33); border-radius:20px 20px 0 0; border-top:1.5px solid var(--border,#1a2d47);
+  background:var(--card,#1c1c1e); border-radius:20px 20px 0 0; border-top:1.5px solid var(--border,#242426);
   padding:18px 16px 28px; display:flex; flex-direction:column; gap:10px;
   animation:lf-slide-up .24s cubic-bezier(0.34,1.1,0.64,1);
 }
@@ -144,12 +144,12 @@
 /* ─── فورم النشر ─── */
 .lf-form { display:flex; flex-direction:column; gap:10px; margin-top:4px; }
 .lf-type-toggle { display:flex; gap:10px; }
-.lf-type-toggle label { flex:1; display:flex; align-items:center; justify-content:center; gap:6px; padding:10px; border-radius:12px; border:1.5px solid var(--border,#1a2d47); font-size:13px; font-weight:700; color:var(--muted,#5a7499); cursor:pointer; }
+.lf-type-toggle label { flex:1; display:flex; align-items:center; justify-content:center; gap:6px; padding:10px; border-radius:12px; border:1.5px solid var(--border,#242426); font-size:13px; font-weight:700; color:var(--muted,#5a7499); cursor:pointer; }
 .lf-type-toggle input { accent-color:var(--gold,#c9a96e); }
 
 .lf-input, .lf-textarea {
-  width:100%; padding:12px 14px; border-radius:14px; border:1.5px solid var(--border,#1a2d47);
-  background:var(--bg,#060d1a); color:var(--text,#e8edf5); font-family:inherit; font-size:14px;
+  width:100%; padding:12px 14px; border-radius:14px; border:1.5px solid var(--border,#242426);
+  background:var(--bg,#141416); color:var(--text,#e8edf5); font-family:inherit; font-size:14px;
   outline:none; box-sizing:border-box; direction:rtl; transition:border-color .2s,box-shadow .2s;
 }
 .lf-input:focus, .lf-textarea:focus { border-color:var(--gold,#c9a96e); box-shadow:0 0 0 3px rgba(201,169,110,.14); }
@@ -157,7 +157,7 @@
 .lf-input::placeholder, .lf-textarea::placeholder { color:var(--muted,#5a7499); }
 
 .lf-image-picker { display:flex; flex-direction:column; gap:8px; }
-.lf-image-pick-btn { align-self:flex-start; padding:9px 14px; border-radius:12px; border:1.5px dashed var(--border,#1a2d47); background:rgba(255,255,255,.03); color:var(--muted,#5a7499); font-family:inherit; font-size:12.5px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:6px; }
+.lf-image-pick-btn { align-self:flex-start; padding:9px 14px; border-radius:12px; border:1.5px dashed var(--border,#242426); background:rgba(255,255,255,.03); color:var(--muted,#5a7499); font-family:inherit; font-size:12.5px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:6px; }
 .lf-image-pick-btn:hover { color:var(--text,#e8edf5); }
 .lf-image-preview-wrap:empty { display:none; }
 .lf-image-preview { max-width:140px; max-height:140px; border-radius:12px; object-fit:cover; display:block; }
@@ -174,7 +174,7 @@
 .lf-submit-btn:disabled { opacity:.6; cursor:not-allowed; }
 
 /* ─── طلباتك السابقة (جوه فورم النشر) ─── */
-.lf-my-requests { display:flex; flex-direction:column; gap:8px; padding:12px; margin-bottom:4px; background:rgba(255,255,255,.03); border:1px solid var(--border,#1a2d47); border-radius:14px; }
+.lf-my-requests { display:flex; flex-direction:column; gap:8px; padding:12px; margin-bottom:4px; background:rgba(255,255,255,.03); border:1px solid var(--border,#242426); border-radius:14px; }
 .lf-my-requests h4 { margin:0 0 2px; font-size:12px; font-weight:800; color:var(--muted,#5a7499); }
 .lf-my-request-item { display:flex; flex-direction:column; gap:5px; padding:9px 10px; background:rgba(255,255,255,.03); border-radius:10px; }
 .lf-my-request-top { display:flex; align-items:center; gap:8px; }
@@ -185,7 +185,7 @@
 .lf-edit-request-btn { align-self:flex-start; background:none; border:none; color:var(--gold,#c9a96e); font-family:inherit; font-size:12px; font-weight:800; cursor:pointer; padding:2px 0; text-decoration:underline; }
 
 /* ─── التعليقات ─── */
-.lf-comments { display:flex; flex-direction:column; gap:10px; margin-top:10px; padding-top:10px; border-top:1px solid var(--border,#1a2d47); }
+.lf-comments { display:flex; flex-direction:column; gap:10px; margin-top:10px; padding-top:10px; border-top:1px solid var(--border,#242426); }
 .lf-comments-list { display:flex; flex-direction:column; gap:10px; }
 .lf-no-comments { margin:0; text-align:center; font-size:12.5px; color:var(--muted,#5a7499); padding:14px 0; }
 
@@ -198,10 +198,10 @@
 .lf-reply-btn:hover { color:var(--gold,#c9a96e); }
 .lf-delete-comment-btn:hover { color:var(--danger,#ef4444); }
 
-.lf-replies { display:flex; flex-direction:column; gap:10px; margin-top:4px; padding-right:16px; border-right:2px solid var(--border,#1a2d47); }
+.lf-replies { display:flex; flex-direction:column; gap:10px; margin-top:4px; padding-right:16px; border-right:2px solid var(--border,#242426); }
 
 .lf-comment-form, .lf-reply-inline-form { display:flex; gap:8px; margin-top:6px; }
-.lf-comment-input { flex:1; padding:10px 14px; border-radius:20px; border:1.5px solid var(--border,#1a2d47); background:var(--bg,#060d1a); color:var(--text,#e8edf5); font-family:inherit; font-size:12.5px; outline:none; direction:rtl; }
+.lf-comment-input { flex:1; padding:10px 14px; border-radius:20px; border:1.5px solid var(--border,#242426); background:var(--bg,#141416); color:var(--text,#e8edf5); font-family:inherit; font-size:12.5px; outline:none; direction:rtl; }
 .lf-comment-input:focus { border-color:var(--gold,#c9a96e); }
 .lf-comment-send-btn { flex-shrink:0; width:38px; height:38px; border-radius:50%; border:none; background:var(--gold,#c9a96e); color:#060d1a; cursor:pointer; display:flex; align-items:center; justify-content:center; }
 .lf-comment-send-btn:disabled { opacity:.6; cursor:not-allowed; }
@@ -212,12 +212,12 @@
 .lf-stat-num { font-size:24px; font-weight:900; color:var(--success,#22c55e); line-height:1; }
 .lf-stat-label { font-size:11px; font-weight:700; color:var(--muted,#5a7499); }
 
-.lf-archive-item { display:flex; align-items:center; gap:12px; padding:12px 14px; background:rgba(255,255,255,.03); border:1px solid var(--border,#1a2d47); border-radius:14px; }
+.lf-archive-item { display:flex; align-items:center; gap:12px; padding:12px 14px; background:rgba(255,255,255,.03); border:1px solid var(--border,#242426); border-radius:14px; }
 .lf-archive-item .lf-badge-done { background:rgba(34,197,94,.12); color:var(--success,#22c55e); }
 .lf-archive-info { flex:1; display:flex; flex-direction:column; gap:3px; }
 .lf-archive-title { font-size:13px; font-weight:800; color:var(--text,#e8edf5); }
 .lf-archive-meta { font-size:11px; color:var(--muted,#5a7499); }
-.lf-correct-back-btn { flex-shrink:0; padding:6px 12px; border-radius:10px; border:1px solid var(--border,#1a2d47); background:none; color:var(--muted,#5a7499); font-family:inherit; font-size:11px; font-weight:700; cursor:pointer; }
+.lf-correct-back-btn { flex-shrink:0; padding:6px 12px; border-radius:10px; border:1px solid var(--border,#242426); background:none; color:var(--muted,#5a7499); font-family:inherit; font-size:11px; font-weight:700; cursor:pointer; }
 .lf-correct-back-btn:hover { color:var(--danger,#ef4444); border-color:rgba(239,68,68,.3); }
 
 /* ─── لوحة الإدارة (تاب المراجعة) ─── */
@@ -225,7 +225,7 @@
 .lf-direct-publish-btn { padding:10px 16px; border:none; border-radius:14px; background:var(--gold,#c9a96e); color:#060d1a; font-family:inherit; font-size:13px; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:8px; }
 .lf-direct-publish-btn:hover { opacity:.88; }
 
-.lf-admin-card { background:rgba(255,255,255,.03); border:1px solid var(--border,#1a2d47); border-radius:16px; padding:14px; display:flex; flex-direction:column; gap:8px; }
+.lf-admin-card { background:rgba(255,255,255,.03); border:1px solid var(--border,#242426); border-radius:16px; padding:14px; display:flex; flex-direction:column; gap:8px; }
 .lf-admin-actions { display:flex; gap:8px; margin-top:6px; }
 .lf-admin-actions button { flex:1; padding:9px 6px; border-radius:12px; border:none; font-family:inherit; font-size:12px; font-weight:800; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:5px; }
 .lf-approve-btn { background:rgba(34,197,94,.15); color:var(--success,#22c55e); }
@@ -236,7 +236,7 @@
 .lf-reject-btn:hover { background:rgba(239,68,68,.25); }
 
 .lf-reason-form { display:flex; flex-direction:column; gap:10px; margin-top:4px; }
-.lf-reason-input { width:100%; min-height:100px; padding:12px 14px; border-radius:14px; border:1.5px solid var(--border,#1a2d47); background:var(--bg,#060d1a); color:var(--text,#e8edf5); font-family:inherit; font-size:13px; outline:none; resize:vertical; box-sizing:border-box; direction:rtl; }
+.lf-reason-input { width:100%; min-height:100px; padding:12px 14px; border-radius:14px; border:1.5px solid var(--border,#242426); background:var(--bg,#141416); color:var(--text,#e8edf5); font-family:inherit; font-size:13px; outline:none; resize:vertical; box-sizing:border-box; direction:rtl; }
 .lf-reason-input:focus { border-color:var(--gold,#c9a96e); }
 .lf-reason-submit-btn { padding:12px; border:none; border-radius:14px; background:var(--gold,#c9a96e); color:#060d1a; font-family:inherit; font-size:14px; font-weight:800; cursor:pointer; }
 .lf-reason-submit-btn:hover { opacity:.88; }
