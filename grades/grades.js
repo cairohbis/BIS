@@ -273,7 +273,7 @@
     const area = `${coords[0][0]},${H-pad} ` + coords.map(([x,y])=>`${x},${y}`).join(" ") + ` ${coords[coords.length-1][0]},${H-pad}`;
 
     const dots = coords.map(([x,y,v,r])=>`
-      <circle cx="${x}" cy="${y}" r="3.5" fill="${_perfLabel(v).color}" stroke="#18181a" stroke-width="1.5"/>
+      <circle cx="${x}" cy="${y}" r="3.5" fill="${_perfLabel(v).color}" style="stroke:var(--t-bg2)" stroke-width="1.5"/>
       <text x="${x}" y="${y-7}" text-anchor="middle" fill="${_perfLabel(v).color}"
         font-size="7" font-weight="700" font-family="inherit">${v}%</text>
     `).join("");
