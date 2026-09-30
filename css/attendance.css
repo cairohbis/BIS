@@ -16,7 +16,7 @@
 
 .att-popup {
   width: 100%; max-width: 380px;
-  background: rgba(20,26,38,.85);
+  background: rgba(26,26,28,0.72);
   backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
   border: 1px solid rgba(255,255,255,.12);
   border-radius: 22px;
@@ -128,7 +128,7 @@
 .att-owner-panel .inp,
 .att-schedule-modal .inp {
   color: #e8edf5 !important;
-  background: rgba(15,23,42,.55);
+  background: rgba(25,25,27,0.72);
   border: 1px solid rgba(96,165,250,.25);
 }
 .att-owner-panel .inp::placeholder,

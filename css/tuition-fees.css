@@ -10,7 +10,7 @@
 .tf-overlay { position:absolute; inset:0; background:rgba(0,0,0,.6); backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px); animation:tf-fade .22s ease; }
 .tf-sheet {
   position:relative; z-index:1; width:100%; height:94dvh; max-height:94dvh;
-  background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02)), var(--bg2,#0c1528);
+  background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02)), var(--bg2,#18181a);
   backdrop-filter:blur(18px); -webkit-backdrop-filter:blur(18px);
   border-radius:24px 24px 0 0; border-top:1.5px solid rgba(255,255,255,.14);
   box-shadow:0 -12px 40px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.12);
@@ -25,12 +25,12 @@
 
 .tf-body { flex:1; overflow-y:auto; padding:14px 16px 40px; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; }
 .tf-body::-webkit-scrollbar { width:3px; }
-.tf-body::-webkit-scrollbar-thumb { background:var(--border,#1a2d47); border-radius:3px; }
+.tf-body::-webkit-scrollbar-thumb { background:var(--border,#242426); border-radius:3px; }
 
 .tf-hint { font-size:12px; color:var(--muted,#5a7499); margin-bottom:4px; }
 .tf-label { font-size:12.5px; font-weight:800; color:var(--text,#e8edf5); margin-top:12px; display:block; }
 .tf-select {
-  width:100%; padding:11px 12px; border-radius:12px; border:1px solid var(--border,#1a2d47);
+  width:100%; padding:11px 12px; border-radius:12px; border:1px solid var(--border,#242426);
   background:rgba(255,255,255,.04); color:var(--text,#e8edf5); font-family:inherit; font-size:13px;
   box-sizing:border-box; margin-top:6px;
 }
@@ -90,7 +90,7 @@
 .tf-inst-head { display:flex; align-items:center; justify-content:space-between; margin-top:16px; font-size:12.5px; font-weight:800; color:var(--text,#e8edf5); }
 .tf-add-chip { padding:7px 12px; border-radius:11px; background:rgba(201,169,110,.10); border:1px solid rgba(201,169,110,.25); color:var(--gold,#c9a96e); font-family:inherit; font-size:12px; font-weight:800; cursor:pointer; display:inline-flex; align-items:center; gap:6px; transition:all .18s; }
 .tf-add-chip:hover { background:rgba(201,169,110,.18); }
-.tf-blocks-empty { text-align:center; font-size:12px; color:var(--muted,#5a7499); padding:16px 10px; border:1.5px dashed var(--border,#1a2d47); border-radius:14px; margin-top:8px; }
+.tf-blocks-empty { text-align:center; font-size:12px; color:var(--muted,#5a7499); padding:16px 10px; border:1.5px dashed var(--border,#242426); border-radius:14px; margin-top:8px; }
 .tf-inst-edit-row { display:flex; gap:8px; margin-top:8px; align-items:center; }
 .tf-inst-edit-row .tf-inst-label { flex:1.3; margin-top:0; }
 .tf-inst-edit-row .tf-inst-amt { flex:1; margin-top:0; }

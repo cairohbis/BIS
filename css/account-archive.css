@@ -8,7 +8,7 @@
 .aa-overlay { position:absolute; inset:0; background:rgba(0,0,0,.62); backdrop-filter:blur(5px); -webkit-backdrop-filter:blur(5px); animation:aa-fade .22s ease; }
 .aa-sheet {
   position:relative; z-index:1; width:100%; height:92dvh; max-height:92dvh;
-  background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02)), var(--bg2,#0c1528);
+  background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02)), var(--bg2,#18181a);
   backdrop-filter:blur(18px); -webkit-backdrop-filter:blur(18px);
   border-radius:24px 24px 0 0; border-top:1.5px solid rgba(255,255,255,.14);
   box-shadow:0 -12px 40px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.12);
@@ -25,7 +25,7 @@
 
 .aa-body { flex:1; overflow-y:auto; padding:14px 16px 40px; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; }
 .aa-body::-webkit-scrollbar { width:3px; }
-.aa-body::-webkit-scrollbar-thumb { background:var(--border,#1a2d47); border-radius:3px; }
+.aa-body::-webkit-scrollbar-thumb { background:var(--border,#242426); border-radius:3px; }
 
 .aa-group { margin-bottom:18px; }
 .aa-group-title { font-size:12px; font-weight:800; color:var(--muted,#5a7499); margin-bottom:10px; display:flex; align-items:center; gap:10px; }
@@ -43,7 +43,7 @@
   transition:border-color .2s, background .2s;
 }
 .aa-card:hover { border-color:rgba(201,169,110,.28); background:rgba(255,255,255,.065); }
-.aa-dot { position:absolute; inset-inline-start:-30px; top:12px; width:24px; height:24px; border-radius:50%; background:var(--bg2,#0c1528); border:1.5px solid var(--gold,#c9a96e); color:var(--gold,#c9a96e); font-size:10px; display:flex; align-items:center; justify-content:center; box-shadow:0 0 10px rgba(201,169,110,.25); }
+.aa-dot { position:absolute; inset-inline-start:-30px; top:12px; width:24px; height:24px; border-radius:50%; background:var(--bg2,#18181a); border:1.5px solid var(--gold,#c9a96e); color:var(--gold,#c9a96e); font-size:10px; display:flex; align-items:center; justify-content:center; box-shadow:0 0 10px rgba(201,169,110,.25); }
 .aa-card-head { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:8px; }
 .aa-card-title { font-size:13.5px; font-weight:800; color:var(--text,#e8edf5); }
 .aa-time { font-size:11.5px; color:var(--muted,#5a7499); font-weight:700; }
