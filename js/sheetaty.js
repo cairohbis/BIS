@@ -136,7 +136,7 @@
             <div class="sht-subject-card" onclick="window.SheetatyModule._openSubject('${s.id}')">
               <div class="sht-subject-name">${_esc(s.name)}</div>
               <div class="sht-subject-meta">كود المادة: ${_esc(s.code)}</div>
-              <div class="sht-subject-count"><i class="fa-solid fa-file-lines"></i> ${_num(s.sheetsCount)} شيت</div>
+              <div class="sht-subject-count"><i class="fa-solid fa-file-lines"></i> ${_num(s.activeSheetsCount)} شيت</div>
             </div>`).join("")}
         </div>`}
     `;
@@ -317,7 +317,7 @@
       } else {
         const wid = _worldId();
         const ref = await addDoc(collection(db, COL_SUBJECTS), {
-          worldId: wid, name, code, status: "active", sheetsCount: 0,
+          worldId: wid, name, code, status: "active", sheetsCount: 0, activeSheetsCount: 0,
           createdAt: serverTimestamp(), archivedAt: null, createdBy: _uid(),
         });
         await _load();
@@ -388,7 +388,7 @@
     if (!page || !_draftSheet.dueDate) return;
     _busy = true;
     try {
-      const { db, doc, updateDoc, collection, runTransaction, serverTimestamp } = await _fs();
+      const { db, doc, updateDoc, collection, runTransaction, serverTimestamp, increment } = await _fs();
       const dueDate = new Date(_draftSheet.dueDate);
       if (_draftSheet.id) {
         await updateDoc(doc(db, COL_SHEETS, _draftSheet.id), {
@@ -401,6 +401,8 @@
           const subjRef = doc(db, COL_SUBJECTS, subjectId);
           const subjSnap = await tx.get(subjRef);
           if (!subjSnap.exists()) throw new Error("subject-missing");
+          // sheetsCount هنا عدّاد ترقيم فقط (order) ولا يُنقَص أبدًا.
+          // activeSheetsCount عدّاد منفصل للعرض الحي بس.
           const newOrder = (_num(subjSnap.data().sheetsCount) || 0) + 1;
           const sheetRef = doc(collection(db, COL_SHEETS));
           tx.set(sheetRef, {
@@ -408,19 +410,23 @@
             page, dueDate, note: _draftSheet.note || null, image: _draftSheet.image || null,
             createdAt: serverTimestamp(), createdBy: _uid(),
           });
-          tx.update(subjRef, { sheetsCount: newOrder });
+          tx.update(subjRef, { sheetsCount: newOrder, activeSheetsCount: increment(1) });
         });
       }
+      await _load();
       await window.SheetatyModule._openSubject(_currentSubjectId);
     } catch (e) {
       // يفضل في الفورم لو فشل الحفظ
     } finally { _busy = false; }
   };
   window.SheetatyModule._deleteSheet = async function (id) {
-    if (!_isAdmin()) return;
+    if (!_isAdmin() || !_currentSubjectId) return;
     try {
-      const { db, doc, deleteDoc } = await _fs();
+      const { db, doc, deleteDoc, updateDoc, increment } = await _fs();
       await deleteDoc(doc(db, COL_SHEETS, id));
+      // activeSheetsCount فقط بينقص هنا — sheetsCount (عدّاد الترقيم) يفضل زي ما هو
+      await updateDoc(doc(db, COL_SUBJECTS, _currentSubjectId), { activeSheetsCount: increment(-1) });
+      await _load();
       await window.SheetatyModule._openSubject(_currentSubjectId);
     } catch (e) {}
   };

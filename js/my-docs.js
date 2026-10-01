@@ -154,7 +154,7 @@
             <div class="md-subject-card" onclick="window.MyDocsModule._openSubject('${s.id}')">
               <div class="md-subject-name">${_esc(s.name)}</div>
               <div class="md-subject-meta">كود المادة: ${_esc(s.code)}</div>
-              <div class="md-subject-count"><i class="fa-solid fa-layer-group"></i> ${_num(s.itemsCount)} عنصر</div>
+              <div class="md-subject-count"><i class="fa-solid fa-layer-group"></i> ${_num(s.activeItemsCount)} عنصر</div>
             </div>`).join("")}
         </div>`}
     `;
@@ -347,7 +347,7 @@
       } else {
         const wid = _worldId();
         await addDoc(collection(db, COL_SUBJECTS), {
-          worldId: wid, name, code, status: "active", itemsCount: 0,
+          worldId: wid, name, code, status: "active", itemsCount: 0, activeItemsCount: 0,
           createdAt: serverTimestamp(), archivedAt: null, createdBy: _uid(),
         });
       }
@@ -541,13 +541,16 @@
     if (type === "text" && !(_draftItem.text || "").trim()) return;
     _busy = true;
     try {
-      const { db, doc, collection, runTransaction, serverTimestamp } = await _fs();
+      const { db, doc, collection, runTransaction, serverTimestamp, increment } = await _fs();
       const wid = _worldId();
       const subjectId = _currentSubjectId;
       await runTransaction(db, async (tx) => {
         const subjRef = doc(db, COL_SUBJECTS, subjectId);
         const subjSnap = await tx.get(subjRef);
         if (!subjSnap.exists()) throw new Error("subject-missing");
+        // itemsCount هنا عدّاد ترقيم فقط (order) ولا يُنقَص أبدًا — نفس انضباط
+        // شيتاتي بالحرف. activeItemsCount عدّاد منفصل للعرض الحي بس، بيزيد
+        // وينقص مع الإضافة/الحذف، وما له أي علاقة بتوليد order.
         const newOrder = (_num(subjSnap.data().itemsCount) || 0) + 1;
         const itemRef = doc(collection(db, COL_ITEMS));
         tx.set(itemRef, {
@@ -558,7 +561,7 @@
           duration: _draftItem.duration || null,
           createdAt: serverTimestamp(), createdBy: _uid(),
         });
-        tx.update(subjRef, { itemsCount: newOrder });
+        tx.update(subjRef, { itemsCount: newOrder, activeItemsCount: increment(1) });
       });
       await _load();
       await window.MyDocsModule._openSubject(subjectId);
@@ -567,10 +570,13 @@
   };
 
   window.MyDocsModule._deleteItem = async function (id) {
-    if (!_isAdmin()) return;
+    if (!_isAdmin() || !_currentSubjectId) return;
     try {
-      const { db, doc, deleteDoc } = await _fs();
+      const { db, doc, deleteDoc, updateDoc, increment } = await _fs();
       await deleteDoc(doc(db, COL_ITEMS, id));
+      // activeItemsCount فقط بينقص هنا — itemsCount (عدّاد الترقيم) يفضل زي ما هو
+      await updateDoc(doc(db, COL_SUBJECTS, _currentSubjectId), { activeItemsCount: increment(-1) });
+      await _load();
       await window.MyDocsModule._setFilter(_filter);
     } catch (e) {}
   };
