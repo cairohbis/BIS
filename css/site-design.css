@@ -15,11 +15,14 @@
 #siteDesignModal input[type=color]{width:38px;height:32px;border:1px solid var(--t-border);border-radius:8px;background:transparent;padding:2px;cursor:pointer}
 #siteDesignModal .sd-range{width:100%}
 #siteDesignModal .sd-note{font-size:12px;opacity:.7;margin:10px 2px 4px}
-#siteDesignModal .sd-preview{background:var(--t-bg);border:1px solid var(--t-border);border-radius:12px;padding:12px;font-size:13px}
+#siteDesignModal .sd-preview{background:var(--t-bg);color:var(--sd-text,#e8edf5);border:1px solid var(--t-border);border-radius:12px;padding:12px;font-size:13px}
+#siteDesignModal .sd-modes{display:flex;gap:6px;margin-bottom:10px}
+#siteDesignModal .sd-mode{flex:1;padding:10px 6px;border-radius:10px;border:1px solid var(--t-border);background:var(--t-bg2);color:#e8edf5;font:inherit;font-size:13px;cursor:pointer}
+#siteDesignModal .sd-mode.on{background:#c9a96e;border-color:#c9a96e;color:#060d1a;font-weight:700}
 #siteDesignModal .sd-sw{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px;margin-bottom:12px}
 #siteDesignModal .sd-sw div{border:1px solid rgba(255,255,255,.25);border-radius:8px;padding:8px 2px;text-align:center;font-size:11px}
 #siteDesignModal .sd-sw span{display:block}
-#siteDesignModal .sd-glass{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12)}
+#siteDesignModal .sd-glass{background:var(--sd-glass,rgba(255,255,255,.07));border:1px solid var(--sd-glass-b,rgba(255,255,255,.12))}
 #siteDesignModal .sd-top{border-radius:14px;padding:10px 12px;display:flex;align-items:center;gap:10px;margin-bottom:10px}
 #siteDesignModal .sd-grow{flex:1}
 #siteDesignModal .sd-av{width:30px;height:30px;border-radius:50%;background:#c9a96e;color:#060d1a;display:flex;align-items:center;justify-content:center;font-weight:700}
@@ -28,20 +31,27 @@
 #siteDesignModal .sd-card,#siteDesignModal .sd-card2,#siteDesignModal .sd-fc{border-radius:16px;padding:12px}
 #siteDesignModal .sd-card{background:var(--t-card);border:1.5px solid var(--t-border)}
 #siteDesignModal .sd-card2{background:var(--t-card2);border:1.5px solid var(--t-border)}
-#siteDesignModal .sd-fc{background:rgba(255,255,255,.045)}
+#siteDesignModal .sd-fc{background:var(--sd-glass,rgba(255,255,255,.045))}
 #siteDesignModal .sd-grid b{display:block}
-#siteDesignModal .sd-grid small{font-size:12px;color:var(--muted)}
-#siteDesignModal .sd-input{background:var(--t-bg2);border:1.5px solid var(--t-border);border-radius:14px;padding:9px 12px;color:var(--muted);margin-bottom:12px}
+#siteDesignModal .sd-grid small{font-size:12px;color:var(--sd-muted,var(--muted))}
+#siteDesignModal .sd-input{background:var(--t-bg2);border:1.5px solid var(--t-border);border-radius:14px;padding:9px 12px;color:var(--sd-muted,var(--muted));margin-bottom:12px}
 #siteDesignModal .sd-prof{border-radius:22px;padding:12px;margin-bottom:12px}
 #siteDesignModal .sd-ptitle{text-align:center;font-weight:700;margin-bottom:8px}
 #siteDesignModal .sd-btns{display:flex;gap:6px;margin-bottom:10px}
 #siteDesignModal .sd-btns span{flex:1;text-align:center;background:var(--t-card);border:1px solid var(--t-border);border-radius:14px;padding:8px 2px;font-size:12px}
 #siteDesignModal .sd-line{display:flex;justify-content:space-between;padding:4px 2px}
-#siteDesignModal .sd-line span:first-child{color:var(--muted)}
+#siteDesignModal .sd-line span:first-child{color:var(--sd-muted,var(--muted))}
 #siteDesignModal .sd-gold{height:1px;background:linear-gradient(90deg,transparent,#c9a96e,#dfc090,#c9a96e,transparent);margin:4px 0}
 #siteDesignModal .sd-set{background:var(--t-bg);border:1px solid var(--t-border);border-radius:14px;overflow:hidden;margin-bottom:12px}
 #siteDesignModal .sd-set-h{background:var(--t-card);padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.07);font-weight:700}
 #siteDesignModal .sd-set-r{padding:9px 12px;border-bottom:1px solid rgba(255,255,255,.04)}
-#siteDesignModal .sd-lbl{font-size:12px;color:var(--muted);margin-bottom:6px}
+#siteDesignModal .sd-lbl{font-size:12px;color:var(--sd-muted,var(--muted));margin-bottom:6px}
 #siteDesignModal .sd-stripes{position:relative;height:96px;border-radius:12px;overflow:hidden;background:repeating-linear-gradient(90deg,#c9a96e 0 20px,#3b82f6 20px 40px,#22c55e 40px 60px,#ef4444 60px 80px)}
 #siteDesignModal .sd-ov{position:absolute;top:8px;width:28%;height:80px;border-radius:10px;background:rgba(var(--t-bg-rgb),var(--glass-a))}
+#siteDesignModal .sd-lock{display:flex;align-items:center;gap:10px;background:var(--t-card);border:1px solid var(--t-border);border-radius:12px;padding:10px 12px;margin-bottom:10px}
+#siteDesignModal .sd-lock.locked{border-color:#ef4444}
+#siteDesignModal .sd-lock-txt{flex:1;display:flex;flex-direction:column;gap:2px;font-size:13px}
+#siteDesignModal .sd-lock-txt span{font-size:12px;opacity:.75}
+#siteDesignModal .sd-lockbtn{padding:9px 12px;border-radius:10px;border:1px solid #ef4444;background:transparent;color:#fca5a5;font:inherit;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap}
+#siteDesignModal .sd-lockbtn.locked{background:#c9a96e;border-color:#c9a96e;color:#060d1a}
+#siteDesignModal .sd-lockbtn:disabled{opacity:.5}
