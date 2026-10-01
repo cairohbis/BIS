@@ -70,6 +70,7 @@ if ("serviceWorker" in navigator) {
 <link rel="stylesheet" href="css/expenses.css">
 <link rel="stylesheet" href="css/study-schedule.css">
 <link rel="stylesheet" href="css/sheetaty.css">
+<link rel="stylesheet" href="css/my-docs.css">
 <link rel="stylesheet" href="css/style.css">
 <link rel="stylesheet" href="css/why-here-forum.css">
 <link rel="stylesheet" href="css/chat-reply.css">
@@ -294,6 +295,11 @@ if ("serviceWorker" in navigator) {
         <div class="forum-card-icon forum-card-icon--sheetaty"><i class="fa-solid fa-list-check"></i></div>
         <div class="forum-card-title">شيتاتي</div>
         <div class="forum-card-sub">الشيتات المطلوبة لكل مادة ومتابعة إنجازك</div>
+      </div>
+      <div class="forum-section-card" onclick="window.MyDocsModule && window.MyDocsModule.open()">
+        <div class="forum-card-icon forum-card-icon--mydocs"><i class="fa-solid fa-folder-open"></i></div>
+        <div class="forum-card-title">مستنداتي</div>
+        <div class="forum-card-sub">صور وPDF وروابط وتسجيلات لكل مادة</div>
       </div>
       <div class="forum-section-card" onclick="window.MyExpensesHub && window.MyExpensesHub.open()">
         <div class="forum-card-icon forum-card-icon--tuition"><i class="fa-solid fa-sack-dollar"></i></div>
@@ -3615,6 +3621,7 @@ onAuthStateChanged(auth, async (user) => {
   window.currentUser = user;
   window._dmsGuardUser?.(user.uid); // لو تغيّر الحساب: أوقف مستمعات/بيانات قائمة الـDM للحساب السابق فوراً
   window._sheetatyGuardUser?.(user.uid); // لو تغيّر الحساب: صفّر كاش شيتاتي (subjects/sheets/completions) للحساب السابق فوراً
+  window._mydocsGuardUser?.(user.uid); // لو تغيّر الحساب: صفّر كاش مستنداتي (docSubjects/docItems) للحساب السابق فوراً
   if (!window.db) window.db = db;
   window.qnStartListening?.(); // بدء/إعادة بدء مستمع الإخطار السريع بعد تأكيد الجلسة (quick-notifications.js)
   showPage("page-home");
@@ -9341,6 +9348,7 @@ try { window._listenPinnedMsg?.(); } catch(e) {}
 <div id="expenses-app-root" aria-label="احسب فلوسك ومواصلاتك" role="dialog"></div>
 <div id="study-schedule-app-root" aria-label="الجدول الدراسي" role="dialog"></div>
 <div id="sheetaty-app-root" aria-label="شيتاتي" role="dialog"></div>
+<div id="mydocs-app-root" aria-label="مستنداتي" role="dialog"></div>
 <script src="grades/grades.js" defer></script>
 
 <!-- ══════════════════════════════════════════
@@ -9361,6 +9369,7 @@ try { window._listenPinnedMsg?.(); } catch(e) {}
 <script src="js/study-schedule.js" defer></script>
 <script src="js/study-schedule-reminder.js" defer></script>
 <script src="js/sheetaty.js" defer></script>
+<script src="js/my-docs.js" defer></script>
 
 <!-- ══════════════════════════════════════════
      MAINTENANCE MODE — Overlay
