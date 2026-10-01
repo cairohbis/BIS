@@ -1,7 +1,7 @@
 (function() {
   /* ── THEME SYSTEM (with Auto / prefers-color-scheme) ── */
   // تنبيه: الوضع الفاتح متوقف مؤقتًا للإصلاح. لإعادة التفعيل غيّر القيمة إلى false.
-  const LIGHT_MODE_DISABLED = true;
+  let LIGHT_MODE_DISABLED = (function () { try { return localStorage.getItem("_lightLocked") === "1"; } catch (e) { return false; } })();
   const THEME_KEY   = "app_theme";
   const FS_KEY      = "chat_font_size";
   const FW_KEY      = "chat_font_weight";
@@ -37,6 +37,8 @@
     } else {
       document.documentElement.classList.remove("theme-light");
     }
+    const _tb = document.getElementById("themeToggleBtn");
+    if (_tb) _tb.classList.toggle("is-light", theme === "light");
     /* sync buttons */
     document.querySelectorAll(".smod-theme-btn").forEach(b => {
       // active if: (dark btn & theme is dark & choice is dark) etc.
@@ -61,6 +63,12 @@
   } catch(e) {
     try { _mq.addListener(_onSystemThemeChange); } catch(e2) {}
   }
+
+  /* قفل/فتح الوضع الفاتح لكل المستخدمين (بيتحكم فيه المالك من نافذة تصميم موقع) — اختيار المستخدم المحفوظ ما بيتغيّرش */
+  window._setLightModeLocked = function(locked) {
+    LIGHT_MODE_DISABLED = !!locked;
+    _applyThemeDOM(_resolveTheme(_themeChoice));
+  };
 
   window.applyTheme = async function(theme) {
     if (LIGHT_MODE_DISABLED && theme !== "dark") {
