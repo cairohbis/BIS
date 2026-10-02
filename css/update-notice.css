@@ -1,0 +1,80 @@
+/* ============================================================================
+   Update Notice — نافذة إشعار نشر تحديث عالمي (Glass)
+   كل الكلاسات بادئة بـ upd- ولا تلمس أي كلاس موجود. نفس لغة apk-prompt.css
+   (--t-* و --glass-a) ويدعم الوضع الفاتح.
+   ========================================================================= */
+
+.upd-overlay{
+  position: fixed;
+  inset: 0;
+  z-index: 195000; /* فوق نافذة التثبيت (190000) وتحت إقرار الإخلاء (200000) */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: calc(16px + env(safe-area-inset-top, 0px)) 16px calc(16px + env(safe-area-inset-bottom, 0px));
+  background: rgba(var(--t-bg-rgb), calc(var(--glass-a) * .6));
+  backdrop-filter: blur(14px) saturate(160%);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .25s ease;
+}
+.upd-overlay.show{ opacity: 1; pointer-events: auto; }
+
+.upd-card{
+  width: 100%;
+  max-width: 360px;
+  padding: 22px;
+  text-align: center;
+  background: rgba(var(--t-card-rgb), var(--glass-a));
+  backdrop-filter: blur(24px) saturate(170%);
+  -webkit-backdrop-filter: blur(24px) saturate(170%);
+  border: 1px solid var(--t-border);
+  border-radius: 24px;
+  box-shadow: 0 12px 40px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.10);
+  transform: translateY(14px) scale(.97);
+  transition: transform .25s ease;
+}
+.upd-overlay.show .upd-card{ transform: translateY(0) scale(1); }
+
+.upd-icon{
+  width: 56px; height: 56px; margin: 0 auto 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 24px;
+  color: var(--goldL, #dfc090);
+  background: rgba(201,169,110,.12);
+  border: 1px solid rgba(201,169,110,.28);
+  border-radius: 18px;
+}
+.upd-title{ font-size: 19px; font-weight: 700; line-height: 1.4; color: var(--goldL, #dfc090); }
+.upd-num{ font-weight: 800; }
+.upd-msg{
+  margin: 10px 0 0;
+  font-size: 14px; line-height: 1.8;
+  color: var(--text);
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 40vh;
+  overflow-y: auto;
+}
+.upd-btn{
+  display: block;
+  width: 100%;
+  margin-top: 16px;
+  padding: 12px 14px;
+  border: none;
+  border-radius: 14px;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  background: var(--gold, #c9a96e);
+  color: #1a1408;
+  box-shadow: 0 4px 14px rgba(201,169,110,.35);
+  transition: transform .15s ease;
+}
+.upd-btn:active{ transform: scale(.98); }
+
+html.theme-light .upd-card{ box-shadow: 0 12px 40px rgba(0,0,0,.18), inset 0 1px 0 rgba(255,255,255,.6); }
+html.theme-light .upd-title,
+html.theme-light .upd-icon{ color: #7a5c1f; }
