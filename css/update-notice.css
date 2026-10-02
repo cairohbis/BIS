@@ -37,15 +37,7 @@
 }
 .upd-overlay.show .upd-card{ transform: translateY(0) scale(1); }
 
-.upd-icon{
-  width: 56px; height: 56px; margin: 0 auto 10px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 24px;
-  color: var(--goldL, #dfc090);
-  background: rgba(201,169,110,.12);
-  border: 1px solid rgba(201,169,110,.28);
-  border-radius: 18px;
-}
+.upd-img{ display: block; width: 112px; height: 112px; margin: -4px auto 6px; object-fit: contain; }
 .upd-title{ font-size: 19px; font-weight: 700; line-height: 1.4; color: var(--goldL, #dfc090); }
 .upd-num{ font-weight: 800; }
 .upd-msg{
@@ -76,5 +68,4 @@
 .upd-btn:active{ transform: scale(.98); }
 
 html.theme-light .upd-card{ box-shadow: 0 12px 40px rgba(0,0,0,.18), inset 0 1px 0 rgba(255,255,255,.6); }
-html.theme-light .upd-title,
-html.theme-light .upd-icon{ color: #7a5c1f; }
+html.theme-light .upd-title{ color: #7a5c1f; }
