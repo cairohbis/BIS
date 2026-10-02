@@ -35,6 +35,7 @@ const DEFAULTS = {
     "border": "#242426", "hover": "#212123", "hover-border": "#2c2c2e", "deep": "#0d0d0f"
   },
   glassA: 0.72,
+  glassALight: 0.72,
   lightLocked: false,
   light: { "bg": "#f5ecd4", "bg2": "#ecdfbd", "card": "#fffaf0", "card2": "#faf1da", "border": "#d4bd85", "text": "#1a1405" }
 };
@@ -59,26 +60,34 @@ function _normalize(raw) {
   cfg.lightLocked = !!(raw && raw.lightLocked === true);
   const a = Number(raw && raw.glassA);
   if (isFinite(a) && a >= 0.3 && a <= 1) cfg.glassA = Math.round(a * 100) / 100;
+  const al = Number(raw && raw.glassALight);
+  if (isFinite(al) && al >= 0.3 && al <= 1) cfg.glassALight = Math.round(al * 100) / 100;
   return cfg;
 }
 
-/* يطبّق الإعداد على عنصر (الافتراضي: الموقع كله). المعاينة بتستعمل نفس الدالة على عنصرها. */
+/* يطبّق الإعداد. للموقع كله: عبر <style> على :root (مش inline) عشان html.theme-light يقدر يغلبه في الوضع الفاتح.
+   للمعاينة: inline على عنصرها. */
 function applyThemeColors(cfg, target) {
-  const el = target || document.documentElement;
-  KEYS.forEach(k => {
-    el.style.setProperty("--t-" + k, cfg.colors[k]);
-    el.style.setProperty("--t-" + k + "-rgb", _hexToRgb(cfg.colors[k]));
-  });
-  el.style.setProperty("--glass-a", String(cfg.glassA));
-  if (!target) {
-    _applyLight(cfg);
-    _applyLock(cfg);
-    const m = document.querySelector('meta[name="theme-color"]');
-    if (m) m.setAttribute("content", cfg.colors.bg);
+  if (target) {
+    KEYS.forEach(k => {
+      target.style.setProperty("--t-" + k, cfg.colors[k]);
+      target.style.setProperty("--t-" + k + "-rgb", _hexToRgb(cfg.colors[k]));
+    });
+    target.style.setProperty("--glass-a", String(cfg.glassA));
+    return;
   }
+  let v = "--glass-a:" + cfg.glassA + ";";
+  KEYS.forEach(k => { v += "--t-" + k + ":" + cfg.colors[k] + ";--t-" + k + "-rgb:" + _hexToRgb(cfg.colors[k]) + ";"; });
+  let st = document.getElementById("siteDesignDarkStyle");
+  if (!st) { st = document.createElement("style"); st.id = "siteDesignDarkStyle"; document.head.appendChild(st); }
+  st.textContent = ":root{" + v + "}";
+  _applyLight(cfg);
+  _applyLock(cfg);
+  const m = document.querySelector('meta[name="theme-color"]');
+  if (m) m.setAttribute("content", cfg.colors.bg);
 }
 
-/* الوضع الفاتح: ستايل واحد في آخر الـ head يعيد تعريف متغيرات html.theme-light (نفس الـ specificity فيكسب بالترتيب) */
+/* الوضع الفاتح: ستايل واحد في آخر الـ head يعيد تعريف متغيرات html.theme-light (أقوى من :root) */
 function _shade(hex, k) { // k<0 يغمّق، k>0 يفتّح
   return "#" + [1, 3, 5].map(i => {
     const v = parseInt(hex.slice(i, i + 2), 16);
@@ -86,17 +95,18 @@ function _shade(hex, k) { // k<0 يغمّق، k>0 يفتّح
     return Math.max(0, Math.min(255, Math.round(n))).toString(16).padStart(2, "0");
   }).join("");
 }
-function _lightVars(L) {
+function _lightVars(cfg) {
+  const L = cfg.light;
   const m = { "bg": L.bg, "bg2": L.bg2, "card": L.card, "card2": L.card2, "border": L.border,
               "hover": _shade(L.bg2, -0.06), "hover-border": _shade(L.border, -0.08), "deep": _shade(L.bg, -0.08) };
-  let v = "--bg:" + L.bg + ";--bg2:" + L.bg2 + ";--card:" + L.card + ";--card2:" + L.card2 + ";--border:" + L.border + ";--text:" + L.text + ";";
+  let v = "--glass-a:" + cfg.glassALight + ";--bg:" + L.bg + ";--bg2:" + L.bg2 + ";--card:" + L.card + ";--card2:" + L.card2 + ";--border:" + L.border + ";--text:" + L.text + ";";
   Object.keys(m).forEach(k => { v += "--t-" + k + ":" + m[k] + ";--t-" + k + "-rgb:" + _hexToRgb(m[k]) + ";"; });
   return v;
 }
 function _applyLight(cfg) {
   let st = document.getElementById("siteDesignLightStyle");
   if (!st) { st = document.createElement("style"); st.id = "siteDesignLightStyle"; document.head.appendChild(st); }
-  st.textContent = "html.theme-light{" + _lightVars(cfg.light) + "}";
+  st.textContent = "html.theme-light{" + _lightVars(cfg) + "}";
 }
 
 /* قفل الوضع الفاتح: كاش محلي (بيقراه settings-modal.js قبل أول رسم) + تطبيق فوري لو الدالة جاهزة */
@@ -223,7 +233,7 @@ function _refresh() {
     pv.style.setProperty("--sd-muted", "#5c4a22");
     pv.style.setProperty("--sd-glass", "rgba(0,0,0,.04)");
     pv.style.setProperty("--sd-glass-b", "rgba(0,0,0,.10)");
-    pv.style.setProperty("--glass-a", "1");
+    pv.style.setProperty("--glass-a", String(_draft.glassALight));
   } else {
     applyThemeColors(_draft, pv);
     pv.style.setProperty("--sd-text", "#e8edf5");
@@ -236,9 +246,9 @@ function _refresh() {
     if (c) c.value = pal[k];
     if (h) h.value = pal[k];
   });
-  document.getElementById("sdAlphaWrap").style.display = _mode === "light" ? "none" : "";
-  document.getElementById("sdAlpha").value = Math.round(_draft.glassA * 100);
-  document.getElementById("sdAval").textContent = _draft.glassA.toFixed(2);
+  const ga = _mode === "light" ? _draft.glassALight : _draft.glassA;
+  document.getElementById("sdAlpha").value = Math.round(ga * 100);
+  document.getElementById("sdAval").textContent = ga.toFixed(2);
   document.getElementById("sdSw").innerHTML = ["bg", "bg2", "card", "card2", "border"].map(k =>
     `<div style="background:var(--t-${k})"><span>${k}</span><span dir="ltr">${pal[k]}</span></div>`).join("");
 }
@@ -295,12 +305,12 @@ function openSiteDesign() {
     _modal.addEventListener("input", (e) => {
       const t = e.target;
       if (t.dataset && t.dataset.k) { _palette()[t.dataset.k] = t.value.toLowerCase(); _refresh(); }
-      else if (t.id === "sdAlpha") { _draft.glassA = Number(t.value) / 100; _refresh(); }
+      else if (t.id === "sdAlpha") { _draft[_mode === "light" ? "glassALight" : "glassA"] = Number(t.value) / 100; _refresh(); }
     });
     document.getElementById("sdClose").onclick = closeSiteDesign;
     document.getElementById("sdCancel").onclick = closeSiteDesign;
     document.getElementById("sdReset").onclick = () => {
-      if (_mode === "light") _draft.light = _clone(DEFAULTS.light);
+      if (_mode === "light") { _draft.light = _clone(DEFAULTS.light); _draft.glassALight = DEFAULTS.glassALight; }
       else { _draft.colors = _clone(DEFAULTS.colors); _draft.glassA = DEFAULTS.glassA; }
       _refresh();
     };
@@ -322,7 +332,7 @@ async function _save() {
   btn.disabled = true;
   try {
     const uid = (window.currentUser && window.currentUser.uid) || null;
-    await setDoc(_ref(), { colors: _draft.colors, glassA: _draft.glassA, light: _draft.light, lightLocked: !!_current.lightLocked, updatedBy: uid, updatedAt: serverTimestamp() });
+    await setDoc(_ref(), { colors: _draft.colors, glassA: _draft.glassA, glassALight: _draft.glassALight, light: _draft.light, lightLocked: !!_current.lightLocked, updatedBy: uid, updatedAt: serverTimestamp() });
     _current = _clone(_draft);
     _cacheSet(_current);
     applyThemeColors(_current);
