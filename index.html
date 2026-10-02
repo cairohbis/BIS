@@ -93,6 +93,7 @@ if ("serviceWorker" in navigator) {
 <link rel="stylesheet" href="css/mascot-underdev-adapter.css">
 <link rel="stylesheet" href="css/quick-notifications.css">
 <link rel="stylesheet" href="css/disclaimer-consent.css">
+<link rel="stylesheet" href="css/apk-prompt.css">
 <link rel="stylesheet" href="css/qr-share.css">
 
 <!-- ══ Critical inline CSS — يُطبَّق فورًا بدون انتظار أي ملف خارجي، لعرض خلفية محايدة بدل الفراغ الأبيض/الفلاش قبل تحميل باقي الصفحة ══ -->
@@ -1675,6 +1676,32 @@ if ("serviceWorker" in navigator) {
               </div>
               <div style="font-size:12px;color:var(--muted);margin-top:10px;line-height:1.6;">
                 عند التفعيل: يتم منع جميع المستخدمين من استخدام الموقع وعرض صفحة الصيانة فقط، بينما يحتفظ المالك بالوصول الكامل.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ قسم: نافذة تحميل تطبيق بريق (Global — لمستخدمي المتصفح فقط) ══ -->
+      <div class="owner-collapse-item" style="margin-top:10px;">
+        <div class="owner-collapse-header" id="apkPromptOwnerHeader" onclick="ownerToggleSection(this)">
+          <div class="owner-collapse-icon-wrap"><i class="fa-solid fa-download"></i></div>
+          <div class="owner-collapse-body-text">
+            <div class="owner-collapse-title">نافذة تحميل تطبيق بريق</div>
+            <div class="owner-collapse-sub">اقتراح التحميل لمستخدمي المتصفح</div>
+          </div>
+          <i class="fa-solid fa-chevron-down owner-collapse-arrow"></i>
+        </div>
+        <div class="owner-collapse-panel">
+          <div class="owner-collapse-inner">
+            <div class="panel-sec">
+              <div class="label">الحالة الحالية: <span id="apkPromptStatusText" style="font-weight:800;">—</span></div>
+              <div style="display:flex;gap:8px;margin-top:8px;">
+                <button class="btn" id="apkPromptOnBtn" style="flex:1;" onclick="setApkPromptEnabled(true)"><i class="fa-solid fa-toggle-on"></i> تشغيل</button>
+                <button class="btn btn-dark" id="apkPromptOffBtn" style="flex:1;" onclick="setApkPromptEnabled(false)"><i class="fa-solid fa-toggle-off"></i> إيقاف</button>
+              </div>
+              <div style="font-size:12px;color:var(--muted);margin-top:10px;line-height:1.6;">
+                إعداد عام لكل مستخدمي المتصفح (لا يظهر لمستخدمي التطبيق ولا يرتبط بأي عالم).
               </div>
             </div>
           </div>
@@ -3350,6 +3377,7 @@ async function doLogin() {
 
   try {
     await signInWithEmailAndPassword(auth, email, pass);
+    try { window.__apkPromptAfterLogin?.(); } catch (_) {}
   } catch (e) {
     const map = {
       "auth/invalid-credential": "بريد أو كلمة مرور غلط",
@@ -3613,6 +3641,7 @@ onAuthStateChanged(auth, async (user) => {
     }
     window._dmsStopListeners?.(); // لا تُبقِ أي مستمع/قائمة DM بعد الخروج (مهما كان سبب الخروج)
     window._maintenanceApply?.();
+    window.__apkPromptHide?.();
     showPage("page-login"); return;
   }
 
@@ -9492,6 +9521,7 @@ try { window._listenPinnedMsg?.(); } catch(e) {}
 <script type="module" src="js/appearance-page.js"></script>
 <script type="module" src="js/quick-notifications.js"></script>
 <script type="module" src="js/disclaimer-consent.js"></script>
+<script type="module" src="js/apk-prompt.js"></script>
 <script src="js/why-here-forum.js"></script>
 <script type="module" src="js/forum-badges.js"></script>
 
