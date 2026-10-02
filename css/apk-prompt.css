@@ -1,0 +1,119 @@
+/* ============================================================================
+   APK Prompt — اقتراح تحميل تطبيق بريق (لمستخدمي المتصفح فقط)
+   كل الكلاسات بادئة بـ apk- ولا يلمس أي كلاس موجود. نفس لغة النوافذ الزجاجية
+   (disclaimer-consent.css) بمتغيرات --t-* و --glass-a، ويدعم الوضع الفاتح.
+   ========================================================================= */
+
+.apk-overlay{
+  position: fixed;
+  inset: 0;
+  z-index: 190000; /* تحت نافذة الإخلاء (200000) وفوق باقي النوافذ */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: calc(16px + env(safe-area-inset-top, 0px)) 16px calc(16px + env(safe-area-inset-bottom, 0px));
+  background: rgba(var(--t-bg-rgb), calc(var(--glass-a) * .6));
+  backdrop-filter: blur(14px) saturate(160%);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .25s ease;
+}
+.apk-overlay.show{ opacity: 1; pointer-events: auto; }
+
+.apk-card{
+  position: relative;
+  width: 100%;
+  max-width: 360px;
+  padding: 22px 22px calc(20px + env(safe-area-inset-bottom, 0px) * 0);
+  text-align: center;
+  background: rgba(var(--t-card-rgb), var(--glass-a));
+  backdrop-filter: blur(24px) saturate(170%);
+  -webkit-backdrop-filter: blur(24px) saturate(170%);
+  border: 1px solid var(--t-border);
+  border-radius: 24px;
+  box-shadow: 0 12px 40px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.10);
+  transform: translateY(14px) scale(.97);
+  transition: transform .25s ease;
+}
+.apk-overlay.show .apk-card{ transform: translateY(0) scale(1); }
+
+.apk-img{ display: block; width: 112px; height: 112px; margin: -4px auto 6px; object-fit: contain; }
+.apk-title{ font-size: 19px; font-weight: 700; line-height: 1.4; color: var(--goldL, #dfc090); }
+.apk-text{ margin: 8px 0 0; font-size: 14px; line-height: 1.8; color: var(--text); }
+.apk-size{ margin: 10px 0 0; font-size: 13px; color: var(--muted); }
+.apk-btn{
+  display: block;
+  width: 100%;
+  margin-top: 16px;
+  padding: 12px 14px;
+  border: none;
+  border-radius: 14px;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  background: var(--gold, #c9a96e);
+  color: #1a1408;
+  box-shadow: 0 4px 14px rgba(201,169,110,.35);
+  transition: transform .15s ease;
+}
+.apk-btn:active{ transform: scale(.98); }
+
+/* صورة الاقتراح المصغرة بعد إغلاق النافذة */
+.apk-mini{
+  position: fixed;
+  inset-inline-end: 12px;
+  bottom: calc(84px + env(safe-area-inset-bottom, 0px));
+  z-index: 29000;
+  width: 54px;
+  height: 54px;
+  padding: 4px;
+  object-fit: contain;
+  border-radius: 50%;
+  background: rgba(var(--t-card-rgb), var(--glass-a));
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid var(--t-border);
+  box-shadow: 0 4px 14px rgba(0,0,0,.35);
+  pointer-events: none;
+  opacity: 0;
+  transform: scale(.7);
+  transition: opacity .25s ease, transform .25s ease;
+}
+.apk-mini.show{ opacity: .92; transform: scale(1); }
+
+/* نافذة "تم تحميل التطبيق" — لا تحجب الموقع (بدون طبقة خلفية) */
+.apk-done{
+  position: fixed;
+  inset-inline: 16px;
+  bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+  margin-inline: auto;
+  max-width: 340px;
+  z-index: 190000;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-align: start;
+  background: rgba(var(--t-card-rgb), var(--glass-a));
+  backdrop-filter: blur(24px) saturate(170%);
+  -webkit-backdrop-filter: blur(24px) saturate(170%);
+  border: 1px solid var(--t-border);
+  border-radius: 20px;
+  box-shadow: 0 12px 40px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.10);
+  opacity: 0;
+  transform: translateY(14px);
+  pointer-events: none;
+  transition: opacity .25s ease, transform .25s ease;
+}
+.apk-done.show{ opacity: 1; transform: translateY(0); pointer-events: auto; }
+.apk-done img{ flex: 0 0 auto; width: 56px; height: 56px; object-fit: contain; }
+.apk-done-title{ font-size: 15px; font-weight: 700; color: var(--goldL, #dfc090); }
+.apk-done-text{ margin-top: 2px; font-size: 13px; line-height: 1.6; color: var(--text); }
+
+html.theme-light .apk-card,
+html.theme-light .apk-done{ box-shadow: 0 12px 40px rgba(0,0,0,.18), inset 0 1px 0 rgba(255,255,255,.6); }
+html.theme-light .apk-title,
+html.theme-light .apk-done-title{ color: #7a5c1f; }
+html.theme-light .apk-mini{ box-shadow: 0 4px 14px rgba(0,0,0,.18); }
