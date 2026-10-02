@@ -2,7 +2,6 @@
    مصروفاتي — مصروفات السنة الدراسية
    (نفس نمط instructions.css / account-archive.css)
 ══════════════════════════════════════════ */
-.forum-card-icon--tuition { background: linear-gradient(160deg, #86efac, #16a34a); }
 
 #tuition-app-root { display:none; position:fixed; inset:0; z-index:9000; align-items:flex-end; }
 #tuition-app-root.tuition-open { display:flex; }

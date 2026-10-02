@@ -2,7 +2,6 @@
    شيتاتي
    (نفس نمط study-schedule.css / tuition-fees.css)
 ══════════════════════════════════════════ */
-.forum-card-icon--sheetaty { background: linear-gradient(160deg, #a7f3d0, #059669); }
 
 #sheetaty-app-root { display:none; position:fixed; inset:0; z-index:9000; align-items:flex-end; }
 #sheetaty-app-root.sht-open { display:flex; }

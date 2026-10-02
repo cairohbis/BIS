@@ -2,7 +2,6 @@
    الجدول الدراسي
    (نفس نمط tuition-fees.css / instructions.css)
 ══════════════════════════════════════════ */
-.forum-card-icon--studyschedule { background: linear-gradient(160deg, #93c5fd, #2563eb); }
 
 #study-schedule-app-root { display:none; position:fixed; inset:0; z-index:9000; align-items:flex-end; }
 #study-schedule-app-root.ss-open { display:flex; }
