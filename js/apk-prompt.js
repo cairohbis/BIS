@@ -147,21 +147,23 @@ window.addEventListener("appinstalled", () => {
 
 /* ── إخفاء كل شيء (تسجيل الخروج / إيقاف الميزة) ── */
 window.__apkPromptHide = function () {
+  _scheduled = false;
   _open = false; _installing = true;
   if (_overlay) _overlay.classList.remove("show");
   _hideMini();
 };
 
 /* ── نقطة الدخول: تُستدعى بعد نجاح تسجيل الدخول فقط (لا تعمل أي شيء ثقيل هنا) ── */
+let _scheduled = false;
 window.__apkPromptAfterLogin = function () {
-  if (_isApp()) return;
+  if (_scheduled || _isApp()) return;
+  _scheduled = true;
   setTimeout(async () => {
     if (_busy || _open) return;
     _busy = true;
     try {
       if (_isApp() || !window.currentUser || !window.db) return;
       if (!(await _enabled())) return;
-      if (!window.__pwaInstallEvt) return; // المتصفح لا يوفّر التثبيت حاليًا → لا فائدة من الاقتراح
       _sizeTxt = await _appSizeText();
       if (window.currentUser) _show();
     } finally { _busy = false; }
