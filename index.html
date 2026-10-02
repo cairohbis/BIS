@@ -1211,6 +1211,32 @@ if ("serviceWorker" in navigator) {
         </div>
       </div>
 
+      <!-- ══ قسم: نافذة تحميل تطبيق بريق (Global — لمستخدمي المتصفح فقط) ══ -->
+      <div class="owner-collapse-item">
+        <div class="owner-collapse-header" id="apkPromptOwnerHeader" onclick="ownerToggleSection(this)">
+          <div class="owner-collapse-icon-wrap"><i class="fa-solid fa-download"></i></div>
+          <div class="owner-collapse-body-text">
+            <div class="owner-collapse-title">نافذة تحميل تطبيق بريق</div>
+            <div class="owner-collapse-sub">اقتراح التحميل لمستخدمي المتصفح</div>
+          </div>
+          <i class="fa-solid fa-chevron-down owner-collapse-arrow"></i>
+        </div>
+        <div class="owner-collapse-panel">
+          <div class="owner-collapse-inner">
+            <div class="panel-sec">
+              <div class="label">الحالة الحالية: <span id="apkPromptStatusText" style="font-weight:800;">—</span></div>
+              <div style="display:flex;gap:8px;margin-top:8px;">
+                <button class="btn" id="apkPromptOnBtn" style="flex:1;" onclick="setApkPromptEnabled(true)"><i class="fa-solid fa-toggle-on"></i> تشغيل</button>
+                <button class="btn btn-dark" id="apkPromptOffBtn" style="flex:1;" onclick="setApkPromptEnabled(false)"><i class="fa-solid fa-toggle-off"></i> إيقاف</button>
+              </div>
+              <div style="font-size:12px;color:var(--muted);margin-top:10px;line-height:1.6;">
+                إعداد عام لكل مستخدمي المتصفح (لا يظهر لمستخدمي التطبيق ولا يرتبط بأي عالم).
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- ══ قسم 1: الإحصائيات العامة ══ -->
       <div class="owner-collapse-item">
         <div class="owner-collapse-header" onclick="ownerToggleSection(this)">
@@ -1676,32 +1702,6 @@ if ("serviceWorker" in navigator) {
               </div>
               <div style="font-size:12px;color:var(--muted);margin-top:10px;line-height:1.6;">
                 عند التفعيل: يتم منع جميع المستخدمين من استخدام الموقع وعرض صفحة الصيانة فقط، بينما يحتفظ المالك بالوصول الكامل.
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ══ قسم: نافذة تحميل تطبيق بريق (Global — لمستخدمي المتصفح فقط) ══ -->
-      <div class="owner-collapse-item" style="margin-top:10px;">
-        <div class="owner-collapse-header" id="apkPromptOwnerHeader" onclick="ownerToggleSection(this)">
-          <div class="owner-collapse-icon-wrap"><i class="fa-solid fa-download"></i></div>
-          <div class="owner-collapse-body-text">
-            <div class="owner-collapse-title">نافذة تحميل تطبيق بريق</div>
-            <div class="owner-collapse-sub">اقتراح التحميل لمستخدمي المتصفح</div>
-          </div>
-          <i class="fa-solid fa-chevron-down owner-collapse-arrow"></i>
-        </div>
-        <div class="owner-collapse-panel">
-          <div class="owner-collapse-inner">
-            <div class="panel-sec">
-              <div class="label">الحالة الحالية: <span id="apkPromptStatusText" style="font-weight:800;">—</span></div>
-              <div style="display:flex;gap:8px;margin-top:8px;">
-                <button class="btn" id="apkPromptOnBtn" style="flex:1;" onclick="setApkPromptEnabled(true)"><i class="fa-solid fa-toggle-on"></i> تشغيل</button>
-                <button class="btn btn-dark" id="apkPromptOffBtn" style="flex:1;" onclick="setApkPromptEnabled(false)"><i class="fa-solid fa-toggle-off"></i> إيقاف</button>
-              </div>
-              <div style="font-size:12px;color:var(--muted);margin-top:10px;line-height:1.6;">
-                إعداد عام لكل مستخدمي المتصفح (لا يظهر لمستخدمي التطبيق ولا يرتبط بأي عالم).
               </div>
             </div>
           </div>
@@ -3658,6 +3658,7 @@ onAuthStateChanged(auth, async (user) => {
   showPage("page-home");
   goTab("tab-home");
   window.checkAttendancePopup?.().catch(() => {});
+  try { window.__apkPromptAfterLogin?.(); } catch (_) {} // اقتراح تحميل التطبيق (متصفح فقط) — يعمل أيضًا مع الجلسة المحفوظة
 
   let userData = null;
   let _readSucceeded = false;
