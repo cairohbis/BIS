@@ -252,7 +252,7 @@
 
     try {
       const fs = await core.getFS();
-      const { db, collection, doc, addDoc, updateDoc, serverTimestamp } = fs;
+      const { db, collection, doc, getDoc, addDoc, updateDoc, serverTimestamp } = fs;
 
       const basePayload = {
         type,
@@ -263,8 +263,30 @@
       };
 
       if (_editingPostId) {
+        const postRef = doc(db, "lostFound", _editingPostId);
+
+        // ✅ Admin Isolation: تحقق مباشر من ملكية وعالم المنشور قبل أي تعديل —
+        // دايمًا صاحب المنشور بس اللي بيعدّل (زي ما هو أصلًا)، بس لازم كمان عالمه
+        // الحالي يطابق worldId المنشور. الأونر Global، ومنشور بلا worldId ممنوع
+        // على غير الأونر.
+        const existSnap = await getDoc(postRef);
+        const existing = existSnap.exists() ? existSnap.data() : null;
+        const isOwnerOfPost = !!(existing && currentUser.uid === existing.createdBy);
+        const isGlobalOwner = !!(window.isOwner && window.isOwner());
+        const _myWorld = (typeof window.currentUserWorldId === "function") ? window.currentUserWorldId() : null;
+        const worldOk = isGlobalOwner || (existing && existing.worldId && existing.worldId === _myWorld);
+
+        if (!existing || !(isGlobalOwner || (isOwnerOfPost && worldOk))) {
+          window.toast?.("غير مسموح لك بهذا الإجراء", "warn");
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalBtnLabel;
+          }
+          return;
+        }
+
         // إعادة إرسال بعد رفض: الحالة ترجع pending دايمًا، وcreatedBy ثابت (الـ Rules بتتأكد برضه)
-        await updateDoc(doc(db, "lostFound", _editingPostId), {
+        await updateDoc(postRef, {
           ...basePayload,
           status: "pending",
           rejectedBy: null,
@@ -280,6 +302,9 @@
           createdBy: currentUser.uid,
           createdByName: window.getCurrentName?.() || "مستخدم",
           createdByPhoto: window.currentPhoto || "",
+          // ✅ Admin Isolation: كل منشور جديد يُختم بعالم منشئه (الفيد العام يفضل
+          // بلا فلترة — worldId هنا للعزل الإداري بس، مش لإخفاء المنشور عن باقي العوالم)
+          worldId: (typeof window.activeWorldContext === "function") ? window.activeWorldContext() : null,
           createdAt: serverTimestamp(),
           approvedBy: _directPublish ? currentUser.uid : null,
           approvedAt: _directPublish ? serverTimestamp() : null,
@@ -354,8 +379,27 @@
   async function deletePost(postId) {
     try {
       const fs = await core.getFS();
-      const { db, doc, deleteDoc } = fs;
-      await deleteDoc(doc(db, "lostFound", postId));
+      const { db, doc, getDoc, deleteDoc } = fs;
+      const postRef = doc(db, "lostFound", postId);
+
+      // ✅ Admin Isolation: تحقق نهائي قبل أي حذف — الحذف بصلاحية صاحب المنشور
+      // يفضل زي ما هو، وحذف الأدمن يحتاج worldId المنشور == عالمه (الأونر Global،
+      // ومنشور بلا worldId ممنوع على أي أدمن غير الأونر لأن عالمه غير معروف)
+      const currentUser = window.currentUser;
+      const snap = await getDoc(postRef);
+      const post = snap.exists() ? snap.data() : null;
+      const isOwnerOfPost = !!(post && currentUser && currentUser.uid === post.createdBy);
+      const isGlobalOwner = !!(window.isOwner && window.isOwner());
+      const _myWorld = (typeof window.currentUserWorldId === "function") ? window.currentUserWorldId() : null;
+      const adminAllowed = core.state.isAdmin && (isGlobalOwner || (post && post.worldId && post.worldId === _myWorld));
+      const allowed = adminAllowed || (isOwnerOfPost && post && post.status !== "found");
+
+      if (!allowed) {
+        window.toast?.("غير مسموح لك بهذا الإجراء", "warn");
+        return;
+      }
+
+      await deleteDoc(postRef);
       window.toast?.("تم حذف المنشور ✓");
       core.closeModal();
     } catch (e) {
