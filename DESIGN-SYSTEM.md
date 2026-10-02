@@ -42,3 +42,4 @@ background: rgba(var(--t-bg-rgb), var(--glass-a));
 - `js/site-design.js`: الدالة `applyThemeColors()` والنافذة والحفظ.
 - `css/site-design.css`: ستايل النافذة.
 - `css/style.css` (`:root`): القيم الافتراضية `--t-*` و`--glass-a`.
+- `FORUM-CARDS.md`: دليل إضافة كروت المنتدى (المكان والترتيب والألوان والتوهج).
