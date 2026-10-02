@@ -117,6 +117,7 @@ function _showMini() {
     _mini.className = "apk-mini";
     _mini.src = IMG_SAD;
     _mini.alt = "";
+    _mini.addEventListener("click", () => { if (!_open) _show(); });
     document.body.appendChild(_mini);
   }
   requestAnimationFrame(() => _mini.classList.add("show"));
@@ -154,6 +155,22 @@ window.__apkPromptHide = function () {
 };
 
 /* ── نقطة الدخول: تُستدعى بعد نجاح تسجيل الدخول فقط (لا تعمل أي شيء ثقيل هنا) ── */
+/* Chrome يتخطّى عند زر Back أي سجل (pushState) أُنشئ بدون تفاعل المستخدم، فيخرج الرجوع من الصفحة.
+   لذلك لا تُعرض النافذة (ولا تُسجَّل خطوتها) إلا بعد أول تفاعل فعلي. */
+function _whenActive(fn) {
+  const ua = navigator.userActivation;
+  if (!ua || ua.hasBeenActive) { fn(); return; }
+  const evs = ["pointerup", "keydown", "touchend", "click"];
+  let done = false;
+  const go = () => setTimeout(() => {
+    if (done || !ua.hasBeenActive) return;
+    done = true;
+    evs.forEach((t) => window.removeEventListener(t, go, true));
+    fn();
+  }, 0);
+  evs.forEach((t) => window.addEventListener(t, go, { capture: true, passive: true }));
+}
+
 let _scheduled = false;
 window.__apkPromptAfterLogin = function () {
   if (_scheduled || _isApp()) return;
@@ -165,7 +182,7 @@ window.__apkPromptAfterLogin = function () {
       if (_isApp() || !window.currentUser || !window.db) return;
       if (!(await _enabled())) return;
       _sizeTxt = await _appSizeText();
-      if (window.currentUser) _show();
+      if (window.currentUser) _whenActive(() => { if (window.currentUser && !_open) _show(); });
     } finally { _busy = false; }
   }, 1500);
 };
