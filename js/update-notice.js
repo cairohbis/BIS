@@ -41,7 +41,7 @@ function _build() {
   _overlay.className = "upd-overlay";
   _overlay.innerHTML =
     '<div class="upd-card" role="dialog" aria-modal="true">' +
-      '<div class="upd-icon"><i class="fa-solid fa-arrows-rotate"></i></div>' +
+      '<img class="upd-img" src="images/mascot/ui/loading.webp" alt="">' +
       '<div class="upd-title">تحديث جديد <span class="upd-num"></span></div>' +
       '<div class="upd-msg"></div>' +
       '<button type="button" class="upd-btn">تحديث</button>' +
