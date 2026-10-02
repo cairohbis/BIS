@@ -212,9 +212,9 @@ function _rowsHTML() {
   const labels = _mode === "light" ? LIGHT_LABELS : LABELS;
   return keys.map(k => `
     <div class="sd-row">
-      <label for="sdc-${k}">${labels[k]}</label>
-      <input type="text" class="sd-hex" id="sdh-${k}" dir="ltr" readonly>
-      <input type="color" id="sdc-${k}" data-k="${k}">
+      <label for="sdh-${k}">${labels[k]}</label>
+      <input type="text" class="sd-hex" id="sdh-${k}" data-k="${k}" dir="ltr" maxlength="9" spellcheck="false" autocomplete="off" autocapitalize="characters" placeholder="FCF0DA">
+      <button type="button" class="sd-swatch" id="sdc-${k}" data-pick="${k}" aria-label="${labels[k]}"></button>
     </div>`).join("");
 }
 
@@ -243,8 +243,8 @@ function _refresh() {
   }
   Object.keys(pal).forEach(k => {
     const c = document.getElementById("sdc-" + k), h = document.getElementById("sdh-" + k);
-    if (c) c.value = pal[k];
-    if (h) h.value = pal[k];
+    if (c) c.style.background = pal[k];
+    if (h && document.activeElement !== h) { h.value = pal[k].toUpperCase(); h.classList.remove("bad"); }
   });
   const ga = _mode === "light" ? _draft.glassALight : _draft.glassA;
   document.getElementById("sdAlpha").value = Math.round(ga * 100);
@@ -285,6 +285,119 @@ async function _toggleLock() {
   _refreshLock();
 }
 
+/* ── منتقي الألوان الحديث (زجاجي): مربع التشبّع/السطوع + شريط الدرجة + كود HEX + ألوان جاهزة ── */
+function _parseHex(str) {
+  let h = String(str || "").trim().replace(/^#/, "").replace(/\s+/g, "");
+  if (!/^[0-9a-fA-F]+$/.test(h)) return null;
+  if (h.length === 3) h = h.split("").map(c => c + c).join("");
+  else if (h.length === 8) h = h.slice(0, 6); // نتجاهل قناة الشفافية في الكود
+  if (h.length !== 6) return null;
+  return "#" + h.toLowerCase();
+}
+function _rgbToHsv(r, g, b) {
+  r /= 255; g /= 255; b /= 255;
+  const mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn;
+  let h = 0;
+  if (d) {
+    if (mx === r) h = ((g - b) / d) % 6; else if (mx === g) h = (b - r) / d + 2; else h = (r - g) / d + 4;
+    h *= 60; if (h < 0) h += 360;
+  }
+  return { h: h, s: mx ? d / mx : 0, v: mx };
+}
+function _hsvToHex(h, s, v) {
+  const c = v * s, x = c * (1 - Math.abs((h / 60) % 2 - 1)), m = v - c;
+  let r = 0, g = 0, b = 0;
+  if (h < 60) { r = c; g = x; } else if (h < 120) { r = x; g = c; } else if (h < 180) { g = c; b = x; }
+  else if (h < 240) { g = x; b = c; } else if (h < 300) { r = x; b = c; } else { r = c; b = x; }
+  return "#" + [r, g, b].map(n => Math.round((n + m) * 255).toString(16).padStart(2, "0")).join("");
+}
+const PRESETS = {
+  dark: ["#0d0d0f", "#141416", "#18181a", "#1a1a1c", "#1c1c1e", "#212123", "#242426", "#2c2c2e", "#3a3a3c", "#48484a", "#1a1405", "#c9a96e"],
+  light: ["#ffffff", "#fffaf0", "#faf1da", "#f5ecd4", "#ecdfbd", "#e6d7aa", "#d4bd85", "#c4a96a", "#1a1405", "#5c4a22", "#0d1f3c", "#b08a3e"]
+};
+let _pk = { k: null, h: 0, s: 0, v: 0, old: "#000000" };
+let _pkEl = null;
+
+function _pkApply(hex) {
+  _palette()[_pk.k] = hex;
+  _refresh();
+}
+function _pkRender(fromHex) {
+  const hex = fromHex || _hsvToHex(_pk.h, _pk.s, _pk.v);
+  document.getElementById("sdPkSV").style.background =
+    "linear-gradient(to top,#000,rgba(0,0,0,0)),linear-gradient(to right,#fff,hsl(" + Math.round(_pk.h) + ",100%,50%))";
+  const th = document.getElementById("sdPkThumb");
+  th.style.left = (_pk.s * 100) + "%"; th.style.top = ((1 - _pk.v) * 100) + "%"; th.style.background = hex;
+  document.getElementById("sdPkHue").value = Math.round(_pk.h);
+  document.getElementById("sdPkNew").style.background = hex;
+  const hi = document.getElementById("sdPkHex");
+  if (document.activeElement !== hi) { hi.value = hex.toUpperCase(); hi.classList.remove("bad"); }
+}
+function _openPicker(k) {
+  _pk.k = k; _pk.old = _palette()[k];
+  const rgb = [1, 3, 5].map(i => parseInt(_pk.old.slice(i, i + 2), 16));
+  const hsv = _rgbToHsv(rgb[0], rgb[1], rgb[2]); _pk.h = hsv.h; _pk.s = hsv.s; _pk.v = hsv.v;
+  if (!_pkEl) {
+    _pkEl = document.createElement("div");
+    _pkEl.id = "sdPicker";
+    _pkEl.innerHTML = `
+      <div class="sd-pk-card" role="dialog" aria-label="اختيار اللون">
+        <div class="sd-pk-head"><b id="sdPkTitle"></b><button type="button" class="sd-x" id="sdPkX" aria-label="إغلاق">×</button></div>
+        <div class="sd-pk-sv" id="sdPkSV"><div class="sd-pk-thumb" id="sdPkThumb"></div></div>
+        <input type="range" class="sd-pk-hue" id="sdPkHue" min="0" max="360" step="1" aria-label="درجة اللون">
+        <div class="sd-pk-row">
+          <div class="sd-pk-prev"><span id="sdPkOld" title="اللون الحالي"></span><span id="sdPkNew" title="اللون الجديد"></span></div>
+          <input type="text" class="sd-hex sd-pk-hex" id="sdPkHex" dir="ltr" maxlength="9" spellcheck="false" autocomplete="off" autocapitalize="characters" placeholder="FCF0DA">
+        </div>
+        <div class="sd-pk-presets" id="sdPkPresets"></div>
+        <button type="button" class="sd-b sd-save" id="sdPkDone">تم</button>
+      </div>`;
+    _modal.appendChild(_pkEl);
+    const sv = _pkEl.querySelector("#sdPkSV");
+    const move = (e) => {
+      const r = sv.getBoundingClientRect();
+      _pk.s = Math.min(1, Math.max(0, (e.clientX - r.left) / r.width));
+      _pk.v = 1 - Math.min(1, Math.max(0, (e.clientY - r.top) / r.height));
+      const hx = _hsvToHex(_pk.h, _pk.s, _pk.v); _pkApply(hx); _pkRender(hx);
+    };
+    sv.addEventListener("pointerdown", (e) => { sv.setPointerCapture(e.pointerId); sv._drag = true; move(e); });
+    sv.addEventListener("pointermove", (e) => { if (sv._drag) move(e); });
+    sv.addEventListener("pointerup", () => { sv._drag = false; });
+    sv.addEventListener("pointercancel", () => { sv._drag = false; });
+    _pkEl.querySelector("#sdPkHue").addEventListener("input", (e) => {
+      _pk.h = Number(e.target.value);
+      const hx = _hsvToHex(_pk.h, _pk.s, _pk.v); _pkApply(hx); _pkRender(hx);
+    });
+    const hi = _pkEl.querySelector("#sdPkHex");
+    hi.addEventListener("input", () => {
+      const hx = _parseHex(hi.value);
+      hi.classList.toggle("bad", !hx);
+      if (hx) {
+        const rgb2 = [1, 3, 5].map(i => parseInt(hx.slice(i, i + 2), 16));
+        const hv = _rgbToHsv(rgb2[0], rgb2[1], rgb2[2]); _pk.h = hv.h; _pk.s = hv.s; _pk.v = hv.v;
+        _pkApply(hx); _pkRender(hx);
+      }
+    });
+    hi.addEventListener("blur", () => { hi.value = _palette()[_pk.k].toUpperCase(); hi.classList.remove("bad"); });
+    _pkEl.querySelector("#sdPkPresets").addEventListener("click", (e) => {
+      const b = e.target.closest("[data-c]"); if (!b) return;
+      const hx = b.dataset.c, rgb2 = [1, 3, 5].map(i => parseInt(hx.slice(i, i + 2), 16));
+      const hv = _rgbToHsv(rgb2[0], rgb2[1], rgb2[2]); _pk.h = hv.h; _pk.s = hv.s; _pk.v = hv.v;
+      _pkApply(hx); _pkRender(hx);
+    });
+    _pkEl.querySelector("#sdPkDone").onclick = _closePicker;
+    _pkEl.querySelector("#sdPkX").onclick = _closePicker;
+    _pkEl.addEventListener("click", (e) => { if (e.target === _pkEl) _closePicker(); });
+  }
+  const labels = _mode === "light" ? LIGHT_LABELS : LABELS;
+  document.getElementById("sdPkTitle").textContent = labels[k];
+  document.getElementById("sdPkOld").style.background = _pk.old;
+  document.getElementById("sdPkPresets").innerHTML = PRESETS[_mode].map(c => `<button type="button" data-c="${c}" style="background:${c}" aria-label="${c}"></button>`).join("");
+  _pkEl.style.display = "flex";
+  _pkRender(_pk.old);
+}
+function _closePicker() { if (_pkEl) _pkEl.style.display = "none"; }
+
 function _setMode(m) {
   _mode = m;
   document.getElementById("sdModeDark").classList.toggle("on", m === "dark");
@@ -304,8 +417,20 @@ function openSiteDesign() {
     document.body.appendChild(_modal);
     _modal.addEventListener("input", (e) => {
       const t = e.target;
-      if (t.dataset && t.dataset.k) { _palette()[t.dataset.k] = t.value.toLowerCase(); _refresh(); }
+      if (t.classList && t.classList.contains("sd-hex")) {
+        const hx = _parseHex(t.value);
+        t.classList.toggle("bad", !hx);
+        if (hx) { _palette()[t.dataset.k] = hx; _refresh(); }
+      }
       else if (t.id === "sdAlpha") { _draft[_mode === "light" ? "glassALight" : "glassA"] = Number(t.value) / 100; _refresh(); }
+    });
+    _modal.addEventListener("focusout", (e) => {
+      const t = e.target;
+      if (t.classList && t.classList.contains("sd-hex")) { t.value = _palette()[t.dataset.k].toUpperCase(); t.classList.remove("bad"); }
+    });
+    _modal.addEventListener("click", (e) => {
+      const b = e.target.closest && e.target.closest("[data-pick]");
+      if (b) _openPicker(b.dataset.pick);
     });
     document.getElementById("sdClose").onclick = closeSiteDesign;
     document.getElementById("sdCancel").onclick = closeSiteDesign;
@@ -324,7 +449,7 @@ function openSiteDesign() {
   _modal.style.display = "flex";
 }
 
-function closeSiteDesign() { if (_modal) _modal.style.display = "none"; }
+function closeSiteDesign() { _closePicker(); if (_modal) _modal.style.display = "none"; }
 
 async function _save() {
   if (!window.isOwner?.()) return;
