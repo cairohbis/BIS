@@ -68,7 +68,7 @@
   z-index: 29000;
   width: 54px;
   height: 54px;
-  padding: 4px;
+  padding: 2px;
   object-fit: contain;
   border-radius: 50%;
   background: rgba(var(--t-card-rgb), var(--glass-a));
@@ -81,7 +81,7 @@
   transform: scale(.7);
   transition: opacity .25s ease, transform .25s ease;
 }
-.apk-mini.show{ opacity: .92; transform: scale(1); }
+.apk-mini.show{ opacity: .92; transform: scale(1); pointer-events: auto; cursor: pointer; }
 
 /* نافذة "تم تحميل التطبيق" — لا تحجب الموقع (بدون طبقة خلفية) */
 .apk-done{
