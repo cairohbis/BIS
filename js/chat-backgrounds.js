@@ -35,18 +35,40 @@ function _ensureBgStyle() {
 }
 .newchat-shell .phone.has-bg::before,
 .newchat-shell .phone.has-bg::after{
-  content:""; position:absolute; inset:0; z-index:-1; pointer-events:none;
+  content:""; position:absolute; top:0; left:0; right:0;
+  height:var(--chat-bg-h,100%);            /* ارتفاع الشاشة الكامل (ثابت مع الكيبورد) */
+  z-index:-1; pointer-events:none;
   background-position:center; background-repeat:no-repeat;
   background-image:var(--chat-bg-url);
 }
 .newchat-shell .phone.has-bg::before{      /* تعبئة مغبّشة */
-  inset:-24px; background-size:cover;
+  top:-24px; left:-24px; right:-24px;
+  height:calc(var(--chat-bg-h,100%) + 48px);
+  background-size:cover;
   filter:blur(24px) brightness(.75);
 }
 .newchat-shell .phone.has-bg::after{       /* الصورة الأصلية كاملة */
   background-size:contain;
 }`;
   document.head.appendChild(st);
+}
+
+// ── ثبات الخلفية مع الكيبورد ──
+// لما الكيبورد يفتح الـ .phone بيقصر (resizes-content)، فكان contain بيصغّر الصورة.
+// بنحفظ أقصى ارتفاع وصله الـ phone (من غير كيبورد) لنفس العرض، ونستخدمه كارتفاع للخلفية.
+let _bgRO = null, _bgMaxH = 0, _bgW = 0;
+function _trackBgHeight(el) {
+  const upd = () => {
+    const w = el.clientWidth, h = el.clientHeight;
+    if (!w || !h) return;
+    if (Math.abs(w - _bgW) > 40) { _bgW = w; _bgMaxH = 0; }   // تغيّر العرض (دوران/تغيير حجم) → ابدأ من جديد
+    if (h > _bgMaxH) _bgMaxH = h;
+    el.style.setProperty("--chat-bg-h", _bgMaxH + "px");
+  };
+  upd();
+  if (_bgRO) return;
+  if (window.ResizeObserver) { _bgRO = new ResizeObserver(upd); _bgRO.observe(el); }
+  window.addEventListener("orientationchange", () => { _bgMaxH = 0; setTimeout(upd, 350); });
 }
 
 function _applyChatBg(type, url) {
@@ -61,6 +83,7 @@ function _applyChatBg(type, url) {
     _ensureBgStyle();
     el.style.setProperty("--chat-bg-url", `url("${String(url).replace(/"/g, "%22")}")`);
     el.classList.add("has-bg");
+    _trackBgHeight(el);
   } else {
     el.style.removeProperty("--chat-bg-url");
     el.classList.remove("has-bg");
