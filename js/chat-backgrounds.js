@@ -21,6 +21,34 @@ const _bgSettingsRef = () => doc(window.db, "appSettings", "chatBackgrounds");
 // #oldChatMainLegacy)، فكانت الخلفية بتتطبّق فعليًا لكن على عنصر غير ظاهر
 // للمستخدم أبدًا. اتغيّر الاستهداف لـ ".newchat-shell .phone" وهو العنصر
 // الظاهر فعليًا في التصميم الجديد. باقي منطق الحفظ/الكاش/Firestore زي ما هو.
+
+// ── ستايل الخلفية: طبقتين (مغبّشة للتعبئة + الصورة الأصلية كاملة فوقها) ──
+function _ensureBgStyle() {
+  if (document.getElementById("chatBgStyle")) return;
+  const st = document.createElement("style");
+  st.id = "chatBgStyle";
+  st.textContent = `
+.newchat-shell .phone.has-bg{
+  isolation:isolate;
+  background-image:none !important;
+  background-color:#000;
+}
+.newchat-shell .phone.has-bg::before,
+.newchat-shell .phone.has-bg::after{
+  content:""; position:absolute; inset:0; z-index:-1; pointer-events:none;
+  background-position:center; background-repeat:no-repeat;
+  background-image:var(--chat-bg-url);
+}
+.newchat-shell .phone.has-bg::before{      /* تعبئة مغبّشة */
+  inset:-24px; background-size:cover;
+  filter:blur(24px) brightness(.75);
+}
+.newchat-shell .phone.has-bg::after{       /* الصورة الأصلية كاملة */
+  background-size:contain;
+}`;
+  document.head.appendChild(st);
+}
+
 function _applyChatBg(type, url) {
   const el = document.querySelector(".newchat-shell .phone");
   if (!el) return;
@@ -28,10 +56,13 @@ function _applyChatBg(type, url) {
     : window._currentChatId?.startsWith("room:") ? "rooms" : "private";
   if (type !== currentType) return;
   if (url) {
-    el.style.backgroundImage = `url('${url}')`;
+    // ✅ عرض الصورة كاملة بنسبتها الأصلية (contain) بدون قص أو تكرار أو تمدد،
+    // والمساحة الفاضية حواليها بتتملي بنسخة مغبّشة من نفس الصورة (CSS تحت).
+    _ensureBgStyle();
+    el.style.setProperty("--chat-bg-url", `url("${String(url).replace(/"/g, "%22")}")`);
     el.classList.add("has-bg");
   } else {
-    el.style.backgroundImage = "";
+    el.style.removeProperty("--chat-bg-url");
     el.classList.remove("has-bg");
   }
 }
