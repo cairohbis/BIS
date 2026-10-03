@@ -1494,6 +1494,11 @@ if ("serviceWorker" in navigator) {
           <div class="owner-collapse-inner">
             <div class="panel-sec">
               <div class="panel-sec-title"><i class="fa-solid fa-bullhorn"></i> إرسال إخطار سريع</div>
+              <div class="label">نوع الإخطار</div>
+              <select class="inp" id="qnAudienceSelect">
+                <option value="world">إخطار الدفعة</option>
+                <option value="global">إخطار عام</option>
+              </select>
               <div class="label">عنوان الإخطار *</div>
               <input class="inp" id="qnTitleInput" placeholder="مثال: تم تحديد موعد امتحان مهم غداً" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other">
               <div class="label">نص الإخطار</div>
@@ -5374,19 +5379,20 @@ makeAdder("oAddNewsBtn", () => {
 
 // إخطار سريع — نظام مستقل، بيستخدم window.qnPublish من quick-notifications.js
 // شغّال من صفحتين مختلفتين (الأونر والأدمن) بنفس المنطق، كل واحدة بحقولها
-function _wireQuickNotifBtn(btnId, titleId, bodyId) {
+function _wireQuickNotifBtn(btnId, titleId, bodyId, audienceId) {
   var btn = document.getElementById(btnId);
   if (!btn) return;
   btn.addEventListener("click", async function () {
     if (!isAdmin()) return toast("ليس لديك صلاحية", "error");
     var title = document.getElementById(titleId).value;
     var body  = document.getElementById(bodyId).value;
-    await window.qnPublish(title, body);
+    var _audEl = audienceId ? document.getElementById(audienceId) : null;
+    await window.qnPublish(title, body, _audEl ? _audEl.value : undefined);
     document.getElementById(titleId).value = "";
     document.getElementById(bodyId).value = "";
   });
 }
-_wireQuickNotifBtn("oAddQuickNotifBtn", "qnTitleInput", "qnBodyInput");
+_wireQuickNotifBtn("oAddQuickNotifBtn", "qnTitleInput", "qnBodyInput", "qnAudienceSelect");
 _wireQuickNotifBtn("adminAddQuickNotifBtn", "adminQnTitleInput", "adminQnBodyInput");
 
 makeAdder("oAddLecBtn", () => {
