@@ -24,11 +24,11 @@
   will-change: transform;
 }
 .bubble.other{
-  background: color-mix(in srgb, var(--other-bubble-color, #2b3242) var(--user-bubble-glass, 100%), transparent);
+  background: color-mix(in srgb, var(--other-bubble-color, var(--t-hover-border)) var(--user-bubble-glass, 100%), transparent);
   border: 1px solid rgba(255,255,255,0.08);
   backdrop-filter: blur(var(--user-bubble-blur, 8px));
   -webkit-backdrop-filter: blur(var(--user-bubble-blur, 8px));
-  color: var(--other-bubble-text, #f2f2f4);
+  color: var(--other-bubble-text, var(--text));
   border-bottom-left-radius: 6px;
 }
 .bubble.me{
@@ -146,7 +146,7 @@
 }
 #pollModal.open { display: flex; }
 .poll-sheet {
-  background: rgba(10,20,38,.97);
+  background: rgba(var(--t-card-rgb),var(--glass-a));
   border: 1px solid rgba(255,255,255,.11);
   border-radius: 26px 26px 0 0;
   width: 100%; max-width: 560px;
@@ -163,7 +163,7 @@
   padding: 18px 20px 12px;
   border-bottom: 1px solid rgba(255,255,255,.07);
   position: sticky; top: 0;
-  background: rgba(10,20,38,.97);
+  background: rgba(var(--t-card-rgb),var(--glass-a));
   border-radius: 26px 26px 0 0; z-index: 1;
 }
 .poll-sheet-title { font-size: 16px; font-weight: 800; color: var(--text); display: flex; align-items: center; gap: 8px; }
@@ -182,7 +182,7 @@
 }
 .poll-inp {
   width: 100%; padding: 11px 14px;
-  border-radius: 14px; border: 1.5px solid rgba(26,45,71,.9);
+  border-radius: 14px; border: 1.5px solid rgba(var(--t-border-rgb),.9);
   background: rgba(255,255,255,.05); color: var(--text);
   font-family: inherit; font-size: 14px; outline: none;
   transition: border-color .2s, background .2s;
@@ -195,7 +195,7 @@
 }
 .poll-opt-inp {
   flex: 1; padding: 9px 13px;
-  border-radius: 12px; border: 1.5px solid rgba(26,45,71,.9);
+  border-radius: 12px; border: 1.5px solid rgba(var(--t-border-rgb),.9);
   background: rgba(255,255,255,.04); color: var(--text);
   font-family: inherit; font-size: 13px; outline: none;
   transition: border-color .2s;
@@ -270,7 +270,7 @@
 .bubble.me .bubble-text { color: var(--user-bubble-text, #fff); }
 
 /* ── Chat bubble text — other (new design) ── */
-.bubble.other .bubble-text { color: var(--other-bubble-text, #f2f2f4); }
+.bubble.other .bubble-text { color: var(--other-bubble-text, var(--text)); }
 
 /* ── الأصل: كانت أسطر فردية محشورة في قائمة html.theme-light مشتركة، سطر 6153-6170 تقريبًا ── */
 html.theme-light .bubble.other { background: color-mix(in srgb, var(--other-bubble-color, var(--chat-other)) var(--user-bubble-glass, 100%), transparent); color: var(--other-bubble-text, var(--chat-other-text)); }

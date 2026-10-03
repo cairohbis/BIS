@@ -68,7 +68,7 @@
   display: none; flex-shrink: 0;
   align-items: center; gap: 8px;
   padding: 8px 12px;
-  background: rgba(6,13,26,.85);
+  background: rgba(var(--t-bg-rgb),.85);
   backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
   border-bottom: 1px solid rgba(255,255,255,.08);
   animation: srchBarIn .18s ease;
