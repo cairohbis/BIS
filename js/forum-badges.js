@@ -28,6 +28,9 @@
   let _db, _fs, _uid, _worldId;
   const _counts = {};   // key -> عدد حالي
   const _unsubs = {};   // key -> دالة إلغاء الاشتراك الحالية
+  let _sig = null;      // بصمة "uid|worldId" الحالية — تغيّرها = إعادة تشغيل كاملة
+  let _gen = 0;         // رقم الجيل: يُبطل أي _watch قديم كان منتظر await
+  let _bound = false;   // ربط click مرة واحدة فقط
 
   // ── الشكل (badge أحمر فاتح على الكارت + badge أحمر غامق نابض على شريط "المنتدى") ──
   function _injectStyles() {
@@ -106,9 +109,11 @@
   }
 
   async function _watch(src) {
+    const gen = _gen;
     if (_unsubs[src.key]) { try { _unsubs[src.key](); } catch (e) {} }
 
     const lastSeen = await _lastSeenOrInit(src.key);
+    if (gen !== _gen) return; // الحساب/العالم اتغيّر أثناء الانتظار — تجاهل هذا الاستماع القديم
 
     if (src.kind === "singleDoc") {
       const ref = _fs.doc(_db, src.col, _worldId || "_none_");
@@ -152,7 +157,8 @@
 
   function _bindResetOnClick() {
     const grid = document.getElementById("forum-landing");
-    if (!grid) return;
+    if (!grid || _bound) return;
+    _bound = true;
     grid.addEventListener("click", (e) => {
       const card = e.target.closest(".forum-section-card");
       if (!card) return;
@@ -161,22 +167,42 @@
     });
   }
 
+  function _teardown() {
+    _gen++;
+    Object.keys(_unsubs).forEach((k) => { try { _unsubs[k](); } catch (e) {} delete _unsubs[k]; });
+    Object.keys(_counts).forEach((k) => { delete _counts[k]; });
+    _renderAll();
+  }
+
   async function _boot() {
-    if (!window.db || !window.currentUser || !window.currentUser.uid) {
+    if (!_fs) {
+      try {
+        _fs = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+      } catch (e) { return; }
+    }
+
+    const uid = window.currentUser && window.currentUser.uid;
+    const worldId = (typeof window.activeWorldContext === "function") ? window.activeWorldContext() : null;
+
+    // لا بداية قبل ما uid + worldId صالح يكونوا جاهزين؛ ولو اختفوا (خروج) نوقف كل حاجة.
+    if (!window.db || !uid || !worldId) {
+      if (_sig !== null) { _sig = null; _teardown(); }
       setTimeout(_boot, 800);
       return;
     }
-    _db  = window.db;
-    _uid = window.currentUser.uid;
-    _worldId = (typeof window.activeWorldContext === "function") ? window.activeWorldContext() : null;
 
-    try {
-      _fs = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
-    } catch (e) { return; }
-
-    _injectStyles();
-    _bindResetOnClick();
-    SOURCES.forEach(_watch);
+    const sig = uid + "|" + worldId;
+    if (sig !== _sig) {
+      if (_sig !== null) _teardown();
+      _sig = sig;
+      _db  = window.db;
+      _uid = uid;
+      _worldId = worldId;
+      _injectStyles();
+      _bindResetOnClick();
+      SOURCES.forEach(_watch);
+    }
+    setTimeout(_boot, 800); // مراقبة تغيّر الحساب/العالم
   }
 
   if (document.readyState === "loading") {
