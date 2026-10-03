@@ -38,6 +38,29 @@ import { doc, getDoc, setDoc, deleteDoc, serverTimestamp } from "https://www.gst
   var IMG_REL = /^images\/[\w\-.\/]+\.(webp|png|jpe?g|gif|svg)$/i;
   var IMG_HTTPS = /^https:\/\/[^\s"'<>\\]+\.(webp|png|jpe?g|gif|svg)(\?[^\s"'<>\\]*)?$/i;
 
+  /* أماكن عرض بريق خارج الإشعارات: الصورة فقط بتتغير، الحجم والحركة والمكان ثابتين.
+     sel بيستهدف عنصر <img> نفسه. الأماكن بتتعرف بالحاوية (slot) اللي كل adapter بيعملها. */
+  var PLACES = [
+    { id: "dialog",     label: "حوار التأكيد",           defaultKey: "thinking",     size: "md", sel: ".mascot-dialog-slot .mascot__img" },
+    { id: "notifPanel", label: "لوحة الإشعارات",         defaultKey: "happy",        size: "md", sel: ".mascot-notification-slot .mascot__img" },
+    { id: "empty",      label: "حالة فارغة",             defaultKey: "empty",        size: "xl", sel: ".mascot-empty-state-slot .mascot[data-mood=\"empty\"] .mascot__img" },
+    { id: "emptyChat",  label: "شات فارغ",               defaultKey: "emptyChat",    size: "xl", sel: ".mascot-empty-state-slot .mascot[data-mood=\"emptyChat\"] .mascot__img" },
+    { id: "underdev",   label: "قيد التطوير / موقوف",    defaultKey: "construction", size: "xl", sel: ".mascot-underdev-slot .mascot__img" },
+    { id: "loading",    label: "التحميل",                defaultKey: "thinking",     size: "sm", sel: ".mascot-loading-slot .mascot__img" },
+    { id: "grades",     label: "الدرجات",                defaultKey: "thinking",     size: "sm", sel: ".mascot-grades-slot .mascot__img" },
+    { id: "login",      label: "تسجيل الدخول",           defaultKey: "happy",        size: "sm", sel: ".mascot-login-slot .mascot__img" },
+    { id: "settings",   label: "الإعدادات",              defaultKey: "happy",        size: "sm", sel: ".mascot-settings-slot .mascot__img" },
+    { id: "splash",     label: "شاشة البداية",           defaultKey: "wave",         size: "lg", sel: ".mascot-splash-slot .mascot__img" },
+    { id: "military",   label: "الخدمة العسكرية",        defaultKey: "salute",       size: "md", sel: ".mascot-mil-title-slot .mascot__img" },
+    { id: "quickNotif", label: "إخطار سريع",             defaultKey: null,           size: "ثابت", file: "images/mascot/actions/bell-ring.webp", sel: "#qnMascotSlot img" },
+    { id: "apkMain",    label: "نافذة تحميل التطبيق",    defaultKey: "run",          size: "ثابت", sel: ".apk-overlay img.apk-img" },
+    { id: "apkMini",    label: "تذكير التطبيق (مصغر)",   defaultKey: "sad",          size: "ثابت", sel: "img.apk-mini" },
+    { id: "apkDone",    label: "اكتمال تحميل التطبيق",   defaultKey: "love",         size: "ثابت", sel: ".apk-done img" },
+    { id: "aiAssistant",label: "المساعد الذكي",          defaultKey: "sleep",        size: "ثابت", sel: "img:not(.mascot__img)[src$=\"actions/sleep.webp\"]" }
+  ];
+  var PLACE_BY_ID = {};
+  PLACES.forEach(function (pl) { PLACE_BY_ID[pl.id] = pl; });
+
   var _cfg = null;        // الإعداد الفعّال في الذاكرة (null = مفيش Override)
   var _loaded = false;    // اتحمّل من كاش طازج أو من Firestore في الجلسة دي
   var _loading = false;
@@ -60,8 +83,18 @@ import { doc, getDoc, setDoc, deleteDoc, serverTimestamp } from "https://www.gst
   }
 
   function normalize(raw) {
-    var out = { version: VERSION, states: {} };
-    if (!raw || typeof raw !== "object" || !raw.states || typeof raw.states !== "object") return out;
+    var out = { version: VERSION, states: {}, places: {} };
+    if (!raw || typeof raw !== "object") return out;
+    PLACES.forEach(function (pl) {
+      var r = raw.places && typeof raw.places === "object" ? raw.places[pl.id] : null;
+      if (!r || typeof r !== "object") return;
+      var o = {};
+      if (validKey(r.imageKey)) o.imageKey = r.imageKey;
+      var ci = normImg(r.customImage);
+      if (ci) o.customImage = ci;
+      if (Object.keys(o).length) out.places[pl.id] = o;
+    });
+    if (!raw.states || typeof raw.states !== "object") return out;
     STATE_IDS.forEach(function (id) {
       var r = raw.states[id];
       if (!r || typeof r !== "object") return;
@@ -77,7 +110,9 @@ import { doc, getDoc, setDoc, deleteDoc, serverTimestamp } from "https://www.gst
     return out;
   }
 
-  function hasStates(c) { return !!(c && c.states && Object.keys(c.states).length); }
+  function hasStates(c) {
+    return !!(c && ((c.states && Object.keys(c.states).length) || (c.places && Object.keys(c.places).length)));
+  }
 
   /* ── كاش محلي ── */
   function readCache() {
@@ -96,9 +131,10 @@ import { doc, getDoc, setDoc, deleteDoc, serverTimestamp } from "https://www.gst
   }
 
   /* ── تحميل مرة واحدة (في الخلفية — مفيش حاجة بتستناه) ── */
+  var _inflight = null;
   function load(force) {
-    return new Promise(function (resolve) {
-      if (_loading) { resolve(_cfg); return; }
+    if (_loading && _inflight) return _inflight; // قراءة شغالة بالفعل: استنّى نفس النتيجة بدل null
+    var pr = new Promise(function (resolve) {
       if (!force && (_loaded || _attempts >= MAX_ATTEMPTS)) { resolve(_cfg); return; }
       if (!window.db || !window.currentUser) { resolve(_cfg); return; } // لا قراءة قبل تسجيل الدخول
       _loading = true;
@@ -108,17 +144,22 @@ import { doc, getDoc, setDoc, deleteDoc, serverTimestamp } from "https://www.gst
         _cfg = hasStates(n) ? n : null;
         _loaded = true;
         writeCache();
+        syncPlaces();
       }).catch(function () {
         /* فشل/أوفلاين/Rules: نكمل بالكاش أو بالنظام الحالي */
       }).then(function () {
         _loading = false;
+        _inflight = null;
         resolve(_cfg);
       });
     });
+    if (_loading) _inflight = pr;
+    return pr;
   }
 
   var _cacheT = readCache();
   if (_cacheT && (Date.now() - _cacheT) < TTL_MS) _loaded = true; // كاش طازج = مفيش قراءة شبكة خالص
+  syncPlaces();
 
   if (!_loaded) {
     var _polls = 0;
@@ -154,6 +195,79 @@ import { doc, getDoc, setDoc, deleteDoc, serverTimestamp } from "https://www.gst
   function defaultFile(key) {
     try { var s = window.Mascot.getRegistrySnapshot("default"); return (s[key] && s[key].file) || null; } catch (e) { return null; }
   }
+  /* ── أماكن العرض: تغيير src الصورة فقط (الحجم/الحركة/الحاوية من الـ adapter زي ما هي) ── */
+  var _obs = null;
+  function placeSrc(ov) {
+    if (ov.customImage) return ov.customImage.value;
+    if (ov.imageKey) return defaultFile(ov.imageKey);
+    return null;
+  }
+  function applyPlaceImg(img, id, ov) {
+    var want = placeSrc(ov);
+    if (!want || img.tagName !== "IMG") return;
+    if (img.getAttribute("data-mdp") === id && img.getAttribute("src") === want) return;
+    if (!img.hasAttribute("data-mdp-orig")) img.setAttribute("data-mdp-orig", img.getAttribute("src") || "");
+    img.setAttribute("data-mdp", id);
+    var onErr = function () {
+      img.removeEventListener("error", onErr);
+      var o = img.getAttribute("data-mdp-orig");
+      if (o) img.src = o; // fallback للصورة الأصلية
+    };
+    img.addEventListener("error", onErr);
+    img.src = want;
+  }
+  function applyPlacesIn(root) {
+    var pl = _cfg && _cfg.places;
+    if (!pl) return;
+    Object.keys(pl).forEach(function (id) {
+      var def = PLACE_BY_ID[id];
+      if (!def) return;
+      try {
+        if (root.nodeType === 1 && root.matches && root.matches(def.sel)) applyPlaceImg(root, id, pl[id]);
+        var list = root.querySelectorAll ? root.querySelectorAll(def.sel) : [];
+        for (var i = 0; i < list.length; i++) applyPlaceImg(list[i], id, pl[id]);
+      } catch (e) {}
+    });
+  }
+  function restorePlaces() {
+    var list = document.querySelectorAll("img[data-mdp-orig]");
+    for (var i = 0; i < list.length; i++) {
+      var o = list[i].getAttribute("data-mdp-orig");
+      if (o) list[i].src = o;
+      list[i].removeAttribute("data-mdp");
+      list[i].removeAttribute("data-mdp-orig");
+    }
+  }
+  function syncPlaces() {
+    var has = !!(_cfg && _cfg.places && Object.keys(_cfg.places).length);
+    if (!has) {
+      if (_obs) { _obs.disconnect(); _obs = null; } // مفيش Override أماكن = صفر تكلفة
+      restorePlaces();
+      return;
+    }
+    if (!document.body) return;
+    if (!_obs) {
+      _obs = new MutationObserver(function (muts) {
+        for (var i = 0; i < muts.length; i++) {
+          var added = muts[i].addedNodes;
+          for (var j = 0; j < added.length; j++) if (added[j].nodeType === 1) applyPlacesIn(added[j]);
+        }
+      });
+      _obs.observe(document.body, { childList: true, subtree: true });
+    }
+    applyPlacesIn(document);
+    var stale = document.querySelectorAll("img[data-mdp]");
+    for (var k = 0; k < stale.length; k++) {
+      var pid = stale[k].getAttribute("data-mdp");
+      if (!_cfg.places[pid]) { // مكان اتشال منه الـ Override
+        var o = stale[k].getAttribute("data-mdp-orig");
+        if (o) stale[k].src = o;
+        stale[k].removeAttribute("data-mdp");
+        stale[k].removeAttribute("data-mdp-orig");
+      }
+    }
+  }
+
   function applyToToast(msg, type, explicit) {
     if (!_cfg || !window.Mascot) return;
     var id = stateFor(msg, type, explicit);
@@ -211,7 +325,18 @@ import { doc, getDoc, setDoc, deleteDoc, serverTimestamp } from "https://www.gst
 
   /* ── النشر (المالك فقط) ── */
   function buildPublished(draft) {
-    var out = { version: VERSION, states: {} }, skipped = 0;
+    var out = { version: VERSION, states: {}, places: {} }, skipped = 0;
+    PLACES.forEach(function (pl) {
+      var d = draft && draft.places && draft.places[pl.id];
+      if (!d) return;
+      var o = {};
+      if (validKey(d.imageKey)) o.imageKey = d.imageKey;
+      if (d.customImage) {
+        var ci = normImg(d.customImage);
+        if (ci) o.customImage = ci; else skipped++;
+      }
+      if (Object.keys(o).length) out.places[pl.id] = o;
+    });
     STATE_IDS.forEach(function (id) {
       var d = draft && draft.states && draft.states[id];
       if (!d) return;
@@ -239,13 +364,15 @@ import { doc, getDoc, setDoc, deleteDoc, serverTimestamp } from "https://www.gst
       await setDoc(doc(window.db, COL, DOC), {
         version: VERSION,
         states: b.cfg.states,
+        places: b.cfg.places,
         updatedBy: (window.currentUser && window.currentUser.uid) || "",
         updatedAt: serverTimestamp()
       });
       _cfg = hasStates(b.cfg) ? b.cfg : null;
       _loaded = true;
       writeCache();
-      return { ok: true, count: Object.keys(b.cfg.states).length, skipped: b.skipped };
+      syncPlaces();
+      return { ok: true, count: Object.keys(b.cfg.states).length + Object.keys(b.cfg.places).length, states: Object.keys(b.cfg.states).length, places: Object.keys(b.cfg.places).length, skipped: b.skipped };
     } catch (e) {
       return { ok: false, reason: (e && (e.code || e.message)) || "error" };
     }
@@ -259,6 +386,7 @@ import { doc, getDoc, setDoc, deleteDoc, serverTimestamp } from "https://www.gst
       _cfg = null;
       _loaded = true;
       writeCache();
+      syncPlaces();
       return { ok: true };
     } catch (e) {
       return { ok: false, reason: (e && (e.code || e.message)) || "error" };
@@ -269,6 +397,7 @@ import { doc, getDoc, setDoc, deleteDoc, serverTimestamp } from "https://www.gst
     VERSION: VERSION,
     PATH: COL + "/" + DOC,
     STATE_IDS: STATE_IDS.slice(),
+    PLACES: PLACES.map(function (p) { return { id: p.id, label: p.label, defaultKey: p.defaultKey, size: p.size, file: p.file || null }; }),
     getConfig: function () { return _cfg ? JSON.parse(JSON.stringify(_cfg)) : null; },
     load: load,
     publish: publish,

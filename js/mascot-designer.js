@@ -46,7 +46,7 @@
   ];
 
   var _draft = null;
-  var _sel = "success";
+  var _sel = "success"; // "success" | ... | "place:<id>"
   var _modal = null;
   var _inst = null;
 
@@ -68,12 +68,29 @@
     return M.EMOTIONS.indexOf(k) > -1 || M.ACTIONS.indexOf(k) > -1 || M.UI_STATES.indexOf(k) > -1;
   }
 
+  function placeList() { return (window.MascotOverride && window.MascotOverride.PLACES) || []; }
+  function placeById(id) {
+    var l = placeList();
+    for (var i = 0; i < l.length; i++) if (l[i].id === id) return l[i];
+    return null;
+  }
+  function isPlace() { return _sel.indexOf("place:") === 0; }
+  function cur() { return isPlace() ? _draft.places[_sel.slice(6)] : _draft.states[_sel]; }
+  function curDef() { return isPlace() ? placeById(_sel.slice(6)) : stateById(_sel); }
+  function placeDefaults() { return { imageKey: null, customImage: null }; }
+  function fileFor(key) {
+    try { var sn = window.Mascot.getRegistrySnapshot("default"); return (sn[key] && sn[key].file) || ""; }
+    catch (e) { return ""; }
+  }
+  function thumbOf(def) { return def.file || (def.defaultKey ? fileFor(def.defaultKey) : ""); }
+
   function stateDefaults(st) {
     return { imageKey: null, customImage: null, size: "sm", animation: "auto", message: st.msg, label: "" };
   }
   function getDefaults() {
-    var cfg = { version: VERSION, states: {} };
+    var cfg = { version: VERSION, states: {}, places: {} };
     STATES.forEach(function (st) { cfg.states[st.id] = stateDefaults(st); });
+    placeList().forEach(function (pl) { cfg.places[pl.id] = placeDefaults(); });
     return cfg;
   }
 
@@ -96,9 +113,16 @@
 
   function normalize(raw) {
     var cfg = getDefaults();
-    if (!raw || typeof raw !== "object" || !raw.states) return cfg;
+    if (!raw || typeof raw !== "object") return cfg;
+    placeList().forEach(function (pl) {
+      var r = raw.places && raw.places[pl.id];
+      if (!r || typeof r !== "object") return;
+      var d = cfg.places[pl.id];
+      if (validKey(r.imageKey)) d.imageKey = r.imageKey;
+      d.customImage = normalizeCustom(r.customImage);
+    });
     STATES.forEach(function (st) {
-      var r = raw.states[st.id];
+      var r = raw.states && raw.states[st.id];
       if (!r || typeof r !== "object") return;
       var d = cfg.states[st.id];
       if (validKey(r.imageKey)) d.imageKey = r.imageKey;
@@ -142,24 +166,34 @@
       "<div class=\"md-preview\">" +
         "<div class=\"md-stage\"><div class=\"toast show success md-toast\" id=\"mdToast\">" +
           "<span class=\"mascot-toast-slot\" id=\"mdSlot\"></span><span id=\"mdMsg\"></span>" +
-        "</div></div>" +
-        "<div class=\"md-lbl\">جرّب الحالات</div>" +
+        "</div>" +
+        "<div class=\"md-placebox\" id=\"mdPlaceBox\" style=\"display:none\"><span id=\"mdPlaceSlot\"></span><div class=\"md-placecap\" id=\"mdPlaceCap\"></div></div></div>" +
+        "<div class=\"md-lbl\">حالات شريط الإشعارات</div>" +
         "<div class=\"md-states\" id=\"mdStates\">" +
           STATES.map(function (st) {
-            return "<button class=\"md-chip\" data-st=\"" + st.id + "\">" + st.label + "</button>";
+            return "<button class=\"md-chip\" data-st=\"" + st.id + "\" data-sel=\"" + st.id + "\">" + st.label + "</button>";
+          }).join("") +
+        "</div>" +
+        "<div class=\"md-lbl\" style=\"margin-top:10px\">أماكن العرض (الصورة فقط — الحجم ثابت)</div>" +
+        "<div class=\"md-states\" id=\"mdPlaces\">" +
+          placeList().map(function (pl) {
+            return "<button class=\"md-chip\" data-pl=\"" + pl.id + "\" data-sel=\"place:" + pl.id + "\">" + esc(pl.label) + "</button>";
           }).join("") +
         "</div>" +
       "</div>" +
       "<div class=\"md-sec\">صورة بريق</div>" +
-      "<div class=\"md-row\"><label for=\"mdImg\">اختيار الصورة</label>" +
-        "<select class=\"md-in\" id=\"mdImg\"></select></div>" +
+      "<div class=\"md-row\"><label for=\"mdPick\">اختيار الصورة</label>" +
+        "<select id=\"mdImg\" style=\"display:none\"></select>" +
+        "<button type=\"button\" class=\"md-pick\" id=\"mdPick\"><img id=\"mdPickImg\" alt=\"\"><span id=\"mdPickTxt\"></span><i>▾</i></button>" +
+        "<div class=\"md-list\" id=\"mdList\" style=\"display:none\"></div></div>" +
       "<div class=\"md-row\"><label for=\"mdFile\">صورة مخصصة (معاينة فقط)</label>" +
         "<input type=\"file\" class=\"md-in\" id=\"mdFile\" accept=\"image/*\"></div>" +
       "<div class=\"md-row\"><label for=\"mdPath\">أو مسار صورة داخل المشروع</label>" +
         "<div class=\"md-line\"><input type=\"text\" class=\"md-in\" id=\"mdPath\" dir=\"ltr\" placeholder=\"images/mascot/actions/bell-ring.webp\">" +
         "<button class=\"md-mini\" id=\"mdPathApply\">تطبيق</button></div></div>" +
       "<div class=\"md-row\"><button class=\"md-mini danger\" id=\"mdCustomClear\" style=\"display:none\">إزالة الصورة المخصصة</button></div>" +
-      "<div class=\"md-sec\">إعدادات الشكل</div>" +
+      "<div id=\"mdShape\">" +
+      "<div class=\"md-sec\">إعدادات الشكل (للإشعارات فقط)</div>" +
       "<div class=\"md-row\"><label for=\"mdSize\">الحجم</label><select class=\"md-in\" id=\"mdSize\">" +
         Object.keys(SIZES).map(function (k) { return "<option value=\"" + k + "\">" + SIZES[k] + "</option>"; }).join("") +
       "</select></div>" +
@@ -168,14 +202,16 @@
       "</select></div>" +
       "<div class=\"md-row\"><label for=\"mdMsgIn\">نص المعاينة</label><input type=\"text\" class=\"md-in\" id=\"mdMsgIn\" maxlength=\"80\"></div>" +
       "<div class=\"md-row\"><label for=\"mdLabel\">وصف الصورة (إتاحة، اختياري)</label><input type=\"text\" class=\"md-in\" id=\"mdLabel\" maxlength=\"60\"></div>" +
+      "</div>" +
       "<div class=\"md-sec\">النشر على الموقع</div>" +
+      "<div class=\"md-pubinfo\" id=\"mdPubInfo\"></div>" +
       "<div class=\"md-line\">" +
         "<button class=\"md-mini\" id=\"mdPublish\">نشر على الموقع</button>" +
         "<button class=\"md-mini\" id=\"mdLoadPub\">تحميل المنشور</button>" +
         "<button class=\"md-mini danger\" id=\"mdUnpublish\">إلغاء النشر</button>" +
       "</div>" +
       "<div class=\"md-status\" id=\"mdStatus\"></div>" +
-      "<div class=\"md-note\">«حفظ المسودة» بيحفظ على جهازك فقط. «نشر على الموقع» بيطبّق الصور (مسار/رابط) والحجم والحركة ووصف الصورة على إشعارات كل المستخدمين؛ صور الجهاز ونص المعاينة معاينة فقط. «إلغاء النشر» بيرجّع النظام الأصلي.</div>" +
+      "<div class=\"md-note\">«حفظ المسودة» بيحفظ على جهازك فقط. «نشر على الموقع» بيطبّق على إشعارات كل المستخدمين الصورة والحجم والحركة ووصف الصورة، وعلى أماكن العرض الصورة فقط (الحجم ثابت)؛ صور الجهاز ونص المعاينة معاينة فقط. اضغط زر النشر مرتين للتأكيد. «إلغاء النشر» بيرجّع النظام الأصلي.</div>" +
     "</div>" +
     "<div class=\"md-foot\">" +
       "<button class=\"md-b md-save\" id=\"mdSaveDraft\">حفظ المسودة</button>" +
@@ -187,34 +223,106 @@
 
   function setStatus(t) { var s = byId("mdStatus"); if (s) s.textContent = t || ""; }
 
+  function updatePick() {
+    var d = cur(), def = curDef();
+    if (!d || !def) return;
+    var url = d.customImage ? d.customImage.value : (d.imageKey ? fileFor(d.imageKey) : thumbOf(def));
+    var txt = d.customImage ? "صورة مخصصة"
+      : d.imageKey ? (KEY_LABELS[d.imageKey] || d.imageKey)
+      : "الافتراضي" + (def.defaultKey ? " (" + (KEY_LABELS[def.defaultKey] || def.defaultKey) + ")" : "");
+    byId("mdPickImg").src = url;
+    byId("mdPickTxt").textContent = txt;
+  }
+
+  function markPublished() {
+    var MO = window.MascotOverride, cfg = MO && MO.getConfig();
+    Array.prototype.forEach.call(document.querySelectorAll("#mascotDesignerModal .md-chip"), function (b) {
+      var sel = b.getAttribute("data-sel") || "", on = false;
+      if (cfg) on = sel.indexOf("place:") === 0 ? !!(cfg.places && cfg.places[sel.slice(6)]) : !!(cfg.states && cfg.states[sel]);
+      b.classList.toggle("pub", on);
+    });
+    var info = byId("mdPubInfo");
+    if (info) {
+      var ns = cfg && cfg.states ? Object.keys(cfg.states).length : 0, np = cfg && cfg.places ? Object.keys(cfg.places).length : 0;
+      info.textContent = (ns + np) ? "Override منشور حالياً: " + ns + " إشعار + " + np + " مكان (النقطة على الزر = منشور)" : "لا يوجد تصميم منشور — النظام الأصلي شغال";
+    }
+  }
+
+  function listHTML() {
+    var M = window.Mascot, d = cur(), def = curDef();
+    function opt(v, label, url) {
+      return "<button type=\"button\" class=\"md-opt" + ((d.imageKey || "") === v ? " on" : "") + "\" data-v=\"" + esc(v) + "\">" +
+        "<img loading=\"lazy\" decoding=\"async\" alt=\"\" src=\"" + esc(url) + "\"><span>" + esc(label) + "</span></button>";
+    }
+    function group(title, keys) {
+      return "<div class=\"md-gt\">" + title + "</div>" + keys.map(function (k) {
+        return opt(k, (KEY_LABELS[k] || k) + " (" + k + ")", fileFor(k));
+      }).join("");
+    }
+    return opt("", "الافتراضي" + (def && def.defaultKey ? " (" + (KEY_LABELS[def.defaultKey] || def.defaultKey) + ")" : ""), def ? thumbOf(def) : "") +
+      group("انفعالات", M.EMOTIONS) + group("حركات", M.ACTIONS) + group("واجهة", M.UI_STATES);
+  }
+  function closeList() { var l = byId("mdList"); if (l) l.style.display = "none"; }
+  function toggleList() {
+    var l = byId("mdList");
+    if (l.style.display !== "none") { closeList(); return; }
+    l.innerHTML = listHTML();
+    l.style.display = "block";
+  }
+
   function syncControls() {
-    var st = stateById(_sel), d = _draft.states[_sel];
+    var d = cur(), def = curDef(), place = isPlace();
+    if (!d || !def) return;
+    closeList();
+    byId("mdShape").style.display = place ? "none" : "";
     var sel = byId("mdImg");
-    var defLabel = KEY_LABELS[st.defaultKey] || st.defaultKey;
-    sel.innerHTML = "<option value=\"\">الافتراضي للحالة (" + esc(defLabel) + ")</option>" + imageOptionsHTML();
+    sel.innerHTML = "<option value=\"\">الافتراضي</option>" + imageOptionsHTML();
     sel.value = d.imageKey || "";
-    byId("mdSize").value = d.size;
-    byId("mdAnim").value = d.animation;
-    byId("mdMsgIn").value = d.message;
-    byId("mdLabel").value = d.label;
+    if (!place) {
+      byId("mdSize").value = d.size;
+      byId("mdAnim").value = d.animation;
+      byId("mdMsgIn").value = d.message;
+      byId("mdLabel").value = d.label;
+    }
     byId("mdPath").value = d.customImage && d.customImage.type === "path" ? d.customImage.value : "";
     byId("mdFile").value = "";
     byId("mdCustomClear").style.display = d.customImage ? "" : "none";
-    Array.prototype.forEach.call(document.querySelectorAll("#mdStates .md-chip"), function (b) {
-      b.classList.toggle("on", b.getAttribute("data-st") === _sel);
+    Array.prototype.forEach.call(document.querySelectorAll("#mascotDesignerModal .md-chip"), function (b) {
+      b.classList.toggle("on", b.getAttribute("data-sel") === _sel);
     });
+    updatePick();
   }
 
   /* المعاينة: Mascot.show الحقيقي. الصورة المخصصة والحركة بتتطبق على نسخة المعاينة فقط (بدون لمس Registry) */
   function renderPreview() {
-    var st = stateById(_sel), d = _draft.states[_sel];
-    var slot = byId("mdSlot"), toastEl = byId("mdToast");
-    if (!slot || !toastEl) return;
+    var place = isPlace(), d = cur(), def = curDef();
+    var toastEl = byId("mdToast"), box = byId("mdPlaceBox");
+    if (!toastEl || !d || !def) return;
     if (_inst) { _inst.destroy(); _inst = null; }
-    slot.innerHTML = "";
+    byId("mdSlot").innerHTML = "";
+    byId("mdPlaceSlot").innerHTML = "";
+    if (!window.Mascot) { byId("mdMsg").textContent = "بريق غير محمّل"; return; }
+
+    if (place) {
+      toastEl.style.display = "none";
+      box.style.display = "";
+      var size = { sm: 1, md: 1, lg: 1, xl: 1 }[def.size] ? def.size : "md";
+      _inst = window.Mascot.show({ mood: d.imageKey || def.defaultKey || "happy", size: size, container: byId("mdPlaceSlot"), decorative: true });
+      var url = d.customImage ? d.customImage.value : (!d.imageKey && def.file ? def.file : null);
+      if (url) {
+        var pimg = _inst.el.querySelector(".mascot__img");
+        if (pimg) { pimg.loading = "eager"; pimg.src = url; }
+      }
+      byId("mdPlaceCap").textContent = "الحجم ثابت" + (size === def.size ? " (" + def.size + ")" : "") + " — الصورة فقط بتتغير";
+      return;
+    }
+
+    box.style.display = "none";
+    toastEl.style.display = "";
+    var st = def;
+    var slot = byId("mdSlot");
     toastEl.className = "toast show md-toast" + (st.tone ? " " + st.tone : "");
     byId("mdMsg").textContent = d.message;
-    if (!window.Mascot) { byId("mdMsg").textContent = "بريق غير محمّل"; return; }
 
     _inst = window.Mascot.show({
       mood: d.imageKey || st.defaultKey,
@@ -238,8 +346,9 @@
   }
 
   function setCustom(ci) {
-    _draft.states[_sel].customImage = ci;
+    cur().customImage = ci;
     byId("mdCustomClear").style.display = ci ? "" : "none";
+    updatePick();
     renderPreview();
   }
 
@@ -270,7 +379,11 @@
 
   function open() {
     if (!(window.isOwner && window.isOwner())) return;
+    var hasDraft = false;
+    try { hasDraft = !!localStorage.getItem(DRAFT_KEY); } catch (e) {}
     _draft = loadDraft();
+    var pub = window.MascotOverride && window.MascotOverride.getConfig();
+    if (!hasDraft && pub) _draft = normalize(pub); // مفيش مسودة محلية: ابدأ من التصميم المنشور مش من الشكل القديم
     if (!_modal) {
       _modal = document.createElement("div");
       _modal.id = "mascotDesignerModal";
@@ -279,16 +392,26 @@
 
       _modal.addEventListener("click", function (e) {
         var chip = e.target.closest && e.target.closest(".md-chip");
-        if (chip) { _sel = chip.getAttribute("data-st"); setStatus(""); syncControls(); renderPreview(); }
+        if (chip) { _sel = chip.getAttribute("data-sel"); setStatus(""); syncControls(); renderPreview(); return; }
+        if (e.target.closest && e.target.closest("#mdPick")) { toggleList(); return; }
+        var op = e.target.closest && e.target.closest(".md-opt");
+        if (op) {
+          var sel = byId("mdImg");
+          sel.value = op.getAttribute("data-v");
+          closeList();
+          sel.dispatchEvent(new Event("change", { bubbles: true }));
+        }
       });
       _modal.addEventListener("input", function (e) {
+        if (isPlace()) return;
         var id = e.target.id, d = _draft.states[_sel];
         if (id === "mdMsgIn") { d.message = e.target.value.trim().slice(0, 80) || stateById(_sel).msg; byId("mdMsg").textContent = d.message; }
         else if (id === "mdLabel") { d.label = e.target.value.trim().slice(0, 60); renderPreview(); }
       });
       _modal.addEventListener("change", function (e) {
-        var id = e.target.id, d = _draft.states[_sel];
-        if (id === "mdImg") { d.imageKey = validKey(e.target.value) ? e.target.value : null; renderPreview(); }
+        var id = e.target.id, d = cur();
+        if (id === "mdImg") { d.imageKey = validKey(e.target.value) ? e.target.value : null; updatePick(); renderPreview(); }
+        else if (isPlace() && id !== "mdFile") { return; }
         else if (id === "mdSize") { if (SIZES[e.target.value]) { d.size = e.target.value; renderPreview(); } }
         else if (id === "mdAnim") { if (ANIMS[e.target.value]) { d.animation = e.target.value; renderPreview(); } }
         else if (id === "mdFile") { onFile(e.target.files && e.target.files[0]); }
@@ -299,27 +422,37 @@
       byId("mdClose").onclick = close;
       byId("mdCancel").onclick = close;
       byId("mdReset").onclick = function () {
-        _draft.states[_sel] = stateDefaults(stateById(_sel));
+        if (isPlace()) _draft.places[_sel.slice(6)] = placeDefaults();
+        else _draft.states[_sel] = stateDefaults(stateById(_sel));
         setStatus("");
         syncControls();
         renderPreview();
       };
-      byId("mdPublish").onclick = async function () {
+      var _armed = {};
+      function arm(id, ask, run) {
+        var b = byId(id);
+        if (_armed[id]) { clearTimeout(_armed[id].t); b.textContent = _armed[id].orig; delete _armed[id]; run(); return; }
+        _armed[id] = { orig: b.textContent, t: setTimeout(function () { b.textContent = _armed[id].orig; delete _armed[id]; }, 4000) };
+        b.textContent = ask;
+      }
+      byId("mdPublish").onclick = function () {
         var MO = window.MascotOverride;
         if (!MO) { setStatus("طبقة التطبيق غير محمّلة"); return; }
-        var ok = await window.confirm("نشر تصميم بريق", "هيتم تطبيق التصميم على إشعارات الموقع لكل المستخدمين. متأكد؟");
-        if (!ok) return;
-        var btn = byId("mdPublish"); btn.disabled = true;
-        var r = await MO.publish(_draft);
-        btn.disabled = false;
-        setStatus(r.ok
-          ? "تم النشر (" + r.count + " حالة)" + (r.skipped ? " — صور الجهاز لم تُنشر (معاينة فقط)" : "")
-          : "تعذّر النشر: " + (r.reason === "owner" ? "للمالك فقط" : r.reason));
+        arm("mdPublish", "اضغط للتأكيد", async function () {
+          var btn = byId("mdPublish"); btn.disabled = true;
+          var r = await MO.publish(_draft);
+          btn.disabled = false;
+          markPublished();
+          setStatus(r.ok
+            ? "تم النشر وتفعيل الـ Override: " + r.states + " إشعار + " + r.places + " مكان" + (r.skipped ? " — صور الجهاز لم تُنشر (معاينة فقط)" : "")
+            : "تعذّر النشر: " + (r.reason === "owner" ? "للمالك فقط" : r.reason));
+        });
       };
       byId("mdLoadPub").onclick = function () {
         var MO = window.MascotOverride;
         if (!MO) { setStatus("طبقة التطبيق غير محمّلة"); return; }
         MO.load(true).then(function (cfg) {
+          markPublished();
           if (!cfg) { setStatus("لا يوجد تصميم منشور"); return; }
           _draft = normalize(cfg);
           syncControls();
@@ -327,13 +460,14 @@
           setStatus("تم تحميل التصميم المنشور");
         });
       };
-      byId("mdUnpublish").onclick = async function () {
+      byId("mdUnpublish").onclick = function () {
         var MO = window.MascotOverride;
         if (!MO) { setStatus("طبقة التطبيق غير محمّلة"); return; }
-        var ok = await window.confirm("إلغاء نشر تصميم بريق", "هيرجع بريق للنظام الأصلي لكل المستخدمين. متأكد؟");
-        if (!ok) return;
-        var r = await MO.unpublish();
-        setStatus(r.ok ? "تم إلغاء النشر — بريق رجع للنظام الأصلي" : "تعذّر إلغاء النشر: " + (r.reason === "owner" ? "للمالك فقط" : r.reason));
+        arm("mdUnpublish", "اضغط للتأكيد", async function () {
+          var r = await MO.unpublish();
+          markPublished();
+          setStatus(r.ok ? "تم إلغاء النشر — بريق رجع للنظام الأصلي" : "تعذّر إلغاء النشر: " + (r.reason === "owner" ? "للمالك فقط" : r.reason));
+        });
       };
       byId("mdSaveDraft").onclick = function () {
         setStatus(saveDraft(_draft) ? "تم حفظ المسودة على جهازك (غير مطبّقة على الموقع)" : "تعذّر حفظ المسودة — الصورة المخصصة كبيرة على التخزين المحلي");
@@ -341,8 +475,10 @@
     }
     setStatus("");
     syncControls();
+    markPublished();
     _modal.style.display = "flex";
     renderPreview();
+    if (window.MascotOverride) window.MascotOverride.load(false).then(markPublished);
   }
 
   function close() {
