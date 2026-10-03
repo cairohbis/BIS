@@ -234,7 +234,7 @@ import {
   // ────────────────────────────────────────────
   // دالة النشر — بتتنادى من لوحة الأونر/الأدمن
   // ────────────────────────────────────────────
-  window.qnPublish = async function (title, body) {
+  window.qnPublish = async function (title, body, audience) {
     if (!title || !title.trim()) { window.toast && window.toast("اكتب عنوان الإخطار", "error"); return; }
     // ✅ Admin Isolation + World Isolation: كل إخطار جديد له Audience صريح
     // واحد فقط — الأونر ينشر audience:"global" (يصل للجميع فعليًا عبر
@@ -248,7 +248,7 @@ import {
       active: true,
       createdAt: serverTimestamp()
     };
-    if (_isOwnerNow) {
+    if (_isOwnerNow && audience !== "world") {
       _payload.audience = "global";
     } else {
       var _worldId = (typeof window.activeWorldContext === "function") ? window.activeWorldContext() : null;
@@ -257,7 +257,7 @@ import {
     }
     try {
       await addDoc(collection(window.db, "quickNotifications"), _payload);
-      window.toast && window.toast("تم نشر الإخطار للجميع", "success");
+      window.toast && window.toast((_isOwnerNow && audience === "world") ? "تم نشر الإخطار للدفعة" : "تم نشر الإخطار للجميع", "success");
     } catch (e) {
       console.error("[QuickNotif] فشل النشر:", e);
       window.toast && window.toast("فشل نشر الإخطار", "error");
