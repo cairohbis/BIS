@@ -56,7 +56,9 @@ import { doc, getDoc, setDoc, deleteDoc, serverTimestamp } from "https://www.gst
     { id: "apkMain",    label: "نافذة تحميل التطبيق",    defaultKey: "run",          size: "ثابت", sel: ".apk-overlay img.apk-img" },
     { id: "apkMini",    label: "تذكير التطبيق (مصغر)",   defaultKey: "sad",          size: "ثابت", sel: "img.apk-mini" },
     { id: "apkDone",    label: "اكتمال تحميل التطبيق",   defaultKey: "love",         size: "ثابت", sel: ".apk-done img" },
-    { id: "aiAssistant",label: "المساعد الذكي",          defaultKey: "sleep",        size: "ثابت", sel: "img:not(.mascot__img)[src$=\"actions/sleep.webp\"]" }
+    { id: "aiAssistant",label: "المساعد الذكي",          defaultKey: "sleep",        size: "ثابت", sel: "img:not(.mascot__img)[src$=\"actions/sleep.webp\"]" },
+    /* صورة بروفايل المساعد الذكي (هيدر شات المساعد + قائمة الدردشات): بتتظبط دائرية cover زي صور الطلاب */
+    { id: "aiProfile",  label: "بروفايل المساعد الذكي",   defaultKey: null,           size: "بروفايل", kind: "avatar", sel: "#page-ai-chat .ai-avatar, .dms-conv-avatar.ai-avatar" }
   ];
   var PLACE_BY_ID = {};
   PLACES.forEach(function (pl) { PLACE_BY_ID[pl.id] = pl; });
@@ -216,6 +218,29 @@ import { doc, getDoc, setDoc, deleteDoc, serverTimestamp } from "https://www.gst
     img.addEventListener("error", onErr);
     img.src = want;
   }
+  /* أفاتار (حاوية فيها أيقونة): بنحط <img> دائرية cover مكان الأيقونة، ونرجّع الأيقونة الأصلية لو الصورة فشلت/اتلغى النشر */
+  var _avOrig = new WeakMap();
+  function restoreAvatar(el) {
+    if (_avOrig.has(el)) { el.innerHTML = _avOrig.get(el); _avOrig.delete(el); }
+    el.removeAttribute("data-mdp-avatar");
+  }
+  function applyAvatar(el, id, ov) {
+    var want = placeSrc(ov);
+    if (!want) return;
+    var cur = el.querySelector("img.mdp-ai-img");
+    if (cur && cur.getAttribute("src") === want) return;
+    if (!el.hasAttribute("data-mdp-avatar")) { _avOrig.set(el, el.innerHTML); el.setAttribute("data-mdp-avatar", id); }
+    var img = cur || document.createElement("img");
+    img.className = "mdp-ai-img";
+    img.alt = "";
+    img.decoding = "async";
+    img.onerror = function () { restoreAvatar(el); };
+    img.src = want;
+    if (!cur) { el.innerHTML = ""; el.appendChild(img); }
+  }
+  function applyTarget(el, id, def, ov) {
+    if (def.kind === "avatar") applyAvatar(el, id, ov); else applyPlaceImg(el, id, ov);
+  }
   function applyPlacesIn(root) {
     var pl = _cfg && _cfg.places;
     if (!pl) return;
@@ -223,9 +248,9 @@ import { doc, getDoc, setDoc, deleteDoc, serverTimestamp } from "https://www.gst
       var def = PLACE_BY_ID[id];
       if (!def) return;
       try {
-        if (root.nodeType === 1 && root.matches && root.matches(def.sel)) applyPlaceImg(root, id, pl[id]);
+        if (root.nodeType === 1 && root.matches && root.matches(def.sel)) applyTarget(root, id, def, pl[id]);
         var list = root.querySelectorAll ? root.querySelectorAll(def.sel) : [];
-        for (var i = 0; i < list.length; i++) applyPlaceImg(list[i], id, pl[id]);
+        for (var i = 0; i < list.length; i++) applyTarget(list[i], id, def, pl[id]);
       } catch (e) {}
     });
   }
@@ -237,6 +262,8 @@ import { doc, getDoc, setDoc, deleteDoc, serverTimestamp } from "https://www.gst
       list[i].removeAttribute("data-mdp");
       list[i].removeAttribute("data-mdp-orig");
     }
+    var av = document.querySelectorAll("[data-mdp-avatar]");
+    for (var a = 0; a < av.length; a++) restoreAvatar(av[a]);
   }
   function syncPlaces() {
     var has = !!(_cfg && _cfg.places && Object.keys(_cfg.places).length);
@@ -265,6 +292,10 @@ import { doc, getDoc, setDoc, deleteDoc, serverTimestamp } from "https://www.gst
         stale[k].removeAttribute("data-mdp");
         stale[k].removeAttribute("data-mdp-orig");
       }
+    }
+    var avs = document.querySelectorAll("[data-mdp-avatar]");
+    for (var m = 0; m < avs.length; m++) {
+      if (!_cfg.places[avs[m].getAttribute("data-mdp-avatar")]) restoreAvatar(avs[m]);
     }
   }
 
@@ -397,7 +428,7 @@ import { doc, getDoc, setDoc, deleteDoc, serverTimestamp } from "https://www.gst
     VERSION: VERSION,
     PATH: COL + "/" + DOC,
     STATE_IDS: STATE_IDS.slice(),
-    PLACES: PLACES.map(function (p) { return { id: p.id, label: p.label, defaultKey: p.defaultKey, size: p.size, file: p.file || null }; }),
+    PLACES: PLACES.map(function (p) { return { id: p.id, label: p.label, defaultKey: p.defaultKey, size: p.size, file: p.file || null, kind: p.kind || null }; }),
     getConfig: function () { return _cfg ? JSON.parse(JSON.stringify(_cfg)) : null; },
     load: load,
     publish: publish,

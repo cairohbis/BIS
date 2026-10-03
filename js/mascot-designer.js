@@ -31,6 +31,15 @@
     loading: "تحميل", success: "نجاح", error: "خطأ", offline: "بدون اتصال", empty: "فارغ",
     construction: "قيد التطوير", emptyChat: "شات فارغ"
   };
+  /* صور مضافة للمشروع (images/mascot/custom/...) — بتظهر في قائمة اختيار الصور. أضف سطر لكل صورة جديدة بعد رفعها على GitHub */
+  var CUSTOM_IMAGES = [
+    { file: "images/mascot/ui/ai-bariq.webp", label: "بريق الذكاء الاصطناعي" }
+  ];
+  function customByFile(f) {
+    for (var i = 0; i < CUSTOM_IMAGES.length; i++) if (CUSTOM_IMAGES[i].file === f) return CUSTOM_IMAGES[i];
+    return null;
+  }
+
   /* حالات التصميم: الافتراضي لكل حالة = نفس اللي النظام الحالي بيستخدمه (MOOD_MAP في mascot-toast-adapter.js)
      وحالات حفظ/إضافة/نسخ/حذف/تحديث حالات تصميم فقط في المحرر حاليًا (الافتراضي: success.webp) */
   var STATES = [
@@ -153,7 +162,12 @@
         return "<option value=\"" + esc(k) + "\">" + esc(KEY_LABELS[k] || k) + " (" + esc(k) + ")</option>";
       }).join("") + "</optgroup>";
     }
-    return group("انفعالات", M.EMOTIONS) + group("حركات", M.ACTIONS) + group("واجهة", M.UI_STATES);
+    var custom = CUSTOM_IMAGES.length
+      ? "<optgroup label=\"صور مضافة\">" + CUSTOM_IMAGES.map(function (c) {
+          return "<option value=\"file:" + esc(c.file) + "\">" + esc(c.label) + "</option>";
+        }).join("") + "</optgroup>"
+      : "";
+    return group("انفعالات", M.EMOTIONS) + group("حركات", M.ACTIONS) + group("واجهة", M.UI_STATES) + custom;
   }
 
   function modalHTML() {
@@ -227,10 +241,12 @@
     var d = cur(), def = curDef();
     if (!d || !def) return;
     var url = d.customImage ? d.customImage.value : (d.imageKey ? fileFor(d.imageKey) : thumbOf(def));
-    var txt = d.customImage ? "صورة مخصصة"
+    var cb = d.customImage && d.customImage.type === "path" ? customByFile(d.customImage.value) : null;
+    var txt = cb ? cb.label : d.customImage ? "صورة مخصصة"
       : d.imageKey ? (KEY_LABELS[d.imageKey] || d.imageKey)
-      : "الافتراضي" + (def.defaultKey ? " (" + (KEY_LABELS[def.defaultKey] || def.defaultKey) + ")" : "");
-    byId("mdPickImg").src = url;
+      : "الافتراضي" + (def.defaultKey ? " (" + (KEY_LABELS[def.defaultKey] || def.defaultKey) + ")" : (def.kind === "avatar" ? " (الأيقونة الأصلية)" : ""));
+    var pi = byId("mdPickImg");
+    if (url) { pi.src = url; pi.style.display = ""; } else { pi.removeAttribute("src"); pi.style.display = "none"; }
     byId("mdPickTxt").textContent = txt;
   }
 
@@ -251,16 +267,18 @@
   function listHTML() {
     var M = window.Mascot, d = cur(), def = curDef();
     function opt(v, label, url) {
-      return "<button type=\"button\" class=\"md-opt" + ((d.imageKey || "") === v ? " on" : "") + "\" data-v=\"" + esc(v) + "\">" +
-        "<img loading=\"lazy\" decoding=\"async\" alt=\"\" src=\"" + esc(url) + "\"><span>" + esc(label) + "</span></button>";
+      var curV = d.customImage && d.customImage.type === "path" && customByFile(d.customImage.value) ? "file:" + d.customImage.value : (d.imageKey || "");
+      return "<button type=\"button\" class=\"md-opt" + (curV === v && !(d.customImage && curV === "") ? " on" : "") + "\" data-v=\"" + esc(v) + "\">" +
+        (url ? "<img loading=\"lazy\" decoding=\"async\" alt=\"\" src=\"" + esc(url) + "\">" : "") + "<span>" + esc(label) + "</span></button>";
     }
     function group(title, keys) {
       return "<div class=\"md-gt\">" + title + "</div>" + keys.map(function (k) {
         return opt(k, (KEY_LABELS[k] || k) + " (" + k + ")", fileFor(k));
       }).join("");
     }
-    return opt("", "الافتراضي" + (def && def.defaultKey ? " (" + (KEY_LABELS[def.defaultKey] || def.defaultKey) + ")" : ""), def ? thumbOf(def) : "") +
-      group("انفعالات", M.EMOTIONS) + group("حركات", M.ACTIONS) + group("واجهة", M.UI_STATES);
+    return opt("", "الافتراضي" + (def && def.defaultKey ? " (" + (KEY_LABELS[def.defaultKey] || def.defaultKey) + ")" : (def && def.kind === "avatar" ? " (الأيقونة الأصلية)" : "")), def ? thumbOf(def) : "") +
+      group("انفعالات", M.EMOTIONS) + group("حركات", M.ACTIONS) + group("واجهة", M.UI_STATES) +
+      (CUSTOM_IMAGES.length ? "<div class=\"md-gt\">صور مضافة</div>" + CUSTOM_IMAGES.map(function (c) { return opt("file:" + c.file, c.label, c.file); }).join("") : "");
   }
   function closeList() { var l = byId("mdList"); if (l) l.style.display = "none"; }
   function toggleList() {
@@ -277,7 +295,7 @@
     byId("mdShape").style.display = place ? "none" : "";
     var sel = byId("mdImg");
     sel.innerHTML = "<option value=\"\">الافتراضي</option>" + imageOptionsHTML();
-    sel.value = d.imageKey || "";
+    sel.value = d.customImage && d.customImage.type === "path" && customByFile(d.customImage.value) ? "file:" + d.customImage.value : (d.imageKey || "");
     if (!place) {
       byId("mdSize").value = d.size;
       byId("mdAnim").value = d.animation;
@@ -306,6 +324,13 @@
     if (place) {
       toastEl.style.display = "none";
       box.style.display = "";
+      if (def.kind === "avatar") {
+        var aurl = d.customImage ? d.customImage.value : (d.imageKey ? fileFor(d.imageKey) : "");
+        byId("mdPlaceSlot").innerHTML = "<span class=\"md-avring\"><span class=\"md-av\">" +
+          (aurl ? "<img alt=\"\" src=\"" + esc(aurl) + "\">" : "<i class=\"fa-solid fa-sparkles\"></i>") + "</span></span>";
+        byId("mdPlaceCap").textContent = "بتتظبط تلقائياً دائرية على مساحة صورة البروفايل (cover) — في هيدر شات المساعد وقائمة الدردشات";
+        return;
+      }
       var size = { sm: 1, md: 1, lg: 1, xl: 1 }[def.size] ? def.size : "md";
       _inst = window.Mascot.show({ mood: d.imageKey || def.defaultKey || "happy", size: size, container: byId("mdPlaceSlot"), decorative: true });
       var url = d.customImage ? d.customImage.value : (!d.imageKey && def.file ? def.file : null);
@@ -410,7 +435,14 @@
       });
       _modal.addEventListener("change", function (e) {
         var id = e.target.id, d = cur();
-        if (id === "mdImg") { d.imageKey = validKey(e.target.value) ? e.target.value : null; updatePick(); renderPreview(); }
+        if (id === "mdImg") {
+          var v = e.target.value;
+          if (v.indexOf("file:") === 0 && customByFile(v.slice(5))) { d.imageKey = null; d.customImage = { type: "path", value: v.slice(5) }; }
+          else { d.imageKey = validKey(v) ? v : null; d.customImage = null; } // الاختيار من القائمة بيلغي أي صورة مخصصة قديمة
+          byId("mdPath").value = d.customImage ? d.customImage.value : "";
+          byId("mdCustomClear").style.display = d.customImage ? "" : "none";
+          updatePick(); renderPreview();
+        }
         else if (isPlace() && id !== "mdFile") { return; }
         else if (id === "mdSize") { if (SIZES[e.target.value]) { d.size = e.target.value; renderPreview(); } }
         else if (id === "mdAnim") { if (ANIMS[e.target.value]) { d.animation = e.target.value; renderPreview(); } }
