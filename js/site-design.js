@@ -20,13 +20,16 @@ const LABELS = {
   "hover-border": "hover الحدود",
   "deep": "الطبقة الغامقة"
 };
-const LIGHT_KEYS = ["bg", "bg2", "card", "card2", "border", "text"];
+const LIGHT_KEYS = ["bg", "bg2", "card", "card2", "border", "hover", "hover-border", "deep", "text"];
 const LIGHT_LABELS = {
   "bg": "الخلفية الرئيسية",
   "bg2": "الحقول والشيتات",
   "card": "الكروت",
   "card2": "كروت العناصر",
   "border": "الحدود",
+  "hover": "hover الأزرار",
+  "hover-border": "hover الحدود",
+  "deep": "الطبقة الغامقة",
   "text": "لون النص"
 };
 const DEFAULTS = {
@@ -37,7 +40,7 @@ const DEFAULTS = {
   glassA: 0.72,
   glassALight: 0.72,
   lightLocked: false,
-  light: { "bg": "#f5ecd4", "bg2": "#ecdfbd", "card": "#fffaf0", "card2": "#faf1da", "border": "#d4bd85", "text": "#1a1405" }
+  light: { "bg": "#f5ecd4", "bg2": "#ecdfbd", "card": "#fffaf0", "card2": "#faf1da", "border": "#d4bd85", "hover": "#e6d7aa", "hover-border": "#c4a96a", "deep": "#e0cf9c", "text": "#1a1405" }
 };
 const CACHE_KEY = "_siteDesignCache";
 const HEX = /^#[0-9a-f]{6}$/i;
@@ -68,6 +71,7 @@ function _normalize(raw) {
 /* يطبّق الإعداد. للموقع كله: عبر <style> على :root (مش inline) عشان html.theme-light يقدر يغلبه في الوضع الفاتح.
    للمعاينة: inline على عنصرها. */
 function applyThemeColors(cfg, target) {
+  cfg = Object.assign({}, DEFAULTS, cfg, { colors: Object.assign({}, DEFAULTS.colors, cfg && cfg.colors), light: Object.assign({}, DEFAULTS.light, cfg && cfg.light) });
   if (target) {
     KEYS.forEach(k => {
       target.style.setProperty("--t-" + k, cfg.colors[k]);
@@ -79,7 +83,7 @@ function applyThemeColors(cfg, target) {
   let v = "--glass-a:" + cfg.glassA + ";";
   KEYS.forEach(k => { v += "--t-" + k + ":" + cfg.colors[k] + ";--t-" + k + "-rgb:" + _hexToRgb(cfg.colors[k]) + ";"; });
   let st = document.getElementById("siteDesignDarkStyle");
-  if (!st) { st = document.createElement("style"); st.id = "siteDesignDarkStyle"; document.head.appendChild(st); }
+  if (!st) { st = document.createElement("style"); st.id = "siteDesignDarkStyle"; document.documentElement.appendChild(st); }
   st.textContent = ":root{" + v + "}";
   _applyLight(cfg);
   _applyLock(cfg);
@@ -88,24 +92,17 @@ function applyThemeColors(cfg, target) {
 }
 
 /* الوضع الفاتح: ستايل واحد في آخر الـ head يعيد تعريف متغيرات html.theme-light (أقوى من :root) */
-function _shade(hex, k) { // k<0 يغمّق، k>0 يفتّح
-  return "#" + [1, 3, 5].map(i => {
-    const v = parseInt(hex.slice(i, i + 2), 16);
-    const n = k < 0 ? v * (1 + k) : v + (255 - v) * k;
-    return Math.max(0, Math.min(255, Math.round(n))).toString(16).padStart(2, "0");
-  }).join("");
-}
 function _lightVars(cfg) {
-  const L = cfg.light;
+  const L = Object.assign({}, DEFAULTS.light, cfg.light);
   const m = { "bg": L.bg, "bg2": L.bg2, "card": L.card, "card2": L.card2, "border": L.border,
-              "hover": _shade(L.bg2, -0.06), "hover-border": _shade(L.border, -0.08), "deep": _shade(L.bg, -0.08) };
+              "hover": L.hover, "hover-border": L["hover-border"], "deep": L.deep };
   let v = "--glass-a:" + cfg.glassALight + ";--bg:" + L.bg + ";--bg2:" + L.bg2 + ";--card:" + L.card + ";--card2:" + L.card2 + ";--border:" + L.border + ";--text:" + L.text + ";";
   Object.keys(m).forEach(k => { v += "--t-" + k + ":" + m[k] + ";--t-" + k + "-rgb:" + _hexToRgb(m[k]) + ";"; });
   return v;
 }
 function _applyLight(cfg) {
   let st = document.getElementById("siteDesignLightStyle");
-  if (!st) { st = document.createElement("style"); st.id = "siteDesignLightStyle"; document.head.appendChild(st); }
+  if (!st) { st = document.createElement("style"); st.id = "siteDesignLightStyle"; document.documentElement.appendChild(st); }
   st.textContent = "html.theme-light{" + _lightVars(cfg) + "}";
 }
 
@@ -230,7 +227,7 @@ function _refresh() {
       pv.style.setProperty("--t-" + k + "-rgb", [1, 3, 5].map(i => parseInt(L[k].slice(i, i + 2), 16)).join(","));
     });
     pv.style.setProperty("--sd-text", L.text);
-    pv.style.setProperty("--sd-muted", "#5c4a22");
+    pv.style.setProperty("--sd-muted", "color-mix(in srgb, " + L.text + " 72%, " + L.bg + ")");
     pv.style.setProperty("--sd-glass", "rgba(0,0,0,.04)");
     pv.style.setProperty("--sd-glass-b", "rgba(0,0,0,.10)");
     pv.style.setProperty("--glass-a", String(_draft.glassALight));
@@ -417,7 +414,7 @@ function openSiteDesign() {
     document.body.appendChild(_modal);
     _modal.addEventListener("input", (e) => {
       const t = e.target;
-      if (t.classList && t.classList.contains("sd-hex")) {
+      if (t.classList && t.classList.contains("sd-hex") && t.dataset.k) {
         const hx = _parseHex(t.value);
         t.classList.toggle("bad", !hx);
         if (hx) { _palette()[t.dataset.k] = hx; _refresh(); }
@@ -426,7 +423,7 @@ function openSiteDesign() {
     });
     _modal.addEventListener("focusout", (e) => {
       const t = e.target;
-      if (t.classList && t.classList.contains("sd-hex")) { t.value = _palette()[t.dataset.k].toUpperCase(); t.classList.remove("bad"); }
+      if (t.classList && t.classList.contains("sd-hex") && t.dataset.k) { t.value = _palette()[t.dataset.k].toUpperCase(); t.classList.remove("bad"); }
     });
     _modal.addEventListener("click", (e) => {
       const b = e.target.closest && e.target.closest("[data-pick]");
@@ -457,7 +454,9 @@ async function _save() {
   btn.disabled = true;
   try {
     const uid = (window.currentUser && window.currentUser.uid) || null;
-    await setDoc(_ref(), { colors: _draft.colors, glassA: _draft.glassA, glassALight: _draft.glassALight, light: _draft.light, lightLocked: !!_current.lightLocked, updatedBy: uid, updatedAt: serverTimestamp() });
+    const colors = {}; KEYS.forEach(k => { colors[k] = _draft.colors[k]; });
+    const light = {}; LIGHT_KEYS.forEach(k => { light[k] = _draft.light[k]; });
+    await setDoc(_ref(), { colors: colors, glassA: _draft.glassA, glassALight: _draft.glassALight, light: light, lightLocked: !!_current.lightLocked, updatedBy: uid, updatedAt: serverTimestamp() });
     _current = _clone(_draft);
     _cacheSet(_current);
     applyThemeColors(_current);
