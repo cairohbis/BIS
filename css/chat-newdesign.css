@@ -437,3 +437,15 @@
   border-radius: 0 0 16px 16px;
 }
 
+/* ── الوضع الفاتح: البانر السفلي مطابق للعلوي (نفس الزجاج، المرجع هو .glass) ──
+   بدون خلفية صورة: زجاج بلون حدود الموقع ونص بلون النص المختار.
+   مع خلفية صورة (.has-bg): زجاج أبيض ونص أبيض فوق الصورة، زي التصميم الأصلي. */
+html.theme-light .newchat-shell .phone { --nc-glass-bg: rgba(var(--t-border-rgb),.45); --nc-glass-bd: rgba(var(--t-border-rgb),.9); }
+html.theme-light .newchat-shell .phone.has-bg { --nc-glass-bg: rgba(255,255,255,0.14); --nc-glass-bd: rgba(255,255,255,0.16); }
+html.theme-light .newchat-shell .phone.has-bg :is(.nc-header, .input-bar, .bubble.other, .bubble.system-msg) { --text: #fff; --muted: rgba(255,255,255,.7); }
+html.theme-light .newchat-shell .glass,
+html.theme-light .newchat-shell .bar-main { background: var(--nc-glass-bg); border-color: var(--nc-glass-bd); }
+html.theme-light .newchat-shell .back-arrow,
+html.theme-light .newchat-shell .header-name,
+html.theme-light .newchat-shell .call-circle { color: var(--text); }
+html.theme-light .newchat-shell .header-status { color: var(--muted); }
