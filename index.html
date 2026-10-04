@@ -72,6 +72,7 @@ if ("serviceWorker" in navigator) {
 <link rel="stylesheet" href="css/sheetaty.css">
 <link rel="stylesheet" href="css/my-docs.css">
 <link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/auth-ui.css">
 <link rel="stylesheet" href="css/why-here-forum.css">
 <link rel="stylesheet" href="css/chat-reply.css">
 <link rel="stylesheet" href="css/chat-list.css">
@@ -117,7 +118,8 @@ if ("serviceWorker" in navigator) {
 
 
 <!-- ══════════════════════════════════════════
-     LOGIN PAGE — Animated Lamp Edition
+     LOGIN PAGE — واجهة الدخول وإنشاء الحساب (الجديدة)
+     المنطق: js/auth-ui.js | الأنماط: css/auth-ui.css | الربط مع Firebase: js/auth-bridge.js
 ══════════════════════════════════════════ -->
 <div id="page-login" class="page">
   <div class="lp-scene" id="lpScene">
@@ -151,81 +153,160 @@ if ("serviceWorker" in navigator) {
       <div class="lp-base"></div>
       <div class="lp-floor-glow"></div>
 
-      <span class="lp-hint" id="lpHint">اسحب الحبل 💡</span>
+      <span class="lp-hint" id="lpHint">دوس ع الأباجورة</span>
     </div>
 
-    <!-- ══ صندوق تسجيل الدخول ══ -->
-    <div class="lp-box">
-      <div class="lp-box-title">نظام الجامعة</div>
-      <div class="lp-box-sub">سجّل دخولك أو أنشئ حساباً جديداً</div>
+    <!-- ══ صندوق الدخول: هوية ثابتة + عرضان (Login / Register) ══ -->
+    <div class="lp-box" id="lpBox" data-view="login">
 
-      <div class="login-toggle">
-        <button id="toggleLogin" class="active" onclick="setAuthMode('login')">
-          <i class="fa-solid fa-key"></i> تسجيل الدخول
-        </button>
-        <button id="toggleReg" onclick="setAuthMode('register')">
-          <i class="fa-solid fa-star"></i> حساب جديد
-        </button>
-      </div>
+      <div class="av-brand"><div class="lp-box-title av-wordmark">نظام الجامعة</div></div>
 
-      <div id="nameRow"><input class="inp" id="loginName" placeholder="الاسم الكامل" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other"></div>
+      <!-- ─── عرض تسجيل الدخول ─── -->
+      <section class="av-view" id="viewLogin">
+        <h1 class="av-h1">مرحبًا بك في منتدى الجامعة</h1>
+        <p class="av-sub">سجّل دخولك للوصول إلى حسابك</p>
 
-      <div id="genderRow" class="gender-row">
-        <div class="gender-seg-header">
-          <i class="fa-solid fa-user-circle" style="color:var(--gold);font-size:12px;"></i>
-          اختر نوع حسابك
+        <form class="av-form" id="loginForm" novalidate>
+          <div class="av-field"><input class="inp" id="loginEmail" type="email" dir="auto" placeholder="البريد الإلكتروني" autocomplete="off" spellcheck="false"></div>
+          <div class="av-hsep" aria-hidden="true"></div>
+          <div class="av-field av-pass"><input class="inp" id="loginPass" type="password" placeholder="كلمة المرور" autocomplete="off"><button type="button" class="av-eye" data-eye="loginPass" aria-label="إظهار كلمة المرور" aria-pressed="false"></button></div>
+          <button type="button" class="av-link av-forgot" id="forgotBtn">نسيت كلمة المرور؟</button>
+          <div class="av-alert" id="loginAlert" hidden></div>
+          <button class="btn" id="mainAuthBtn" type="submit">تسجيل الدخول</button>
+        </form>
+
+        <div class="av-divider"><span>أو</span></div>
+        <button type="button" class="av-google" id="googleBtn"><svg class="av-g" viewBox="0 0 48 48" width="18" height="18" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.9 6.1C12.4 13.5 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.3 5.5-4.8 7.2l7.5 5.8c4.4-4.1 7.1-10.1 7.1-17.5z"/><path fill="#FBBC05" d="M10.5 28.7A14.5 14.5 0 019.5 24c0-1.6.3-3.2.8-4.7l-7.9-6.1A24 24 0 000 24c0 3.9.9 7.5 2.6 10.8l7.9-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.5-5.8c-2.1 1.4-4.9 2.3-8.4 2.3-6.3 0-11.6-4-13.5-9.8l-7.9 6.1C6.5 42.6 14.6 48 24 48z"/></svg><span>المتابعة باستخدام Google</span></button>
+
+        <p class="av-foot">ليس لديك حساب؟ <button type="button" class="av-link" data-go="register">إنشاء حساب</button></p>
+      </section>
+
+      <!-- ─── عرض إنشاء الحساب ─── -->
+      <section class="av-view" id="viewRegister" hidden>
+        <h1 class="av-h1">إنشاء حساب جديد</h1>
+        <p class="av-sub">أدخل بياناتك أولًا، ثم اختر طريقة ربط حسابك</p>
+
+        <form class="av-form" id="regForm" novalidate>
+          <div class="av-field"><input class="inp" id="loginName" placeholder="اسم المستخدم" autocomplete="off" spellcheck="false"></div>
+          <div id="regGender" class="gender-row show"></div>
+          <div class="av-hsep" aria-hidden="true"></div>
+          <div class="av-grid2 av-dy">
+            <select class="inp" id="regDept">
+          <option value="" selected disabled>الشعبة</option>
+          <option value="is">نظم المعلومات</option>
+          <option value="lt">اللغات والترجمة</option>
+          <option value="th">سياحة وفنادق</option>
+          <option value="ba">إدارة أعمال</option>
+            </select>
+            <span class="av-vsep" aria-hidden="true"></span>
+            <select class="inp" id="regYear">
+          <option value="" selected disabled>الفرقة</option>
+          <option value="1">الأولى</option>
+          <option value="2">الثانية</option>
+          <option value="3">الثالثة</option>
+          <option value="4">الرابعة</option>
+            </select>
+          </div>
+          <div class="av-divider"><span>اختر طريقة ربط حسابك</span></div>
+          <div class="av-grid2" id="regMethods">
+            <button type="button" class="av-google" id="methodGoogle" aria-label="المتابعة باستخدام Google"><svg class="av-g" viewBox="0 0 48 48" width="18" height="18" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.9 6.1C12.4 13.5 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.3 5.5-4.8 7.2l7.5 5.8c4.4-4.1 7.1-10.1 7.1-17.5z"/><path fill="#FBBC05" d="M10.5 28.7A14.5 14.5 0 019.5 24c0-1.6.3-3.2.8-4.7l-7.9-6.1A24 24 0 000 24c0 3.9.9 7.5 2.6 10.8l7.9-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.5-5.8c-2.1 1.4-4.9 2.3-8.4 2.3-6.3 0-11.6-4-13.5-9.8l-7.9 6.1C6.5 42.6 14.6 48 24 48z"/></svg><span>Google</span></button>
+            <button type="button" class="av-google" id="methodMail" aria-label="إضافة بريد إلكتروني"><svg class="av-g" viewBox="0 0 24 24" width="20" height="20" style="flex:none" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M3.5 7.5l8.5 6 8.5-6"/></svg><span>البريد</span></button>
+          </div>
+          <div id="mailBox" class="av-form" hidden>
+            <div class="av-field"><input class="inp" id="mailEmail" type="email" dir="auto" placeholder="البريد الإلكتروني" autocomplete="off" spellcheck="false"></div>
+            <div class="av-hsep" aria-hidden="true"></div>
+            <div class="av-field av-pass"><input class="inp" id="mailPass" type="password" placeholder="كلمة المرور (6 أحرف على الأقل)" autocomplete="new-password"><button type="button" class="av-eye" data-eye="mailPass" aria-label="إظهار كلمة المرور" aria-pressed="false"></button></div>
+            <div class="av-alert" id="mailAlert" hidden></div>
+            <button class="btn" id="mailSend" type="button">إرسال رابط التحقق</button>
+          </div>
+          <div class="av-hsep" aria-hidden="true"></div>
+          <div class="terms-row av-terms">
+          <label class="terms-check-label">
+            <input type="checkbox" id="agreeTermsCheck">
+            <span>أوافق على <b>شروط الاستخدام</b> و<b>سياسة الخصوصية</b> <a href="terms.html" target="_blank" rel="noopener" class="terms-read-link">اقرأ الشروط</a></span>
+          </label>
         </div>
-        <div class="gender-seg-track">
-          <div class="gender-seg-thumb male-active" id="genderThumb"></div>
-          <button type="button" class="gender-seg-opt active-male" id="genderMale" onclick="selectGender('male')">
-            <div class="gender-avatar-preview" id="genderMaleAvatarPreview"></div>
-            <div>
-              <div class="gender-type-label">طالب</div>
-              <div style="font-size:10px;opacity:.65;font-weight:600;">Male</div>
-            </div>
-          </button>
-          <button type="button" class="gender-seg-opt" id="genderFemale" onclick="selectGender('female')">
-            <div class="gender-avatar-preview" id="genderFemaleAvatarPreview"></div>
-            <div>
-              <div class="gender-type-label">طالبة</div>
-              <div style="font-size:10px;opacity:.65;font-weight:600;">Female</div>
-            </div>
-          </button>
-        </div>
-      </div>
+          <div class="av-alert" id="regAlert" hidden></div>
+        </form>
 
-      <div id="worldRow">
-        <select class="inp" id="regDept">
-          <option value="" selected disabled>اختر الشعبة</option>
+        <p class="av-foot">لديك حساب بالفعل؟ <button type="button" class="av-link" data-go="login">تسجيل الدخول</button></p>
+      </section>
+
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════ شاشات مستقلة (بدون أي صفحة خلفها) ══════════ -->
+
+<!-- إكمال البيانات -->
+<div class="av-screen" id="screenComplete" hidden>
+  <div class="av-card">
+    <span class="av-chip">خطوة مطلوبة لإكمال حسابك</span>
+    <h1 class="av-h1">كمّل بيانات حسابك</h1>
+    <p class="av-sub">حسابك موجود، ونحتاج بعض المعلومات الأساسية قبل أن تبدأ. لن تتمكن من استخدام الموقع قبل إكمالها.</p>
+    <form class="av-form" id="cpForm" novalidate>
+      <div class="av-field"><input class="inp" id="cpName" placeholder="اسم المستخدم" autocomplete="off" spellcheck="false"></div>
+      <div id="cpGender" class="gender-row show"></div>
+      <div class="av-hsep" aria-hidden="true"></div>
+      <div class="av-grid2 av-dy">
+        <select class="inp" id="cpDept">
+          <option value="" selected disabled>الشعبة</option>
           <option value="is">نظم المعلومات</option>
           <option value="lt">اللغات والترجمة</option>
           <option value="th">سياحة وفنادق</option>
           <option value="ba">إدارة أعمال</option>
         </select>
-        <select class="inp" id="regYear">
-          <option value="" selected disabled>اختر الفرقة</option>
+        <span class="av-vsep" aria-hidden="true"></span>
+        <select class="inp" id="cpYear">
+          <option value="" selected disabled>الفرقة</option>
           <option value="1">الأولى</option>
           <option value="2">الثانية</option>
           <option value="3">الثالثة</option>
           <option value="4">الرابعة</option>
         </select>
       </div>
+      <div class="terms-row av-terms">
+          <label class="terms-check-label">
+            <input type="checkbox" id="cpTerms">
+            <span>أوافق على <b>شروط الاستخدام</b> و<b>سياسة الخصوصية</b> <a href="terms.html" target="_blank" rel="noopener" class="terms-read-link">اقرأ الشروط</a></span>
+          </label>
+        </div>
+      <div class="av-alert" id="cpAlert" hidden></div>
+      <button class="btn" id="cpSave" type="submit">متابعة</button>
+    </form>
+    <button type="button" class="av-link av-center" id="cpLogout">تسجيل الخروج</button>
+  </div>
+</div>
 
-      <input class="inp" id="loginEmail" placeholder="البريد الإلكتروني" type="email">
-      <input class="inp" id="loginPass"  placeholder="كلمة المرور (6+ أحرف)" type="password">
 
-      <div id="termsRow" class="terms-row">
-        <label class="terms-check-label">
-          <input type="checkbox" id="agreeTermsCheck">
-          <span>أوافق على <b>شروط الاستخدام</b> و<b>سياسة الخصوصية</b></span>
-        </label>
-        <a href="terms.html" target="_blank" rel="noopener" class="terms-read-link">اقرأ الشروط</a>
-      </div>
-
-      <button class="btn" id="mainAuthBtn"><i class="fa-solid fa-key"></i> تسجيل الدخول</button>
-      <div id="loginError" class="error-box"></div>
+<!-- تأكيد البريد -->
+<div class="av-screen" id="screenVerify" hidden>
+  <div class="av-card">
+    <div class="av-badge" aria-hidden="true">
+      <svg viewBox="0 0 24 24" width="42" height="42" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M3.5 7.5l8.5 6 8.5-6"/></svg>
+      <span class="av-badge-dot"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
     </div>
+    <h1 class="av-h1">تأكيد بريدك الإلكتروني</h1>
+    <p class="av-sub">أرسلنا رابط تأكيد إلى بريدك الإلكتروني. افتح الرسالة واضغط على الرابط لتفعيل حسابك.</p>
+    <div class="av-email-chip" id="verifyEmail" dir="ltr">student@university.edu</div>
+    <div class="av-alert" id="verifyAlert" hidden></div>
+    <button type="button" class="btn" id="verifyOk">تم التأكيد</button>
+    <button type="button" class="av-secondary" id="resendBtn">إعادة إرسال الرابط</button>
+    <div class="av-cd" id="cdNote" hidden>
+      <div class="av-cd-row"><span>يمكنك طلب رابط جديد بعد</span><b id="cdTime" dir="ltr">0:45</b></div>
+      <div class="av-cd-bar"><i id="cdBar"></i></div>
+    </div>
+    <button type="button" class="av-link av-center" id="verifyLogout">تسجيل الخروج</button>
+  </div>
+</div>
 
+<!-- نجاح -->
+<div class="av-screen" id="screenSuccess" hidden>
+  <div class="av-card av-center-card">
+    <h1 class="av-h1">تم بنجاح، أهلًا بك!</h1>
+    <p class="av-sub">حسابك جاهز الآن.</p>
+    <button type="button" class="btn" id="successBtn">الدخول إلى الموقع</button>
   </div>
 </div>
 
@@ -1967,7 +2048,7 @@ if ("serviceWorker" in navigator) {
      LAMP TOGGLE SCRIPT (non-module — runs immediately)
 ══════════════════════════════════════════ -->
 <script src="js/back-nav.js"></script>
-<script src="js/lamp-login.js"></script>
+<script src="js/auth-ui.js"></script>
 
 <!-- ══════════════════════════════════════════
      ADMIN VIEW MODE BAR
@@ -1996,8 +2077,6 @@ if ("serviceWorker" in navigator) {
 ══════════════════════════════════════════ -->
 <script>
 // No-op stubs — يُستبدَلان بالدوال الحقيقية بعد تحميل الـ module
-function setAuthMode(m){ if(window._setAuthMode) window._setAuthMode(m); }
-function selectGender(g){ if(window._selectGender) window._selectGender(g); }
 function switchSidebarTab(t){ if(window._switchSidebarTab) window._switchSidebarTab(t); }
 
 /* ── Owner Panel Collapsible Sections ── */
@@ -3171,90 +3250,11 @@ window.openDmsPanel = function() {
   window._dmsPageInit?.();
 };
 
-/* ══════════════════════════════════════════
-   LOGIN PAGE TOGGLE
-══════════════════════════════════════════ */
-let authMode = "login";
-let _selectedGender = "male"; // default
-
-window.selectGender = function(g) {
-  _selectedGender = g;
-  const mEl    = document.getElementById("genderMale");
-  const fEl    = document.getElementById("genderFemale");
-  const thumb  = document.getElementById("genderThumb");
-
-  if (mEl && fEl) {
-    if (g === "male") {
-      mEl.className = "gender-seg-opt active-male";
-      fEl.className = "gender-seg-opt";
-      if (thumb) { thumb.className = "gender-seg-thumb male-active"; }
-    } else {
-      mEl.className = "gender-seg-opt";
-      fEl.className = "gender-seg-opt active-female";
-      // RTL: female pill slides to left side (right side visually)
-      if (thumb) { thumb.className = "gender-seg-thumb female-active"; }
-    }
-  }
-};
-
-// Inject premium SVG avatars into gender selector previews
-function _initGenderPreviews() {
-  const mPreview = document.getElementById("genderMaleAvatarPreview");
-  const fPreview = document.getElementById("genderFemaleAvatarPreview");
-  if (mPreview) mPreview.innerHTML = _maleSVG(36);
-  if (fPreview) fPreview.innerHTML = _femaleSVG(36);
-}
-if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", _initGenderPreviews);
-} else {
-  _initGenderPreviews();
-}
-
-window.setAuthMode = (mode) => {
-  authMode = mode;
-  document.getElementById("nameRow").classList.toggle("show", mode === "register");
-  document.getElementById("genderRow").classList.toggle("show", mode === "register");
-  document.getElementById("worldRow").classList.toggle("show", mode === "register");
-  document.getElementById("termsRow").classList.toggle("show", mode === "register");
-  document.getElementById("mainAuthBtn").innerHTML = mode === "register" ? '<i class="fa-solid fa-user-plus"></i> إنشاء حساب' : '<i class="fa-solid fa-key"></i> تسجيل الدخول';
-  document.getElementById("toggleLogin").classList.toggle("active", mode === "login");
-  document.getElementById("toggleReg").classList.toggle("active",   mode === "register");
-  hideErr();
-  if (mode === "register") {
-    // reset gender selection to male by default
-    _selectedGender = "male";
-    selectGender("male");
-    const _tc = document.getElementById("agreeTermsCheck");
-    if (_tc) _tc.checked = false;
-    // Phase 1 / 5.1 — Signup World: تصفير اختيار الشعبة/الفرقة عند الدخول لوضع التسجيل
-    const _dRow = document.getElementById("regDept"); if (_dRow) _dRow.value = "";
-    const _yRow = document.getElementById("regYear"); if (_yRow) _yRow.value = "";
-  }
-};
-// ربط الـ stubs بالدوال الحقيقية
-window._setAuthMode      = window.setAuthMode;
-window._selectGender     = window.selectGender;
-window._switchSidebarTab = switchSidebarTab;
-
-document.getElementById("mainAuthBtn").addEventListener("click", async () => {
-  hideErr();
-  authMode === "register" ? await doRegister() : await doLogin();
-});
-document.getElementById("loginPass").addEventListener("keydown", e => {
-  if (e.key === "Enter") document.getElementById("mainAuthBtn").click();
-});
-
-function showErr(msg) { const el=document.getElementById("loginError"); el.textContent=msg; el.style.display="block"; }
-function hideErr()    { document.getElementById("loginError").style.display="none"; }
+window._switchSidebarTab = switchSidebarTab; // ربط الـ stub بالدالة الحقيقية
 
 /* ══════════════════════════════════════════
-   AUTH — REGISTER
+   AUTH — PROFILE CORE (التسجيل/الدخول نفسه في js/auth-ui.js + js/auth-bridge.js)
 ══════════════════════════════════════════ */
-
-// ── فلاق لمنع onAuthStateChanged من الاشتغال أثناء إنشاء الحساب ──
-// المشكلة: Firebase يُطلق onAuthStateChanged فوراً بعد createUserWithEmailAndPassword
-// قبل أن يكتمل setDoc، فيجد الـ handler وثيقة Firestore غير موجودة ويعمل signOut
-let _isRegistering = false;
 
 // ── إنشاء وثيقة المستخدم (مشتركة بين التسجيل والإكمال التلقائي) ──
 // الوثيقة تُكتب أولاً بدون publicId، وبعدها نولّده ونحدّثه؛
@@ -3297,124 +3297,16 @@ function _readPendingProfile(email) {
 }
 function _clearPendingProfile() { try { localStorage.removeItem(_PENDING_KEY); } catch (e) {} }
 
-// ── شاشة "كمّل بيانات حسابك" للحسابات اليتيمة (Auth بدون Firestore) ──
-function _showCompleteProfile(user) {
-  if (document.getElementById("completeProfileOverlay")) return;
-  const ov = document.createElement("div");
-  ov.id = "completeProfileOverlay";
-  ov.style.cssText = "position:fixed;inset:0;z-index:99999;background:rgba(var(--t-bg-rgb),var(--glass-a));display:flex;align-items:center;justify-content:center;padding:20px;overflow:auto;";
-  ov.innerHTML = `
-    <div style="width:100%;max-width:380px;background:var(--card);border:1px solid var(--border);border-radius:16px;padding:22px;display:flex;flex-direction:column;gap:10px;direction:rtl;color:var(--text);">
-      <div style="font-weight:800;font-size:17px;">كمّل بيانات حسابك</div>
-      <div style="font-size:12.5px;color:var(--muted);line-height:1.7;">حسابك اتعمل بس خطوة التسجيل ما اكتملتش. اكتب بياناتك مرة واحدة وتدخل على طول.</div>
-      <input class="inp" id="cpName" placeholder="الاسم الكامل" value="${esc(user.displayName || "")}">
-      <select class="inp" id="cpGender"><option value="male">طالب</option><option value="female">طالبة</option></select>
-      <select class="inp" id="cpDept">${document.getElementById("regDept")?.innerHTML || ""}</select>
-      <select class="inp" id="cpYear">${document.getElementById("regYear")?.innerHTML || ""}</select>
-      <label style="display:flex;gap:8px;align-items:center;font-size:12.5px;"><input type="checkbox" id="cpTerms"> أوافق على شروط الاستخدام وسياسة الخصوصية</label>
-      <div id="cpErr" style="display:none;color:#f87171;font-size:12.5px;"></div>
-      <button class="btn" id="cpSave">حفظ ومتابعة</button>
-      <button type="button" id="cpLogout" style="background:none;border:0;color:var(--muted);font-size:12.5px;cursor:pointer;">تسجيل الخروج</button>
-    </div>`;
-  document.body.appendChild(ov);
-  const err = m => { const e = document.getElementById("cpErr"); e.textContent = m; e.style.display = "block"; };
-  document.getElementById("cpLogout").onclick = async () => { ov.remove(); await signOut(auth); };
-  document.getElementById("cpSave").onclick = async () => {
-    const name = document.getElementById("cpName").value.trim();
-    const dept = document.getElementById("cpDept").value;
-    const year = document.getElementById("cpYear").value;
-    const worldId = (dept && year) ? `${dept}_${year}` : "";
-    if (!name) return err("اكتب اسمك الكامل");
-    if (!worldId || !window.isValidWorldId?.(worldId)) return err("اختر الشعبة والفرقة");
-    if (!document.getElementById("cpTerms").checked) return err("يجب الموافقة على شروط الاستخدام");
-    const btn = document.getElementById("cpSave"); btn.disabled = true;
-    try {
-      await _createUserProfile(user, { name, gender: document.getElementById("cpGender").value, worldId });
-      window.location.reload();
-    } catch (e) { btn.disabled = false; err("تعذر الحفظ، تأكد من الاتصال وحاول تاني"); }
-  };
-}
-
-async function doRegister() {
-  const name   = document.getElementById("loginName").value.trim();
-  const email  = document.getElementById("loginEmail").value.trim();
-  const pass   = document.getElementById("loginPass").value;
-  const gender = _selectedGender || "male";
-
-  // Phase 1 / 5.1 — Signup World: قراءة الشعبة/الفرقة وبناء worldId (بدون أي كتابة الآن)
-  const _deptVal = document.getElementById("regDept")?.value || "";
-  const _yearVal = document.getElementById("regYear")?.value || "";
-  const worldId  = (_deptVal && _yearVal) ? `${_deptVal}_${_yearVal}` : null;
-  const _worldOk = !!worldId && typeof window.isValidWorldId === "function" && window.isValidWorldId(worldId);
-
-  if (!name)           return showErr("اكتب اسمك الكامل أولاً");
-  if (!email)          return showErr("اكتب البريد الإلكتروني");
-  if (pass.length < 6) return showErr("كلمة المرور 6 أحرف على الأقل");
-  if (!_worldOk)        return showErr("اختر الشعبة والفرقة أولاً");
-  if (!document.getElementById("agreeTermsCheck")?.checked) {
-    return showErr("يجب الموافقة على شروط الاستخدام وسياسة الخصوصية أولاً");
-  }
-
-  const profile = { name, gender, worldId };
-  try {
-    // ✅ نمنع onAuthStateChanged من التدخل أثناء إنشاء الحساب
-    _isRegistering = true;
-    // شبكة أمان: نحفظ البيانات محلياً قبل إنشاء الحساب، لو العملية اتقطعت تتكمّل عند أول دخول
-    _savePendingProfile(email, profile);
-
-    let cred;
-    try {
-      cred = await createUserWithEmailAndPassword(auth, email, pass);
-    } catch (e) {
-      if (e.code !== "auth/email-already-in-use") throw e;
-      // ممكن يكون حساب يتيم من محاولة قديمة اتقطعت: لو الباسورد صح ومفيش وثيقة، نكمّل عليه
-      let existing;
-      try { existing = await signInWithEmailAndPassword(auth, email, pass); } catch (_) { throw e; }
-      const snap = await getDoc(doc(db, "users", existing.user.uid));
-      if (snap.exists()) { await signOut(auth); throw e; }
-      cred = existing;
-    }
-
-    // ✅ الكتابة في Firestore فوراً بعد إنشاء الحساب (بدون أي طلب شبكة بينهم)
-    await _createUserProfile(cred.user, profile);
-    _clearPendingProfile();
-
-    // ✅ بعد اكتمال كتابة Firestore، نعيد تحميل الصفحة
-    _isRegistering = false;
-    window.location.reload();
-
-  } catch (e) {
-    _isRegistering = false;
-    const map = {
-      "auth/email-already-in-use": "البريد الإلكتروني مستخدم من قبل",
-      "auth/invalid-email":        "تنسيق البريد الإلكتروني غلط",
-      "auth/weak-password":        "كلمة المرور ضعيفة"
-    };
-    showErr(map[e.code] || e.message);
-  }
-}
-
-/* ══════════════════════════════════════════
-   AUTH — LOGIN
-══════════════════════════════════════════ */
-async function doLogin() {
-  const email = document.getElementById("loginEmail").value.trim();
-  const pass  = document.getElementById("loginPass").value;
-  if (!email || !pass) return showErr("اكتب البريد وكلمة المرور");
-
-  try {
-    await signInWithEmailAndPassword(auth, email, pass);
-    try { window.__apkPromptAfterLogin?.(); } catch (_) {}
-  } catch (e) {
-    const map = {
-      "auth/invalid-credential": "بريد أو كلمة مرور غلط",
-      "auth/user-not-found":     "الحساب غير موجود",
-      "auth/wrong-password":     "كلمة المرور غلط",
-      "auth/too-many-requests":  "محاولات كثيرة — انتظر قليلاً"
-    };
-    showErr(map[e.code] || e.message);
-  }
-}
+// ── منطق الحساب المشترك مع واجهة الدخول الجديدة (js/auth-bridge.js) ──
+// واجهة الدخول/التسجيل/إكمال البيانات صارت في js/auth-ui.js؛ هنا يبقى فقط
+// منطق إنشاء وثيقة المستخدم الذي يستخدمه الربط.
+window._bisAuthCore = {
+  auth,
+  createUserProfile: _createUserProfile,
+  savePendingProfile: _savePendingProfile,
+  readPendingProfile: _readPendingProfile,
+  clearPendingProfile: _clearPendingProfile
+};
 
 /* ══════════════════════════════════════════
    AUTH — LOGOUT
@@ -3461,10 +3353,7 @@ async function doLogout() {
   await signOut(auth);
   document.getElementById("settingsModal")?.classList.remove("open");
   document.body.style.overflow = "";
-  document.getElementById("loginEmail").value = "";
-  document.getElementById("loginPass").value  = "";
-  document.getElementById("loginName").value  = "";
-  setAuthMode("login");
+  window.AuthUI?.reset?.(); // الواجهة الجديدة: تفريغ الحقول والرجوع لعرض الدخول
 }
 document.getElementById("logoutBtn")?.addEventListener("click", doLogout);
 document.getElementById("logoutBtnProfile").addEventListener("click", doLogout);
@@ -3648,10 +3537,10 @@ function avatarHTML(photo, name, size=38, gender) {
 ══════════════════════════════════════════ */
 onAuthStateChanged(auth, async (user) => {
 
-  // ✅ تجاهل الحدث أثناء إنشاء الحساب (نتجنب race condition)
-  // Firebase يُطلق هذا الـ callback فور createUserWithEmailAndPassword
-  // قبل أن يكتمل setDoc — لو اشتغل هنا سيجد doc غير موجود ويعمل signOut
-  if (_isRegistering) return;
+  // ✅ أثناء الدخول/التسجيل/تأكيد البريد/إكمال البيانات من واجهة الدخول الجديدة
+  // (Firebase يُطلق هذا الـ callback فور الدخول أو إنشاء الحساب، قبل ما تكتمل الخطوات)
+  // — الواجهة تمسك الحدث وتكمل الموقع بعد ضغط "الدخول إلى الموقع" (js/auth-bridge.js)
+  if (user && window._authHold?.(user)) { showPage("page-login"); return; }
 
   if (!user) {
     // ── تنظيف AVM عند logout أو reload ──
@@ -3669,6 +3558,7 @@ onAuthStateChanged(auth, async (user) => {
     window._dmsStopListeners?.(); // لا تُبقِ أي مستمع/قائمة DM بعد الخروج (مهما كان سبب الخروج)
     window._maintenanceApply?.();
     window.__apkPromptHide?.();
+    window.AuthUI?.sessionEnded?.(); // انتهت الجلسة أثناء انتظار تأكيد البريد
     showPage("page-login"); return;
   }
 
@@ -3714,7 +3604,7 @@ onAuthStateChanged(auth, async (user) => {
           if (s2.exists()) userData = s2.data();
         } catch (e) { console.error("auto-complete profile failed:", e); }
       }
-      if (!userData) { _showCompleteProfile(user); return; }
+      if (!userData) { showPage("page-login"); window.AuthBridge?.needsProfile?.(user); return; }
     }
   }
 
@@ -8612,6 +8502,7 @@ try { window._listenPinnedMsg?.(); } catch(e) {}
 <!-- ══ نُقلت هنا (بعد السكريبت الرئيسي بدل قبله) — الملفات دي مستقلة تمامًا (موثّق بالتعليق داخل كل ملف)
      ولا تعتمد وقت التحميل على db/auth/currentUser، فتنفيذ الكود الحرج (فحص تسجيل الدخول) ما بقاش
      مضطر ينتظر تحميل الملفات دي الأول ══ -->
+<script type="module" src="js/auth-bridge.js"></script>
 <script type="module" src="js/audit-log.js"></script>
 <script type="module" src="js/chat-core.js"></script>
 <script type="module" src="js/chat-listener.js"></script>

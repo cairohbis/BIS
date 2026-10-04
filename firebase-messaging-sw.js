@@ -68,7 +68,7 @@ self.addEventListener('notificationclick', function(event) {
    رقم CACHE_VERSION عشان المستخدمين ياخدوا النسخة الجديدة.
    ══════════════════════════════════════════ */
 
-const CACHE_VERSION = 'v6'; // ← تم رفعه عشان المستخدمين ياخدوا نسخة الشفافية المصلّحة (chat-bubbles.css + bubble-blur.js)
+const CACHE_VERSION = 'v7'; // ← تم رفعه عشان المستخدمين ياخدوا واجهة الدخول الجديدة (auth-ui.css + auth-ui.js + auth-bridge.js)
 const CACHE_NAME = 'bariq-shell-' + CACHE_VERSION;
 const MEDIA_CACHE_NAME = 'bariq-media-' + CACHE_VERSION;
 
@@ -80,6 +80,7 @@ const PRECACHE_PATHS = [
   'terms.html',
 
   'css/style.css',
+  'css/auth-ui.css',
   'css/military.css',
   'css/dms-page.css',
   'css/chat-bubbles.css',
@@ -94,7 +95,7 @@ const PRECACHE_PATHS = [
   'js/ai-assistant.js', 'js/ai-config.js', 'js/audit-log.js',
   'js/back-nav.js', 'js/bubble-blur.js', 'js/bubble-color.js', 'js/change-password.js',
   'js/chat-backgrounds.js', 'js/chat-search.js', 'js/connectivity.js', 'js/dm-extras.js',
-  'js/dms-page.js', 'js/draft-messages.js', 'js/emoji-picker.js', 'js/lamp-login.js',
+  'js/dms-page.js', 'js/draft-messages.js', 'js/emoji-picker.js', 'js/auth-ui.js', 'js/auth-bridge.js',
   'js/library.js', 'js/lightbox.js', 'js/maintenance.js', 'js/mention.js', 'js/military.js',
   'js/notif-panel.js', 'js/notif-settings.js', 'js/pin-message.js', 'js/poll.js',
   'js/report.js', 'js/settings-modal.js', 'js/sidebar-search.js', 'js/skeleton-loader.js',
