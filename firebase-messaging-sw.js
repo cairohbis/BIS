@@ -68,7 +68,7 @@ self.addEventListener('notificationclick', function(event) {
    رقم CACHE_VERSION عشان المستخدمين ياخدوا النسخة الجديدة.
    ══════════════════════════════════════════ */
 
-const CACHE_VERSION = 'v7'; // ← تم رفعه عشان المستخدمين ياخدوا واجهة الدخول الجديدة (auth-ui.css + auth-ui.js + auth-bridge.js)
+const CACHE_VERSION = 'v9'; // ← تم رفعه عشان المستخدمين ياخدوا نافذة «الحساب مسجّل بالفعل» (auth-ui.css + auth-ui.js + auth-bridge.js + index.html)
 const CACHE_NAME = 'bariq-shell-' + CACHE_VERSION;
 const MEDIA_CACHE_NAME = 'bariq-media-' + CACHE_VERSION;
 
