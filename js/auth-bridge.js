@@ -12,7 +12,8 @@
 import { getApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import {
   getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword,
-  sendEmailVerification, sendPasswordResetEmail, signOut, GoogleAuthProvider, signInWithPopup
+  sendEmailVerification, sendPasswordResetEmail, signOut, GoogleAuthProvider, signInWithPopup,
+  verifyPasswordResetCode, confirmPasswordReset, applyActionCode
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
@@ -24,6 +25,13 @@ const auth  = () => (core() && core().auth) || getAuth(getApp());
       (فيُعاد تحميل الصفحة)، ويرجع false عند أي فشل أو تسجيل خروج ── */
 let busy = false;
 
+/* فتح الصفحة من رابط في رسالة Firebase (?mode=resetPassword أو verifyEmail مع oobCode):
+   نمنع فتح الموقع (حتى لو كانت هناك جلسة محفوظة) إلى أن تنتهي خطوات الرابط */
+let resetHold = (() => {
+  try { const q = new URLSearchParams(location.search); return (q.get("mode") === "resetPassword" || q.get("mode") === "verifyEmail") && !!q.get("oobCode"); }
+  catch (e) { return false; }
+})();
+
 function verifyPending() {
   try { const s = JSON.parse(localStorage.getItem(UI_KEY) || "null"); return !!(s && s.pending); }
   catch (e) { return false; }
@@ -32,7 +40,7 @@ function isPasswordUser(u) { return !!u && (u.providerData || []).some(p => p.pr
 
 /* يُستدعى من onAuthStateChanged: true = لا تفتح الموقع الآن */
 window._authHold = (user) =>
-  busy || (!!user && verifyPending() && isPasswordUser(user) && !user.emailVerified);
+  busy || resetHold || (!!user && verifyPending() && isPasswordUser(user) && !user.emailVerified);
 
 /* ── رسائل الأخطاء (نفس صياغة الموقع القديم + رسائل Google/التحقق) ── */
 const ERR = {
@@ -47,7 +55,9 @@ const ERR = {
   "auth/popup-blocked":        "المتصفح منع نافذة Google، اسمح بالنوافذ المنبثقة وحاول تاني",
   "auth/operation-not-allowed": "هذه الطريقة غير مفعّلة حاليًا",
   "auth/unauthorized-domain":  "هذا الرابط غير مسموح له بتسجيل الدخول بـ Google",
-  "auth/user-disabled":        "تم إيقاف هذا الحساب — تواصل مع الإدارة"
+  "auth/user-disabled":        "تم إيقاف هذا الحساب — تواصل مع الإدارة",
+  "auth/expired-action-code":  "انتهت صلاحية الرابط، اطلب رابطًا جديدًا",
+  "auth/invalid-action-code":  "الرابط غير صالح أو تم استخدامه من قبل، اطلب رابطًا جديدًا"
 };
 const CANCELLED = ["auth/popup-closed-by-user", "auth/cancelled-popup-request", "auth/user-cancelled"];
 const errMsg = (e) => ERR[e && e.code] || (e && e.message) || "حدث خطأ، حاول مرة أخرى.";
@@ -133,6 +143,8 @@ B.google = async function (draft) {
   busy = true;
   try {
     const cred = await signInWithPopup(auth(), new GoogleAuthProvider());
+    /* من شاشة إنشاء الحساب: حساب Google مسجّل مسبقًا = رفض (نافذة «الحساب مسجّل بالفعل») */
+    if (draft && await userDoc(cred.user.uid)) { await signOut(auth()); busy = false; return { status: "exists" }; }
     return await afterSignIn(cred.user, draft || null);
   } catch (e) {
     busy = false;
@@ -172,6 +184,29 @@ B.resetPassword = async function ({ email }) {
     if (e && (e.code === "auth/user-not-found" || e.code === "auth/invalid-credential")) return { status: "sent" };
     return { status: "error", message: errMsg(e) };
   }
+};
+
+/* استعادة كلمة المرور داخل الموقع: الرابط المرسل يفتح الموقع ومعه oobCode */
+B.checkResetCode = async function ({ code }) {
+  try { const email = await verifyPasswordResetCode(auth(), code); return { status: "ok", email }; }
+  catch (e) { return { status: "error", message: errMsg(e) }; }
+};
+B.confirmReset = async function ({ code, password }) {
+  try { await confirmPasswordReset(auth(), code, password); return { status: "ok" }; }
+  catch (e) {
+    if (e && (e.code === "auth/expired-action-code" || e.code === "auth/invalid-action-code")) return { status: "expired", message: errMsg(e) };
+    return { status: "error", message: errMsg(e) };
+  }
+};
+/* تأكيد البريد من رابط الرسالة (بعد ضبط Custom action URL ليشير للموقع) */
+B.applyVerify = async function ({ code }) {
+  try { await applyActionCode(auth(), code); return { status: "ok" }; }
+  catch (e) { return { status: "error", message: errMsg(e) }; }
+};
+/* نهاية الاستعادة: نرفع الحجز ونُنهي أي جلسة قديمة ليكون الدخول بعدها طبيعيًا */
+B.endReset = async function () {
+  resetHold = false;
+  try { if (auth().currentUser) await signOut(auth()); } catch (e) {}
 };
 
 B.resendEmailLink = async function () {

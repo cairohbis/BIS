@@ -270,7 +270,7 @@ function _femaleSVG(size) {
      ══════════════════════════════════════════════════════════════════════ */
   var NOT_CONNECTED = "لم يتم ربط نظام المصادقة بعد.";
   var bridge = window.AuthBridge = window.AuthBridge || {};
-  ["loginEmail", "google", "sendEmailLink", "resendEmailLink", "checkEmailVerified", "saveProfile", "resetPassword"].forEach(function (m) {
+  ["loginEmail", "google", "sendEmailLink", "resendEmailLink", "checkEmailVerified", "saveProfile", "resetPassword", "checkResetCode", "confirmReset", "applyVerify"].forEach(function (m) {
     if (typeof bridge[m] !== "function") bridge[m] = function () { return { status: "error", message: NOT_CONNECTED }; };
   });
   var bridgeReady = new Promise(function (res) { window.__resolveAuthBridge = res; });
@@ -296,8 +296,10 @@ function _femaleSVG(size) {
   function restoreDraft() { var d = S.draft; if (!d) return; $("loginName").value = d.name || ""; if (d.gender) gender.reg.set(d.gender); $("regDept").value = d.dept || ""; $("regYear").value = d.year || ""; $("agreeTermsCheck").checked = !!d.terms; }
   function prefillComplete() { var u = profile; if (!u) return; $("cpName").value = u.name || ""; if (u.gender) gender.cp.set(u.gender); $("cpDept").value = u.dept || ""; $("cpYear").value = u.year || ""; $("cpTerms").checked = !!u.terms; }
   function openVerify() { openScreen("Verify"); if (S.pending) $("verifyEmail").textContent = S.pending.email; var r = S.pending ? Math.ceil((S.pending.cdEnd - Date.now()) / 1000) : 0; startCooldown(r > 0 ? r : 0); }
+  /* دخول ناجح: فتح الموقع مباشرة بدون شاشة نجاح */
+  function finish() { if (typeof bridge.onDone === "function") bridge.onDone(profile); else go("login"); }
   function afterAuth(r, onFail) {
-    if (r.status === "ok") { profile = r.profile || profile; S.draft = null; save(); return go("success"); }
+    if (r.status === "ok") { profile = r.profile || profile; S.draft = null; save(); return finish(); }
     if (r.status === "incomplete") { profile = r.profile || {}; return go("complete"); }
     onFail(r);
   }
@@ -373,8 +375,10 @@ function _femaleSVG(size) {
   function closeScreens() {
     document.querySelectorAll(".av-screen").forEach(function (s) { s.hidden = true; });
     document.body.classList.remove("av-screen-open");
-    clearAlert("cpAlert"); clearAlert("verifyAlert");
+    clearAlert("cpAlert"); clearAlert("verifyAlert"); clearAlert("rpAlert");
+    var em = $("existsModal"); if (em) em.hidden = true;
   }
+  function showExists() { var m = $("existsModal"); if (!m) return; m.hidden = false; $("existsLogin").focus(); }
   function openScreen(name) {
     closeScreens();
     document.body.classList.add("av-screen-open");
@@ -448,6 +452,41 @@ function _femaleSVG(size) {
   }
   function stopCooldown() { clearInterval(cdTimer); cdTimer = null; }
 
+  /* ══ استعادة كلمة المرور (البريد ← رابط التحقق ← كلمة مرور جديدة) ══ */
+  var fpCdEnd = 0, fpTimer = null, rpCode = null, rpEmail = "";
+  function renderFp() {
+    var b = $("fpSend"), left = Math.ceil((fpCdEnd - Date.now()) / 1000);
+    if (left > 0) { b.disabled = true; b.textContent = "إعادة الإرسال بعد " + fmt(left); }
+    else { clearInterval(fpTimer); fpTimer = null; b.disabled = false; b.textContent = "إرسال رابط التحقق"; }
+  }
+  function startFp(sec) { fpCdEnd = Date.now() + sec * 1000; renderFp(); clearInterval(fpTimer); fpTimer = setInterval(renderFp, 1000); }
+  function endReset() { rpCode = null; try { if (typeof bridge.endReset === "function") bridge.endReset(); } catch (e) {} }
+  /* الصفحة فُتحت من رابط الاستعادة المرسل للبريد */
+  function resetLink() {
+    try {
+      var q = new URLSearchParams(location.search), mode = q.get("mode"), code = q.get("oobCode");
+      if ((mode !== "resetPassword" && mode !== "verifyEmail") || !code) return null;
+      if (window.history && history.replaceState) history.replaceState(null, "", location.pathname + location.hash);
+      return { mode: mode, code: code };
+    } catch (e) { return null; }
+  }
+  /* رابط تأكيد البريد المرسل في الرسالة */
+  function startVerifyLink(code) {
+    call("applyVerify", { code: code }, "جارٍ تأكيد بريدك الإلكتروني…").then(function (r) {
+      endReset(); go("login");
+      if (r.status === "ok") { S.pending = null; save(); setAlert("loginAlert", "تم تأكيد بريدك الإلكتروني بنجاح. سجّل دخولك الآن.", "ok"); }
+      else setAlert("loginAlert", r.message || "رابط التأكيد غير صالح أو انتهت صلاحيته.");
+    });
+  }
+  function startReset(code) {
+    rpCode = code; rpEmail = ""; $("rpPass").value = ""; $("rpPass2").value = "";
+    call("checkResetCode", { code: code }, "جارٍ التحقق من الرابط…").then(function (r) {
+      if (r.status === "ok") { rpEmail = r.email || ""; return go("reset"); }
+      endReset(); go("forgot");
+      setAlert("fpAlert", r.message || "الرابط غير صالح أو انتهت صلاحيته، اطلب رابطًا جديدًا.");
+    });
+  }
+
   /* ══ التنقل بين الشاشات ══ */
   var gender = {};
   var SCREENS = {
@@ -456,7 +495,8 @@ function _femaleSVG(size) {
     register: function () { setView("register"); ensureLamp(true); },
     complete: function () { openScreen("Complete"); prefillComplete(); },
     verify: openVerify,
-    success: function () { openScreen("Success"); },
+    forgot: function () { openScreen("Forgot"); clearAlert("fpAlert"); clearInvalid(); $("fpEmail").value = ""; renderFp(); },
+    reset: function () { openScreen("Reset"); $("rpEmail").textContent = rpEmail || ""; $("rpEmail").hidden = !rpEmail; },
     loading: function (o) { showLoading({ label: o.label || "جارٍ التحميل…", next: o.next, fixed: o.next ? null : 62 }); }
   };
   function go(id, opts) {
@@ -486,24 +526,50 @@ function _femaleSVG(size) {
     });
     /* زر الدخول يشغّل الفحص مباشرة (إرسال النموذج يتعطل داخل المعاينات المقيّدة) */
     $("mainAuthBtn").addEventListener("click", function (e) { e.preventDefault(); $("loginForm").dispatchEvent(new Event("submit", { cancelable: true, bubbles: true })); });
-    /* نسيت كلمة المرور: يرسل رابط إعادة الضبط على البريد المكتوب في خانة الدخول (sendPasswordResetEmail عبر الربط) */
+    /* نسيت كلمة المرور: تصفير حقلَي الدخول ثم شاشة مستقلة فيها خانة البريد فقط */
     $("forgotBtn").addEventListener("click", function () {
-      var btn = $("forgotBtn"); if (btn.disabled) return;
-      clearAlert("loginAlert"); clearInvalid();
-      var em = $("loginEmail").value.trim();
-      if (!em) { setAlert("loginAlert", "اكتب بريدك الإلكتروني أولًا ثم اضغط «نسيت كلمة المرور»."); markInvalid("loginEmail"); $("loginEmail").focus(); return; }
-      if (!EMAIL_RE.test(em)) { setAlert("loginAlert", "صيغة البريد الإلكتروني غير صحيحة."); markInvalid("loginEmail"); return; }
-      btn.disabled = true;                              /* يمنع الإرسال المتكرر */
+      $("loginEmail").value = ""; $("loginPass").value = ""; $("loginPass").type = "password";
+      var eb = document.querySelector('[data-eye="loginPass"]'); if (eb) { eb.innerHTML = ICON_EYE; eb.setAttribute("aria-pressed", "false"); }
+      go("forgot");
+    });
+    $("fpForm").addEventListener("submit", function (e) {
+      e.preventDefault(); clearAlert("fpAlert"); clearInvalid();
+      if (fpCdEnd > Date.now()) return;
+      var em = $("fpEmail").value.trim();
+      if (!em) { setAlert("fpAlert", "اكتب بريدك الإلكتروني."); markInvalid("fpEmail"); return; }
+      if (!EMAIL_RE.test(em)) { setAlert("fpAlert", "صيغة البريد الإلكتروني غير صحيحة."); markInvalid("fpEmail"); return; }
+      $("fpSend").disabled = true; $("fpSend").textContent = "جارٍ الإرسال…";
       invoke("resetPassword", { email: em }).then(function (r) {
         if (r.status === "sent") {
-          setAlert("loginAlert", "إذا كان هذا البريد مسجّلًا لدينا، أرسلنا إليه رابط إعادة ضبط كلمة المرور. افحص الوارد والرسائل غير المرغوبة.", "ok");
-          setTimeout(function () { btn.disabled = false; }, 45000);
+          setAlert("fpAlert", "إذا كان هذا البريد مسجّلًا لدينا، أرسلنا إليه رابط التحقق. افتح الرسالة واضغط على الرابط (وافحص الرسائل غير المرغوبة).", "ok");
+          startFp(45);
         } else {
-          btn.disabled = false;
-          setAlert("loginAlert", r.message || "تعذّر إرسال الرابط، حاول مرة أخرى.");
+          fpCdEnd = 0; renderFp();
+          setAlert("fpAlert", r.message || "تعذّر إرسال الرابط، حاول مرة أخرى.");
         }
       });
     });
+    $("fpSend").addEventListener("click", function (e) { e.preventDefault(); $("fpForm").dispatchEvent(new Event("submit", { cancelable: true, bubbles: true })); });
+    $("fpBack").addEventListener("click", function () { go("login"); });
+    $("rpForm").addEventListener("submit", function (e) {
+      e.preventDefault(); clearAlert("rpAlert"); clearInvalid();
+      var p1 = $("rpPass").value, p2 = $("rpPass2").value;
+      if (!p1) { setAlert("rpAlert", "اكتب كلمة المرور الجديدة."); markInvalid("rpPass"); return; }
+      if (p1.length < 6) { setAlert("rpAlert", "كلمة المرور يجب ألا تقل عن 6 أحرف."); markInvalid("rpPass"); return; }
+      if (p1 !== p2) { setAlert("rpAlert", "كلمتا المرور غير متطابقتين."); markInvalid("rpPass2"); return; }
+      call("confirmReset", { code: rpCode, password: p1 }, "جارٍ حفظ كلمة المرور…").then(function (r) {
+        if (r.status === "ok") {
+          var em = rpEmail; endReset(); go("login");
+          $("loginEmail").value = em || ""; $("loginPass").value = "";
+          setAlert("loginAlert", "تم تغيير كلمة المرور بنجاح. سجّل دخولك بكلمة المرور الجديدة.", "ok");
+          return;
+        }
+        if (r.status === "expired") { endReset(); go("forgot"); setAlert("fpAlert", r.message); return; }
+        go("reset"); setAlert("rpAlert", r.message || "تعذّر حفظ كلمة المرور، حاول مرة أخرى.");
+      });
+    });
+    $("rpSave").addEventListener("click", function (e) { e.preventDefault(); $("rpForm").dispatchEvent(new Event("submit", { cancelable: true, bubbles: true })); });
+    $("rpBack").addEventListener("click", function () { endReset(); go("login"); });
     $("googleBtn").addEventListener("click", function () {
       call("google", null, "جارٍ الاتصال بحساب Google…").then(function (r) { afterAuth(r, function (x) { fail("login", "loginAlert", x); }); });
     });
@@ -511,7 +577,7 @@ function _femaleSVG(size) {
     $("regForm").addEventListener("input", readDraft); $("regForm").addEventListener("change", readDraft); $("regGender").addEventListener("click", readDraft); ["input", "change"].forEach(function (ev) { $("regForm").addEventListener(ev, syncMethods); }); $("regGender").addEventListener("click", syncMethods);
     $("methodGoogle").addEventListener("click", function () {
       pendingMethod = function () {
-        call("google", S.draft, "جارٍ ربط بياناتك بحساب Google…").then(function (r) { afterAuth(r, function (x) { fail("register", "regAlert", x); }); });
+        call("google", S.draft, "جارٍ ربط بياناتك بحساب Google…").then(function (r) { afterAuth(r, function (x) { if (x.status === "exists") { go("register"); showExists(); } else fail("register", "regAlert", x); }); });
       };
       submitReg();
     });
@@ -568,13 +634,13 @@ function _femaleSVG(size) {
       if (!$("cpTerms").checked) return bad("يجب الموافقة على شروط الاستخدام وسياسة الخصوصية.", "cpTerms");
       profile = { name: $("cpName").value.trim(), gender: gender.cp.get(), dept: $("cpDept").value, year: $("cpYear").value, terms: true };
       call("saveProfile", profile, "جارٍ حفظ بياناتك…").then(function (r) {
-        if (r.status === "ok") return go("success");
+        if (r.status === "ok") return finish();
         go("complete"); setAlert("cpAlert", r.message || "تعذّر حفظ بياناتك، حاول مرة أخرى.");
       });
     });
     $("cpLogout").addEventListener("click", function () { try { if (typeof bridge.signOut === "function") bridge.signOut(); } catch (e) {} go("login"); });
 
-    function verified(p) { profile = p || S.draft || profile; S.pending = null; S.draft = null; save(); go("success"); }
+    function verified(p) { profile = p || S.draft || profile; S.pending = null; S.draft = null; save(); finish(); }
     window.AuthUI = {
       show: go, emailVerified: verified,
       /* إكمال بيانات حساب موجود بدون ملف بيانات (يُستدعى من الموقع) */
@@ -604,17 +670,20 @@ function _femaleSVG(size) {
         S.pending.cdEnd = Date.now() + CD_TOTAL * 1000; save(); startCooldown(CD_TOTAL);
       });
     });
+    $("existsLogin").addEventListener("click", function () { go("login"); });
+    $("existsClose").addEventListener("click", function () { $("existsModal").hidden = true; });
     $("verifyLogout").addEventListener("click", function () {
       S.pending = null; save();
       try { if (typeof bridge.signOut === "function") bridge.signOut(); } catch (e) {}
       go("login");
     });
-    $("successBtn").addEventListener("click", function () { if (typeof bridge.onDone === "function") bridge.onDone(profile); else go("login"); });
   }
 
   function boot() {
     gender.reg = makeGender($("regGender"), true); gender.cp = makeGender($("cpGender"));
     wireEyes(); wire(); enhanceSelects(); restoreDraft(); syncMethods();
+    var rl = resetLink();
+    if (rl) return rl.mode === "verifyEmail" ? startVerifyLink(rl.code) : startReset(rl.code);
     go(S.pending ? "verify" : "lamp-off");
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot); else boot();
