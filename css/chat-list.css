@@ -84,14 +84,6 @@
 .dm-item.is-online .dm-online-dot { opacity: 1; }
 .dm-avatar-wrap { position: relative; flex-shrink: 0; }
 
-/* ── Draft indicator on DM list items ── */
-.dm-preview.has-draft::before {
-  content: '[مسودة] ';
-  color: var(--gold);
-  font-weight: 700;
-  font-size: 10px;
-}
-
 /* ══════════════════════════════════════════
    DM LIST — WhatsApp-style (Part 8 upgrade)
 ══════════════════════════════════════════ */

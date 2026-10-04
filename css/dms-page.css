@@ -57,12 +57,7 @@
 .dms-search-bar input::placeholder { color: var(--muted); }
 
 /* ── Filter Chips ── */
-.dms-filters {
-  display: flex; gap: 8px;
-  padding: 0 20px 12px; flex-shrink: 0;
-  overflow-x: auto; scrollbar-width: none;
-}
-.dms-filters::-webkit-scrollbar { display: none; }
+
 .dms-chip {
   padding: 6px 16px; border-radius: 20px;
   font-size: 13px; font-weight: 600;
@@ -76,12 +71,6 @@
 .dms-chip.active {
   background: var(--gold); color: #1a1a1a;
   border-color: var(--gold);
-}
-
-.dms-chip.dms-chip-archive {
-  background: rgba(20,20,22,0.18);
-  backdrop-filter: blur(9px) saturate(150%);
-  -webkit-backdrop-filter: blur(9px) saturate(150%);
 }
 
 /* ── صندوق الأرشيف المستقل ── */

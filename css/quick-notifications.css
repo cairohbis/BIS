@@ -103,11 +103,3 @@
   box-shadow: 0 4px 14px rgba(201,169,110,.35);
 }
 
-/* حقل اختيار صورة بريق داخل لوحة الأونر */
-.qn-admin-mascot-preview{
-  width: 44px; height: 44px;
-  border-radius: 10px;
-  object-fit: contain;
-  background: rgba(255,255,255,0.05);
-  padding: 4px;
-}
