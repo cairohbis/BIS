@@ -217,7 +217,7 @@ if ("serviceWorker" in navigator) {
             <div class="av-hsep" aria-hidden="true"></div>
             <div class="av-field av-pass"><input class="inp" id="mailPass" type="password" placeholder="كلمة المرور (6 أحرف على الأقل)" autocomplete="new-password"><button type="button" class="av-eye" data-eye="mailPass" aria-label="إظهار كلمة المرور" aria-pressed="false"></button></div>
             <div class="av-alert" id="mailAlert" hidden></div>
-            <button class="btn" id="mailSend" type="button">إرسال رابط التحقق</button>
+            <button class="btn" id="mailSend" type="button">إنشاء الحساب</button>
           </div>
           <div class="av-hsep" aria-hidden="true"></div>
           <div class="terms-row av-terms">
@@ -2150,7 +2150,8 @@ import {
   collection, addDoc, getDocs, writeBatch,
   query, orderBy, onSnapshot, serverTimestamp,
   limit, where, startAfter, deleteField,
-  arrayUnion, arrayRemove, increment
+  arrayUnion, arrayRemove, increment,
+  terminate, clearIndexedDbPersistence
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import {
   getStorage, ref, uploadBytes, getDownloadURL
@@ -3385,6 +3386,12 @@ async function doLogout() {
   document.getElementById("settingsModal")?.classList.remove("open");
   document.body.style.overflow = "";
   window.AuthUI?.reset?.(); // الواجهة الجديدة: تفريغ الحقول والرجوع لعرض الدخول
+
+  // مسح كل أثر للحساب من هذا الجهاز: التخزين المحلي (عدا تفضيل الثيم) + كاش Firestore، ثم صفحة نظيفة
+  try { sessionStorage.clear(); } catch (e) {}
+  try { Object.keys(localStorage).forEach(k => { if (!/theme/i.test(k)) localStorage.removeItem(k); }); } catch (e) {}
+  try { await terminate(db); await clearIndexedDbPersistence(db); } catch (e) {}
+  window.location.replace(window.location.pathname);
 }
 document.getElementById("logoutBtn")?.addEventListener("click", doLogout);
 document.getElementById("logoutBtnProfile").addEventListener("click", doLogout);
@@ -3566,7 +3573,10 @@ function avatarHTML(photo, name, size=38, gender) {
 /* ══════════════════════════════════════════
    AUTH STATE — Central controller
 ══════════════════════════════════════════ */
-onAuthStateChanged(auth, async (user) => {
+/* يسمح لواجهة الدخول بتشغيل منطق فتح الموقع مباشرة بدون إعادة تحميل الصفحة */
+let _authStateHandler = null;
+window._runAuthState = () => (_authStateHandler ? _authStateHandler(auth.currentUser) : undefined);
+onAuthStateChanged(auth, _authStateHandler = async (user) => {
 
   // ✅ أثناء الدخول/التسجيل/تأكيد البريد/إكمال البيانات من واجهة الدخول الجديدة
   // (Firebase يُطلق هذا الـ callback فور الدخول أو إنشاء الحساب، قبل ما تكتمل الخطوات)
