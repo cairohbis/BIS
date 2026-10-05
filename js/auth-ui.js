@@ -279,7 +279,13 @@ function _femaleSVG(size) {
     var p = wait.then(function () { return bridge[method](payload); });
     return p.then(function (r) { return r || { status: "error" }; }, function (e) { return { status: "error", message: (e && e.message) || "" }; });
   }
-  function call(method, payload, label) { go("loading", { label: label }); return invoke(method, payload); }
+  /* بدون شاشة تحميل؛ ونتجاهل الضغطات المتكررة أثناء تنفيذ طلب جارٍ */
+  var inflight = false;
+  function call(method, payload) {
+    if (inflight) return new Promise(function () {});
+    inflight = true;
+    return invoke(method, payload).then(function (r) { inflight = false; return r; }, function (e) { inflight = false; throw e; });
+  }
 
   /* حالة الواجهة فقط (مسودة التسجيل + تحقق البريد المعلّق) — تبقى بعد إغلاق الصفحة */
   var KEY = "bis_auth_ui", S = { draft: null, pending: null }, profile = null, pendingMethod = null;
@@ -385,57 +391,9 @@ function _femaleSVG(size) {
     var s = $("screen" + name); s.hidden = false; s.scrollTop = 0;
   }
 
-  /* ══ Loading — نفس Splash الموقع (الحلقة + الكلمات) + ماسكوت + نص الحالة ══ */
-  var WORDS = [
-    { text: "منتدى جامعي", color: "#4dabf7", icon: "fa-solid fa-comments" },
-    { text: "دردشة سريعة", color: "#ffd43b", icon: "fa-solid fa-bolt" },
-    { text: "سجل مسيرتك", color: "#69db7c", icon: "fa-solid fa-route" },
-    { text: "سرعة استجابة", color: "#ff922b", icon: "fa-solid fa-gauge-high" },
-    { text: "أمان الخصوصية", color: "#845ef7", icon: "fa-solid fa-user-shield" },
-    { text: "تشفير تام", color: "#20c997", icon: "fa-solid fa-lock" },
-    { text: "تواصل مع أصدقائك", color: "#ff6b6b", icon: "fa-solid fa-user-group" },
-    { text: "احفظ درجاتك", color: "#e8b923", icon: "fa-solid fa-graduation-cap" }
-  ];
-  var RADIUS = 48, CIRC = 2 * Math.PI * RADIUS, splashTimer = null, splashT0 = 0, splashNext = null, splashFixed = null;
-  function stopSplash() { if (splashTimer) { cancelAnimationFrame(splashTimer); splashTimer = null; } }
-  function removeLoading() { var sp = $("avLoading"); if (sp) { stopSplash(); sp.remove(); } }
-  function showLoading(o) {
-    o = o || {}; removeLoading();
-    var sp = document.createElement("div");
-    sp.id = "avLoading";
-    sp.setAttribute("role", "status"); sp.setAttribute("aria-live", "polite");
-    sp.innerHTML =
-      '<div class="uni-splash-ring-wrap"><svg viewBox="0 0 110 110"><circle class="uni-splash-ring-bg" cx="55" cy="55" r="' + RADIUS + '"></circle>' +
-      '<circle class="uni-splash-ring-fill" id="av-ring-fill" cx="55" cy="55" r="' + RADIUS + '" stroke-dasharray="' + CIRC + '" stroke-dashoffset="' + CIRC + '"></circle></svg>' +
-      '<div class="uni-splash-percent" id="av-ring-pct">0%</div></div>' +
-      '<div class="uni-splash-status" id="avLoadStatus"></div>' +
-      '<div class="uni-splash-word" id="av-word"><i id="av-word-icon"></i><span id="av-word-text"></span></div>' +
-      '<div class="uni-splash-title">منتدى الجامعة</div>';
-    document.body.appendChild(sp);
-    $("avLoadStatus").textContent = o.label || "جارٍ التحميل…";
-    splashNext = o.next || null; splashFixed = o.fixed == null ? null : o.fixed; splashT0 = 0;
-    var idx = -1;
-    function setP(p) { p = Math.max(0, Math.min(100, p)); $("av-ring-fill").style.strokeDashoffset = CIRC - (p / 100) * CIRC; $("av-ring-pct").textContent = Math.round(p) + "%"; }
-    function word(i) {
-      var w = WORDS[i % WORDS.length], we = $("av-word"); we.classList.remove("uni-splash-word-visible");
-      setTimeout(function () {
-        var ic = $("av-word-icon"), tx = $("av-word-text"); if (!ic) return;
-        ic.className = w.icon; tx.textContent = w.text; we.style.color = w.color; ic.style.color = w.color; we.classList.add("uni-splash-word-visible");
-      }, 60);
-    }
-    function tick(ts) {
-      if (!$("av-ring-fill")) return;
-      if (!splashT0) splashT0 = ts;
-      var el = ts - splashT0;
-      var pct = splashFixed != null ? splashFixed : Math.min(100, el / 1500 * 100);
-      setP(pct);
-      var wi = splashFixed != null ? 2 : Math.min(WORDS.length - 1, Math.floor(el / 400));
-      if (wi !== idx) { idx = wi; word(idx); }
-      if (splashNext && el > 1500) { var n = splashNext; splashNext = null; go(n); return; }
-      splashTimer = requestAnimationFrame(tick);
-    }
-    splashTimer = requestAnimationFrame(tick);
-  }
+  /* لا توجد شاشة تحميل: الواجهة تبقى ظاهرة أثناء الطلب (دوال فارغة تحافظ على استدعاءات go) */
+  function stopSplash() {}
+  function removeLoading() {}
 
   /* ══ تأكيد البريد: cooldown ══ */
   var CD_TOTAL = 45, cd = 0, cdTimer = null;
@@ -453,6 +411,9 @@ function _femaleSVG(size) {
   function stopCooldown() { clearInterval(cdTimer); cdTimer = null; }
 
   /* ══ استعادة كلمة المرور (البريد ← رابط التحقق ← كلمة مرور جديدة) ══ */
+  /* إيقاف مؤقت: اجعلها true لإعادة تشغيل الميزة */
+  var FORGOT_ENABLED = false;
+  var FORGOT_OFF_MSG = "هذه الإضافة لا تعمل لدواعي أمنية";
   var fpCdEnd = 0, fpTimer = null, rpCode = null, rpEmail = "";
   function renderFp() {
     var b = $("fpSend"), left = Math.ceil((fpCdEnd - Date.now()) / 1000);
@@ -479,6 +440,7 @@ function _femaleSVG(size) {
     });
   }
   function startReset(code) {
+    if (!FORGOT_ENABLED) { go("login"); setAlert("loginAlert", FORGOT_OFF_MSG); return; }
     rpCode = code; rpEmail = ""; $("rpPass").value = ""; $("rpPass2").value = "";
     call("checkResetCode", { code: code }, "جارٍ التحقق من الرابط…").then(function (r) {
       if (r.status === "ok") { rpEmail = r.email || ""; return go("reset"); }
@@ -496,8 +458,7 @@ function _femaleSVG(size) {
     complete: function () { openScreen("Complete"); prefillComplete(); },
     verify: openVerify,
     forgot: function () { openScreen("Forgot"); clearAlert("fpAlert"); clearInvalid(); $("fpEmail").value = ""; renderFp(); },
-    reset: function () { openScreen("Reset"); $("rpEmail").textContent = rpEmail || ""; $("rpEmail").hidden = !rpEmail; },
-    loading: function (o) { showLoading({ label: o.label || "جارٍ التحميل…", next: o.next, fixed: o.next ? null : 62 }); }
+    reset: function () { openScreen("Reset"); $("rpEmail").textContent = rpEmail || ""; $("rpEmail").hidden = !rpEmail; }
   };
   function go(id, opts) {
     var fn = SCREENS[id]; if (!fn) return;
@@ -528,6 +489,7 @@ function _femaleSVG(size) {
     $("mainAuthBtn").addEventListener("click", function (e) { e.preventDefault(); $("loginForm").dispatchEvent(new Event("submit", { cancelable: true, bubbles: true })); });
     /* نسيت كلمة المرور: تصفير حقلَي الدخول ثم شاشة مستقلة فيها خانة البريد فقط */
     $("forgotBtn").addEventListener("click", function () {
+      if (!FORGOT_ENABLED) { clearInvalid(); setAlert("loginAlert", FORGOT_OFF_MSG); return; }
       $("loginEmail").value = ""; $("loginPass").value = ""; $("loginPass").type = "password";
       var eb = document.querySelector('[data-eye="loginPass"]'); if (eb) { eb.innerHTML = ICON_EYE; eb.setAttribute("aria-pressed", "false"); }
       go("forgot");
@@ -601,11 +563,12 @@ function _femaleSVG(size) {
       var pw = $("mailPass").value;
       if (!pw) { setAlert("mailAlert", "اكتب كلمة المرور."); markInvalid("mailPass"); return; }
       if (pw.length < 6) { setAlert("mailAlert", "كلمة المرور يجب ألا تقل عن 6 أحرف."); markInvalid("mailPass"); return; }
-      call("sendEmailLink", { email: em, password: pw, profile: S.draft }, "جارٍ إرسال رابط التحقق…").then(function (r) {
+      call("sendEmailLink", { email: em, password: pw, profile: S.draft }, "جارٍ إنشاء حسابك…").then(function (r) {
         $("mailPass").value = "";
-        if (r.status === "sent") { S.pending = { email: em, cdEnd: Date.now() + CD_TOTAL * 1000 }; save(); return go("verify"); }
-        go("register"); $("mailBox").hidden = false; $("mailEmail").value = em; markInvalid("mailEmail");
-        setAlert("mailAlert", r.status === "exists" ? "هذا البريد الإلكتروني مسجّل بالفعل. جرّب تسجيل الدخول بدلًا من ذلك." : (r.message || "تعذّر إرسال رابط التحقق، حاول مرة أخرى."));
+        afterAuth(r, function (x) {
+          go("register"); $("mailBox").hidden = false; $("mailEmail").value = em; markInvalid("mailEmail");
+          setAlert("mailAlert", x.status === "exists" ? "هذا البريد الإلكتروني مسجّل بالفعل. جرّب تسجيل الدخول بدلًا من ذلك." : (x.message || "تعذّر إنشاء الحساب، حاول مرة أخرى."));
+        });
       });
     }
     $("mailSend").addEventListener("click", function () { pendingMethod = sendMail; submitReg(); });
@@ -684,7 +647,8 @@ function _femaleSVG(size) {
     wireEyes(); wire(); enhanceSelects(); restoreDraft(); syncMethods();
     var rl = resetLink();
     if (rl) return rl.mode === "verifyEmail" ? startVerifyLink(rl.code) : startReset(rl.code);
-    go(S.pending ? "verify" : "lamp-off");
+    if (S.pending) { S.pending = null; save(); }   /* لا يوجد انتظار تأكيد بريد بعد الآن */
+    go("lamp-off");
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot); else boot();
 })();

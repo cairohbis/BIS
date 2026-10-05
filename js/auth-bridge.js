@@ -40,7 +40,7 @@ function isPasswordUser(u) { return !!u && (u.providerData || []).some(p => p.pr
 
 /* يُستدعى من onAuthStateChanged: true = لا تفتح الموقع الآن */
 window._authHold = (user) =>
-  busy || resetHold || (!!user && verifyPending() && isPasswordUser(user) && !user.emailVerified);
+  busy || resetHold;
 
 /* ── رسائل الأخطاء (نفس صياغة الموقع القديم + رسائل Google/التحقق) ── */
 const ERR = {
@@ -107,15 +107,6 @@ async function afterSignIn(user, draft) {
     }
     return { status: "ok", profile: toUi(data) };
   }
-  /* لا توجد وثيقة: بريد غير مؤكَّد = تسجيل لم يكتمل تأكيده */
-  if (isPasswordUser(user) && !user.emailVerified) {
-    let sendCode = null;
-    try { await sendEmailVerification(user); } catch (e) { sendCode = (e && e.code) || "unknown"; }
-    await signOut(auth()); busy = false;
-    return sendCode
-      ? { status: "error", code: sendCode, message: NEED_VERIFY + " — تعذّر إرسال رابط التحقق (" + sendCode + ")" }
-      : { status: "error", message: NEED_VERIFY };
-  }
   /* تسجيل جديد بـ Google من شاشة إنشاء الحساب: نستخدم البيانات المكتوبة */
   if (draft) {
     const site = toSite(draft), bad = validSite(site);
@@ -173,9 +164,9 @@ B.sendEmailLink = async function ({ email, password, profile }) {
       if (await userDoc(existing.user.uid)) { await signOut(auth()); busy = false; return { status: "exists" }; }
       cred = existing;
     }
-    core().savePendingProfile(email, site);   /* نحفظ البيانات لحين تأكيد البريد */
-    if (!cred.user.emailVerified) await sendEmailVerification(cred.user);
-    return { status: "sent" };
+    /* بدون رابط تحقق: ننشئ وثيقة المستخدم فورًا ويُفتح الموقع */
+    const created = await ensureProfile(cred.user, site);
+    return { status: "ok", profile: toUi(created) };
   } catch (e) { busy = false; return { status: "error", message: errMsg(e) }; }
 };
 
@@ -250,7 +241,11 @@ B.signOut = async function () {
 };
 
 /* زر "الدخول إلى الموقع": إعادة تحميل الصفحة ليكمل onAuthStateChanged بشكل طبيعي */
-B.onDone = function () { busy = false; window.location.reload(); };
+/* الدخول اكتمل: نرفع الحجز ونشغّل منطق فتح الموقع مباشرة (بدون إعادة تحميل الصفحة) */
+B.onDone = function () {
+  busy = false;
+  if (typeof window._runAuthState === "function") window._runAuthState(); else window.location.reload();
+};
 
 /* حساب موجود بدون وثيقة بيانات (يستدعيه onAuthStateChanged): افتح شاشة إكمال البيانات */
 B.needsProfile = function (user) {
