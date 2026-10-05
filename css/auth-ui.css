@@ -697,20 +697,6 @@ html.theme-light .av-modal { background: rgba(15,23,42,.45); }
 .av-cd-bar { height: 4px; border-radius: 4px; background: rgba(201,169,110,.2); overflow: hidden; }
 .av-cd-bar i { display: block; height: 100%; width: 100%; background: var(--gold); border-radius: 4px; transition: width 1s linear; }
 
-/* ── Loading (نفس شكل الـSplash الأصلي، بعنصر مستقل #avLoading كي لا يتعارض مع splash.js) ───────────── */
-#avLoading {
-  position: fixed; inset: 0; z-index: 999999; direction: rtl;
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  background:
-    radial-gradient(ellipse 60% 40% at 30% 0%, rgba(201,169,110,.09) 0%, transparent 70%),
-    radial-gradient(ellipse 50% 50% at 80% 100%, rgba(201,169,110,.07) 0%, transparent 70%),
-    var(--bg);
-  font-family: 'Cairo', system-ui, sans-serif;
-}
-#avLoading .uni-splash-status { margin-top: 4px; font-size: 14px; font-weight: 800; color: var(--av-link); }
-html.theme-light #avLoading .uni-splash-title { color: var(--av-sub) !important; }
-html.theme-light #avLoading .uni-splash-ring-bg { stroke: rgba(0,0,0,.09) !important; }
-
 /* ── ثيم فاتح: تفاصيل الأصل غير المهيّأة له ─────────────────── */
 html.theme-light .gender-seg-track { background: rgba(0,0,0,.04); box-shadow: 0 2px 10px rgba(0,0,0,.06); }
 html.theme-light .gender-seg-opt { color: #4b6283; }
