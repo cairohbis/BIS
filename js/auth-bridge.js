@@ -109,9 +109,12 @@ async function afterSignIn(user, draft) {
   }
   /* لا توجد وثيقة: بريد غير مؤكَّد = تسجيل لم يكتمل تأكيده */
   if (isPasswordUser(user) && !user.emailVerified) {
-    try { await sendEmailVerification(user); } catch (e) {}
+    let sendCode = null;
+    try { await sendEmailVerification(user); } catch (e) { sendCode = (e && e.code) || "unknown"; }
     await signOut(auth()); busy = false;
-    return { status: "error", message: NEED_VERIFY };
+    return sendCode
+      ? { status: "error", code: sendCode, message: NEED_VERIFY + " — تعذّر إرسال رابط التحقق (" + sendCode + ")" }
+      : { status: "error", message: NEED_VERIFY };
   }
   /* تسجيل جديد بـ Google من شاشة إنشاء الحساب: نستخدم البيانات المكتوبة */
   if (draft) {
