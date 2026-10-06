@@ -1736,6 +1736,11 @@ if ("serviceWorker" in navigator) {
     <div class="panel-sec" id="chatBgSec">
       <div class="panel-sec-title"><i class="fa-solid fa-image"></i> خلفيات الشات</div>
       <div class="chat-bg-panel">
+        <div class="label">اختر الوضع</div>
+        <div class="chat-bg-tabs">
+          <button class="chat-bg-tab active" data-bgtheme="dark" onclick="selectBgTheme(this)">الداكن</button>
+          <button class="chat-bg-tab" data-bgtheme="light" onclick="selectBgTheme(this)">الفاتح</button>
+        </div>
         <div class="label">اختر نوع الشات</div>
         <div class="chat-bg-tabs">
           <button class="chat-bg-tab active" data-bgtype="public" onclick="selectBgTab(this)">العام</button>
@@ -1746,6 +1751,7 @@ if ("serviceWorker" in navigator) {
         <input type="file" id="chatBgFileInput" accept="image/*" class="inp" style="color:var(--muted);padding:9px;">
         <button class="btn" id="chatBgUploadBtn" onclick="uploadChatBg()"><i class="fa-solid fa-upload"></i> رفع وتطبيق</button>
         <button class="chat-bg-remove-btn" id="chatBgRemoveBtn" onclick="removeChatBg()"><i class="fa-solid fa-trash"></i> إزالة الخلفية الحالية</button>
+        <button class="chat-bg-remove-btn" id="chatBgInheritBtn" onclick="inheritChatBgLight()" style="display:none"><i class="fa-solid fa-link"></i> الفاتح يأخذ نفس خلفية الداكن</button>
       </div>
     </div>
           </div>
