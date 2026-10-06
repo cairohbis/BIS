@@ -139,7 +139,7 @@ html.theme-light .role-badge.owner{color:var(--text)}
 html.theme-light .role-badge.admin{color:var(--text)}
 html.theme-light .forum-section-hdr{color:var(--text)}
 html.theme-light .card-icon{color:var(--text)}
-html.theme-light .sec-hdr{color:var(--text)}
+
 html.theme-light .item-card a{color:var(--text)}
 html.theme-light .item-card .del-btn{color:var(--text)}
 html.theme-light .lib-fav-btn:hover,
@@ -152,7 +152,7 @@ html.theme-light .lib-item-fav-btn:hover{color:var(--text)}
 html.theme-light .lib-item-fav-btn.active{color:var(--text)}
 html.theme-light .lib-item-del-btn{color:var(--text)}
 html.theme-light .news-badge{color:var(--text)}
-html.theme-light .prof-settings-btn:hover{color:var(--text)}
+
 html.theme-light .prof-quick-btn i{color:var(--text)}
 html.theme-light .pic-ctx-btn i{color:var(--text)}
 html.theme-light .label{color:var(--text)}
@@ -161,8 +161,7 @@ html.theme-light .prof-section-chevron{color:var(--text)}
 html.theme-light .prof-section-chevron.open{color:var(--text)}
 html.theme-light .prof-panel-pw-hdr{color:var(--text)}
 html.theme-light .nav-item.active{color:var(--text)}
-html.theme-light .sidebar-search-icon-btn:hover{color:var(--text)}
-html.theme-light .sidebar-header.search-open .sidebar-search-icon-btn{color:var(--text)}
+
 html.theme-light .vip-1{color:var(--text)}
 html.theme-light .vip-2{color:var(--text)}
 html.theme-light .vip-3{color:var(--text)}
@@ -178,13 +177,7 @@ html.theme-light .xp-explain-row .xp-pill.daily{color:var(--text)}
 html.theme-light .gender-seg-opt.active-male{color:var(--text)}
 html.theme-light .gender-seg-opt.active-female{color:var(--text)}
 html.theme-light .sidebar-tab.active{color:var(--text)}
-html.theme-light .req-accept-btn{color:var(--text)}
-html.theme-light .req-decline-btn{color:var(--text)}
-html.theme-light .req-status-pill.pending{color:var(--text)}
-html.theme-light .req-status-pill.accepted{color:var(--text)}
-html.theme-light .req-status-pill.declined{color:var(--text)}
-html.theme-light .su-action.pending{color:var(--text)}
-html.theme-light .su-action.friends{color:var(--text)}
+
 html.theme-light .chat-back-btn{color:var(--text)}
 html.theme-light .ai-avatar{color:var(--text)}
 html.theme-light .header-icon-btn{color:var(--text)}
@@ -203,19 +196,7 @@ html.theme-light .srch-hl{color:var(--text)}
 html.theme-light .draft-indicator{color:var(--text)}
 html.theme-light #chatVoiceBtn.recording{color:var(--text)}
 html.theme-light .sidebar-tab.active{color:var(--text)}
-html.theme-light .req-accept-btn{color:var(--text)}
-html.theme-light .req-decline-btn{color:var(--text)}
-html.theme-light .req-status-pill.pending{color:var(--text)}
-html.theme-light .req-status-pill.accepted{color:var(--text)}
-html.theme-light .req-status-pill.declined{color:var(--text)}
-html.theme-light .su-email{color:var(--text)}
-html.theme-light .su-action.send{color:var(--text)}
-html.theme-light .su-action.pending{color:var(--text)}
-html.theme-light .su-action.friends{color:var(--text)}
-html.theme-light .su-action.owner-open{color:var(--text)}
-html.theme-light .req-popup-title{color:var(--text)}
-html.theme-light .req-popup-accept{color:var(--text)}
-html.theme-light .req-popup-decline{color:var(--text)}
+
 html.theme-light .panel-sec-title{color:var(--text)}
 html.theme-light .panel-sec-title.orange{color:var(--text)}
 html.theme-light .badge-owner{color:var(--text)}
@@ -289,10 +270,7 @@ html.theme-light .avm-exit-btn{color:var(--text)}
 html.theme-light .avm-exit-btn:hover{color:var(--text)}
 html.theme-light .avm-open-btn{color:var(--text)}
 html.theme-light .avm-open-btn:hover{color:var(--text)}
-html.theme-light .bio-card-hdr{color:var(--text)}
-html.theme-light .bio-card-lbl i{color:var(--text)}
-html.theme-light .bio-card-bio{color:var(--text)}
-html.theme-light #tab-profile .sec-hdr{color:var(--text)}
+
 html.theme-light .up-icon-wrap.type-image{color:var(--text)}
 html.theme-light .up-icon-wrap.type-gif{color:var(--text)}
 html.theme-light .up-icon-wrap.type-pdf{color:var(--text)}
@@ -332,13 +310,13 @@ html.theme-light .ep-no-results{color:var(--text)}
 html.theme-light .reply-preview-name{color:var(--text)}
 html.theme-light .reply-preview-text{color:var(--muted)}
 html.theme-light .reply-bar-name{color:var(--text)}
-html.theme-light .dm-preview.has-draft::before{color:var(--text)}
+
 html.theme-light .dm-item.active .dm-name{color:var(--text)}
 html.theme-light .dm-item.active .dm-time{color:var(--text)}
 html.theme-light .chat-banned-bar{color:var(--text)}
 html.theme-light .owner-emergency-inner span{color:var(--text)}
 html.theme-light #chatSearchInput::placeholder{color:var(--text) !important}
-html.theme-light .bubble.system-msg{color:var(--text)}
+
 html.theme-light .poll-question i{color:var(--text)}
 html.theme-light .poll-opt-pct{color:var(--text)}
 html.theme-light .poll-sheet-title i{color:var(--text)}
@@ -356,8 +334,7 @@ html.theme-light .newchat-shell .header-status{color:var(--muted)}
 html.theme-light .newchat-shell .call-circle{color:var(--text)}
 html.theme-light .newchat-shell .bubble-meta{color:var(--muted)}
 html.theme-light .newchat-shell .ticks{color:var(--text)}
-html.theme-light .newchat-shell .reply-quote-name{color:var(--text)}
-html.theme-light .newchat-shell .reply-quote-text{color:var(--muted)}
+
 html.theme-light .newchat-shell .mic-icon{color:var(--muted)}
 html.theme-light .newchat-shell .placeholder-text{color:var(--text)}
 html.theme-light .newchat-shell .placeholder-text::placeholder{color:var(--muted)}
@@ -418,7 +395,7 @@ html.theme-light .prof-xp-current{color:var(--text)}
 html.theme-light .prof-xp-pct{color:var(--text)}
 html.theme-light .inp::placeholder{color:var(--text) !important}
 html.theme-light .chat-input-bar .inp::placeholder{color:var(--text) !important}
-html.theme-light .sidebar-header-search-inp::placeholder{color:var(--text) !important}
+
 html.theme-light .np-search-inp::placeholder{color:var(--text) !important}
 html.theme-light .poll-inp::placeholder{color:var(--text) !important}
 html.theme-light .poll-opt-inp::placeholder{color:var(--text) !important}
