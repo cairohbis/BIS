@@ -97,7 +97,6 @@ if ("serviceWorker" in navigator) {
 <link rel="stylesheet" href="css/quick-notifications.css">
 <link rel="stylesheet" href="css/disclaimer-consent.css">
 <link rel="stylesheet" href="css/apk-prompt.css">
-<link rel="stylesheet" href="css/update-notice.css">
 <link rel="stylesheet" href="css/qr-share.css">
 
 <!-- ══ Critical inline CSS — يُطبَّق فورًا بدون انتظار أي ملف خارجي، لعرض خلفية محايدة بدل الفراغ الأبيض/الفلاش قبل تحميل باقي الصفحة ══ -->
@@ -197,7 +196,7 @@ if ("serviceWorker" in navigator) {
           <option value="is">نظم المعلومات</option>
           <option value="lt">اللغات والترجمة</option>
           <option value="th">سياحة وفنادق</option>
-          <option value="ba">إدارة أعمال</option>
+          <option value="ba">علوم إدارية</option>
             </select>
             <span class="av-vsep" aria-hidden="true"></span>
             <select class="inp" id="regYear">
@@ -256,7 +255,7 @@ if ("serviceWorker" in navigator) {
           <option value="is">نظم المعلومات</option>
           <option value="lt">اللغات والترجمة</option>
           <option value="th">سياحة وفنادق</option>
-          <option value="ba">إدارة أعمال</option>
+          <option value="ba">علوم إدارية</option>
         </select>
         <span class="av-vsep" aria-hidden="true"></span>
         <select class="inp" id="cpYear">
@@ -681,6 +680,10 @@ if ("serviceWorker" in navigator) {
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 6l-6 6 6 6"/></svg>
       </button>
 
+      <button class="menu-toggle-btn" id="menuToggleBtn" onclick="openSidebar()" style="display:none;">
+        <i class="fa-solid fa-bars"></i>
+      </button>
+
       <div class="avatar-wrap">
         <div class="avatar-ring"><i class="fa-solid fa-graduation-cap"></i></div>
       </div>
@@ -872,9 +875,6 @@ if ("serviceWorker" in navigator) {
 
   <!-- Header -->
   <div class="dms-header">
-    <button class="dms-back-btn" id="dmsBackBtn" onclick="closeDmsPage()" title="رجوع" aria-label="رجوع">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
-    </button>
     <span class="dms-header-title">الدردشات</span>
   </div>
 
@@ -1316,10 +1316,10 @@ if ("serviceWorker" in navigator) {
               <option value="th_2">سياحة وفنادق — الثانية</option>
               <option value="th_3">سياحة وفنادق — الثالثة</option>
               <option value="th_4">سياحة وفنادق — الرابعة</option>
-              <option value="ba_1">إدارة أعمال — الأولى</option>
-              <option value="ba_2">إدارة أعمال — الثانية</option>
-              <option value="ba_3">إدارة أعمال — الثالثة</option>
-              <option value="ba_4">إدارة أعمال — الرابعة</option>
+              <option value="ba_1">علوم إدارية — الأولى</option>
+              <option value="ba_2">علوم إدارية — الثانية</option>
+              <option value="ba_3">علوم إدارية — الثالثة</option>
+              <option value="ba_4">علوم إدارية — الرابعة</option>
             </select>
           </div>
         </div>
@@ -1743,11 +1743,6 @@ if ("serviceWorker" in navigator) {
           <button class="chat-bg-tab" data-bgtype="rooms" onclick="selectBgTab(this)">الغرف</button>
           <button class="chat-bg-tab" data-bgtype="private" onclick="selectBgTab(this)">الخاص</button>
         </div>
-        <div class="label">الوضع (خلفية مستقلة لكل وضع)</div>
-        <div class="chat-bg-tabs">
-          <button class="chat-bg-tab" data-bgtheme="light" onclick="selectBgTheme(this)">☀️ فاتح</button>
-          <button class="chat-bg-tab" data-bgtheme="dark" onclick="selectBgTheme(this)">🌙 داكن</button>
-        </div>
         <div class="label">رفع خلفية جديدة</div>
         <input type="file" id="chatBgFileInput" accept="image/*" class="inp" style="color:var(--muted);padding:9px;">
         <button class="btn" id="chatBgUploadBtn" onclick="uploadChatBg()"><i class="fa-solid fa-upload"></i> رفع وتطبيق</button>
@@ -1846,31 +1841,6 @@ if ("serviceWorker" in navigator) {
               </div>
               <div style="font-size:12px;color:var(--muted);margin-top:10px;line-height:1.6;">
                 عند التفعيل: يتم منع جميع المستخدمين من استخدام الموقع وعرض صفحة الصيانة فقط، بينما يحتفظ المالك بالوصول الكامل.
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ══ قسم: نشر تحديث (Global — config/appUpdate) ══ -->
-      <div class="owner-collapse-item" style="margin-top:10px;">
-        <div class="owner-collapse-header" onclick="ownerToggleSection(this)">
-          <div class="owner-collapse-icon-wrap"><i class="fa-solid fa-arrows-rotate"></i></div>
-          <div class="owner-collapse-body-text">
-            <div class="owner-collapse-title">نشر تحديث</div>
-            <div class="owner-collapse-sub">إشعار تحديث لجميع المستخدمين</div>
-          </div>
-          <i class="fa-solid fa-chevron-down owner-collapse-arrow"></i>
-        </div>
-        <div class="owner-collapse-panel">
-          <div class="owner-collapse-inner">
-            <div class="panel-sec">
-              <div class="label">رقم التحديث التالي: <span id="updNextNum" style="font-weight:800;">—</span></div>
-              <div id="updLastInfo" style="font-size:12px;color:var(--muted);margin-top:4px;">—</div>
-              <textarea class="inp" id="updMsg" rows="4" maxlength="500" placeholder="اكتب ما الجديد في هذا التحديث…" style="margin-top:8px;resize:vertical;"></textarea>
-              <button class="btn" id="updPublishBtn" style="width:100%;margin-top:8px;" onclick="publishAppUpdate()"><i class="fa-solid fa-paper-plane"></i> نشر تحديث</button>
-              <div style="font-size:12px;color:var(--muted);margin-top:10px;line-height:1.6;">
-                يظهر الإشعار لجميع المستخدمين (بمن فيهم أنت). انشره بعد وصول النسخة الجديدة للموقع بدقائق.
               </div>
             </div>
           </div>
@@ -3283,11 +3253,6 @@ window.closeChatPage = function() {
   if (window._navGoBackIfMatches?.("page:page-chat")) return;
   showPage("page-home");
 };
-window.closeDmsPage = function() {
-  // يرجّع للصفحة/التوب اللي قبل الدردشات بنفس ترتيب الفتح (سجل back-nav.js)
-  if (window._navGoBackIfMatches?.("page:page-dms")) return;
-  showPage("page-home"); // احتياطي لو مفيش خطوة مسجّلة (مثلًا فتح مباشر)
-};
 window.closeArchivePage = function() {
   if (window._navGoBackIfMatches?.("page:page-dms-archive")) return;
   showPage("page-dms");
@@ -3297,8 +3262,17 @@ window.closeAiChatPage = function() {
   showPage("page-dms");
 };
 
-function openSidebar() { /* القائمة الجانبية القديمة اتحذفت — الدردشات من #page-dms */ }
-function closeSidebar() { /* no-op: محفوظة عشان الاستدعاءات القديمة ما تكسرش */ }
+function openSidebar() {
+  const _wasOpen = document.getElementById("chatSidebar").classList.contains("open");
+  document.getElementById("chatSidebar").classList.add("open");
+  document.getElementById("sidebarOverlay").classList.add("show");
+  if (!_wasOpen) window._navPush?.("sidebar", () => closeSidebar());
+}
+function closeSidebar() {
+  if (window._navGoBackIfMatches?.("sidebar")) return;
+  document.getElementById("chatSidebar").classList.remove("open");
+  document.getElementById("sidebarOverlay").classList.remove("show");
+}
 window.openSidebar  = openSidebar;
 window.closeSidebar = closeSidebar;
 window.switchSidebarTab = switchSidebarTab;
@@ -3625,7 +3599,6 @@ onAuthStateChanged(auth, _authStateHandler = async (user) => {
     window._dmsStopListeners?.(); // لا تُبقِ أي مستمع/قائمة DM بعد الخروج (مهما كان سبب الخروج)
     window._maintenanceApply?.();
     window.__apkPromptHide?.();
-    window.__updateNoticeStop?.();
     window.AuthUI?.sessionEnded?.(); // انتهت الجلسة أثناء انتظار تأكيد البريد
     showPage("page-login"); return;
   }
@@ -3644,7 +3617,6 @@ onAuthStateChanged(auth, _authStateHandler = async (user) => {
   goTab("tab-home");
   window.checkAttendancePopup?.().catch(() => {});
   try { window.__apkPromptAfterLogin?.(); } catch (_) {} // اقتراح تحميل التطبيق (متصفح فقط) — يعمل أيضًا مع الجلسة المحفوظة
-  try { window.__updateNoticeStart?.(); } catch (_) {} // إشعار نشر تحديث عالمي — مستمع واحد على config/appUpdate
 
   let userData = null;
   let _readSucceeded = false;
@@ -3983,7 +3955,22 @@ async function buildDmList() {
   // Load existing private chats from privateChats collection
   _loadPrivateChatsFromFirestore();
 
-  // (بحث القائمة القديمة اتحذف — البحث الآن في #dmsSearchInp داخل dms-page.js)
+  // Search filter — uses unified header search
+  const newSearchInp = document.getElementById("sidebarHeaderSearchInp");
+  // Clone to remove stale listeners then re-add
+  const freshInp = newSearchInp.cloneNode(true);
+  newSearchInp.replaceWith(freshInp);
+  freshInp.addEventListener("input", e => {
+    const q = e.target.value.toLowerCase();
+    // filter DM list
+    list.querySelectorAll(".dm-item:not(#dm-public)").forEach(el => {
+      const name = el.querySelector(".dm-name")?.textContent.toLowerCase() || "";
+      el.style.display = name.includes(q) ? "" : "none";
+    });
+    // also filter members list if that tab is active
+    const activeTab = document.querySelector(".sidebar-tab.active")?.id;
+    if (activeTab === "stab-members") renderMembersList(q);
+  });
 }
 
 // ══════════════════════════════════════════
@@ -8529,7 +8516,7 @@ if (_origSelectChat) {
       window._bgCacheSet?.(data);
       const type = chatId === "public" ? "public"
         : chatId?.startsWith("room:") ? "rooms" : "private";
-      window._applyChatBg?.(type, window._chatBgPick ? window._chatBgPick(data, type) : (data[type] || ""));
+      window._applyChatBg?.(type, data[type] || "");
     }).catch(()=>{});
   };
 }
@@ -9398,15 +9385,39 @@ try { window._listenPinnedMsg?.(); } catch(e) {}
 <script type="module" src="js/maintenance.js"></script>
 
 <!-- ══════════════════════════════════════════
-     (تم حذف القائمة الجانبية القديمة — الدردشات الآن من #page-dms)
-     حاوية بيانات مخفية فقط: الكود القديم (buildDmList / _acceptedPeers / _dmMeta)
-     لسه بيستخدمها داخليًا لقائمة التحويل (forward) وحالة الرسائل، ومفيهاش أي واجهة.
+     GLOBAL SIDEBAR — الدردشات (يعمل من أي صفحة)
 ══════════════════════════════════════════ -->
-<div id="chatSidebar" hidden aria-hidden="true" style="display:none !important">
-  <div id="dmList"></div>
-  <div id="roomsList"></div>
-  <div id="membersList"></div>
+<div class="chat-sidebar" id="chatSidebar">
+  <div class="sidebar-header" id="sidebarHeader">
+    <h3><i class="fa-solid fa-comments"></i> المحادثات</h3>
+    <button class="sidebar-search-icon-btn" id="sidebarSearchIconBtn" onclick="toggleSidebarSearch()" title="بحث"><i class="fa-solid fa-magnifying-glass"></i></button>
+    <div class="sidebar-header-search-wrap">
+      <input class="sidebar-header-search-inp" id="sidebarHeaderSearchInp" placeholder="بحث..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other">
+    </div>
+    <button class="sidebar-close-btn" id="sidebarCloseBtn" onclick="closeSidebar()"><i class="fa-solid fa-xmark"></i></button>
+  </div>
+  <div class="sidebar-tabs">
+    <button class="sidebar-tab active" id="stab-chats" onclick="switchSidebarTab('chats')">
+      <span class="st-icon"><i class="fa-solid fa-comments"></i></span>الشات
+    </button>
+    <button class="sidebar-tab" id="stab-rooms" onclick="switchSidebarTab('rooms')">
+      <span class="st-icon"><i class="fa-solid fa-layer-group"></i></span>الغرف
+    </button>
+    <button class="sidebar-tab" id="stab-members" onclick="switchSidebarTab('members')">
+      <span class="st-icon"><i class="fa-solid fa-users"></i></span>الأعضاء
+    </button>
+  </div>
+  <div class="sidebar-panel active" id="spanel-chats">
+    <div class="dm-list" id="dmList"></div>
+  </div>
+  <div class="sidebar-panel" id="spanel-rooms">
+    <div class="stab-rooms-panel" id="roomsList"></div>
+  </div>
+  <div class="sidebar-panel" id="spanel-members">
+    <div class="dm-list" id="membersList" style="flex:1;overflow-y:auto;"></div>
+  </div>
 </div>
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
 
 <script src="js/mascot-toast-adapter.js" defer></script>
 <script src="js/mascot-dialog-adapter.js" defer></script>
@@ -9486,7 +9497,6 @@ try { window._listenPinnedMsg?.(); } catch(e) {}
 <script type="module" src="js/quick-notifications.js"></script>
 <script type="module" src="js/disclaimer-consent.js"></script>
 <script type="module" src="js/apk-prompt.js"></script>
-<script type="module" src="js/update-notice.js"></script>
 <script src="js/why-here-forum.js"></script>
 <script type="module" src="js/forum-badges.js"></script>
 
