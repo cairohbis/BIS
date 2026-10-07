@@ -24,7 +24,7 @@
 
 import {
   collection, doc, getDoc, getDocs,
-  writeBatch, setDoc
+  writeBatch, setDoc, query, where
 } from "./firestore-safe.js";
 
 function _db() { return window.db; }
@@ -56,6 +56,35 @@ function _cairoNow() {
   };
 }
 
+// ── ربط الجدول الدراسي (attendanceSettings.useStudySchedule === true) ──
+// ▸ ربط حي وليس نسخًا: الحصص تُقرأ من studySchedule وقت الفحص، ولا يُكتب منها شيء في attendanceSchedules.
+// ▸ نفس شكل مستند جدول اليوم الذي تتوقعه checkAttendancePopup: وقت ظهور واحد لليوم (= أبكر بداية حصة مفعّلة)
+//   ونهاية 23:59 (نفس قيمة الحفظ اليدوي الحالي) ومواد مرتبة بوقتها (subject ثم subject2 لو موجودة، بلا تكرار).
+const _WEEKDAY_TO_SS_KEY = { sunday: "sun", monday: "mon", tuesday: "tue", wednesday: "wed", thursday: "thu", friday: "fri", saturday: "sat" };
+
+async function _studyScheduleDay(wid, weekday) {
+  const key = _WEEKDAY_TO_SS_KEY[weekday];
+  if (!key) return null;
+  const snap = await getDocs(query(collection(_db(), "studySchedule"), where("worldId", "==", wid), where("day", "==", key)));
+  const items = [];
+  snap.forEach(d => {
+    const l = d.data();
+    if (l.worldId !== wid || l.enabled === false) return; // عزل العالم + الحصص المتوقفة لا تدخل الحضور
+    if ((l.subject || "").trim() && l.startTime) items.push({ name: l.subject.trim(), time: l.startTime });
+    if ((l.subject2 || "").trim() && l.startTime2) items.push({ name: l.subject2.trim(), time: l.startTime2 });
+  });
+  if (!items.length) return null;
+  items.sort((a, b) => a.time.localeCompare(b.time));
+  const seen = new Set();
+  const subjects = [];
+  items.forEach(it => {
+    if (seen.has(it.name)) return;
+    seen.add(it.name);
+    subjects.push({ id: `subject_${subjects.length + 1}`, name: it.name, order: subjects.length + 1 });
+  });
+  return { enabled: true, startTime: items[0].time, endTime: "23:59", subjects };
+}
+
 /* ══════════════════════════════════════════
    جانب المستخدم — نافذة تسجيل الحضور اليومية
 ══════════════════════════════════════════ */
@@ -74,9 +103,15 @@ export async function checkAttendancePopup() {
     if (!cfgSnap.exists() || cfgSnap.data().enabled !== true) return;
 
     const { dateStr, hhmm, weekday } = _cairoNow();
-    const schedSnap = await getDoc(doc(_db(), "attendanceSchedules", `${wid}_${weekday}`));
-    if (!schedSnap.exists()) return;
-    const sched = schedSnap.data();
+    let sched;
+    if (cfgSnap.data().useStudySchedule === true) {
+      sched = await _studyScheduleDay(wid, weekday); // المصدر: الجدول الدراسي (studySchedule)
+      if (!sched) return;
+    } else {
+      const schedSnap = await getDoc(doc(_db(), "attendanceSchedules", `${wid}_${weekday}`));
+      if (!schedSnap.exists()) return;
+      sched = schedSnap.data();
+    }
     if (!sched.enabled) return;
     if (!Array.isArray(sched.subjects) || !sched.subjects.length) return;
     if (hhmm < (sched.startTime || "00:00")) return;
@@ -282,6 +317,7 @@ window.__attShowDayDetail = (ds) => {
    عشان سجلاته القديمة تفضل محفوظة.
 ══════════════════════════════════════════ */
 let _weeklyCache = {}; // { sunday: {enabled,startTime,subjects:[{name,order}]}, ... }
+let _linkedToStudy = false; // attendanceSettings.useStudySchedule للعالم الحالي — للتنبيه في اللوحة فقط
 
 // ── World Isolation: مجموعتا معرّفات DOM لكل لوحة (Owner/Admin) — نفس المودال مشترك بينهما ──
 const _OWNER_PANEL_IDS = { switchId: "attOwnerEnableSwitch", summaryId: "attWeeklySummary", worldLabelId: "attOwnerWorldLabel" };
@@ -307,6 +343,7 @@ async function _initPanel(panelIds) {
     const enabled = cfgSnap.exists() ? !!cfgSnap.data().enabled : false;
     const sw = _el(panelIds.switchId);
     if (sw) sw.checked = enabled;
+    _linkedToStudy = cfgSnap.exists() && cfgSnap.data().useStudySchedule === true;
   } catch (e) {}
   await _loadWeeklyCache(wid);
   _renderWeeklySummary(panelIds.summaryId);
@@ -329,20 +366,32 @@ function _renderWeeklySummary(summaryId) {
   const wrap = _el(summaryId);
   if (!wrap) return;
   const activeDays = DAY_ORDER.filter(k => _weeklyCache[k] && _weeklyCache[k].enabled);
+  const linkNote = _linkedToStudy
+    ? `<div class="empty-state" style="margin-bottom:8px;">🔒 الجدول اليدوي مقفول — الحضور يعتمد الآن على الجدول الدراسي (يُدار من شاشة الجدول). يعود هذا الجدول للعمل عند إيقاف الربط.</div>`
+    : "";
+  // الحذف للمالك فقط (قاعدة attendanceSchedules: delete = isOwner)
+  const owner = _isOwnerUser();
+  const delAll = (owner && DAY_ORDER.some(k => _weeklyCache[k]))
+    ? `<button type="button" class="btn btn-dark" style="width:100%;margin-top:8px;" onclick="window.__attDeleteAll()"><i class="fa-solid fa-trash"></i> حذف الجدول اليدوي كله</button>`
+    : "";
   if (!activeDays.length) {
-    wrap.innerHTML = `<div class="empty-state">لا يوجد جدول حضور مفعّل حاليًا</div>`;
+    wrap.innerHTML = linkNote + `<div class="empty-state">لا يوجد جدول حضور مفعّل حاليًا</div>` + delAll;
     return;
   }
-  wrap.innerHTML = activeDays.map(k => {
+  wrap.innerHTML = linkNote + activeDays.map(k => {
     const d = _weeklyCache[k];
     const count = (d.subjects || []).length;
+    const del = owner
+      ? `<button type="button" aria-label="حذف" style="background:none;border:none;color:#ef4444;cursor:pointer;padding:4px 6px;" onclick="window.__attDeleteDay('${k}')"><i class="fa-solid fa-trash"></i></button>`
+      : "";
     return `
-      <div class="att-weekly-row">
+      <div class="att-weekly-row"${_linkedToStudy ? ' style="opacity:.55;"' : ""}>
         <span class="att-weekly-day">${DAY_LABELS[k]}</span>
         <span class="att-weekly-count">${count} ${count === 1 ? "مادة" : "مواد"}</span>
         <span class="att-weekly-time">${d.startTime || ""}</span>
+        ${del}
       </div>`;
-  }).join("");
+  }).join("") + delAll;
 }
 
 async function _toggleSystem(switchId) {
@@ -366,7 +415,19 @@ window.attAdminToggleSystem = async () => { await _toggleSystem(_ADMIN_PANEL_IDS
 let _modalSelectedDays = new Set();
 let _modalDayData = {}; // { sunday: { time:"15:00", subjects:["اسم1","اسم2"] } }
 
+const _isOwnerUser = () => typeof window.isOwner === "function" && window.isOwner();
+
+// يُستدعى من شاشة الجدول الدراسي بعد تغيير الربط ليتحدّث القفل/الملاحظة فورًا بدون قراءة جديدة
+window.__attSetLinked = (v) => {
+  _linkedToStudy = !!v;
+  if (_panelIds) _renderWeeklySummary(_panelIds.summaryId);
+};
+
 window.__attOpenScheduleModal = async (editMode) => {
+  if (_linkedToStudy) {
+    window.toast?.("الجدول اليدوي مقفول — الحضور يعتمد على الجدول الدراسي. أوقف الربط من شاشة الجدول الدراسي لتعديله", "info");
+    return;
+  }
   const wid = _worldId();
   if (!wid) { window.toast?.("لا يوجد عالم نشط", "error"); return; }
   _modalSelectedDays = new Set();
@@ -470,6 +531,30 @@ window.__attModalCountChange = async (dayKey, val) => {
   data.subjects = Array.from({ length: newCount }, (_, i) => oldSubjects[i] || "");
   _renderModalDaysConfig();
 };
+
+/* ── حذف جداول الحضور اليدوية (المالك فقط، لعالمه النشط فقط) — سجلات users/{uid}/attendance لا تُمس ── */
+async function _deleteDays(dayKeys, title, msg) {
+  if (!_isOwnerUser()) return;
+  const wid = _worldId();
+  if (!wid) { window.toast?.("لا يوجد عالم نشط — تعذّر الحذف", "error"); return; }
+  const keys = dayKeys.filter(k => DAY_ORDER.includes(k) && _weeklyCache[k]);
+  if (!keys.length) return;
+  const ok = await window._appConfirm(title, msg);
+  if (!ok) return;
+  try {
+    const batch = writeBatch(_db());
+    keys.forEach(k => batch.delete(doc(_db(), "attendanceSchedules", `${wid}_${k}`)));
+    await batch.commit();
+    window.toast?.("تم الحذف ✅");
+    await _loadWeeklyCache(wid);
+    _renderWeeklySummary(_panelIds.summaryId);
+  } catch (e) {
+    console.error(e);
+    window.toast?.("حصل خطأ أثناء الحذف", "error");
+  }
+}
+window.__attDeleteDay = (dayKey) => _deleteDays([dayKey], `حذف جدول ${DAY_LABELS[dayKey] || ""}`, "هيتحذف جدول الحضور اليدوي لليوم ده نهائيًا. سجلات حضور الطلبة السابقة مش هتتأثر. متأكد؟");
+window.__attDeleteAll = () => _deleteDays(DAY_ORDER, "حذف الجدول اليدوي كله", "هيتحذف جدول الحضور اليدوي لكل الأيام نهائيًا. سجلات حضور الطلبة السابقة مش هتتأثر. متأكد؟");
 
 window.attScheduleSave = async () => {
   const wid = _worldId();

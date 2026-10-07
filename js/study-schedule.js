@@ -88,6 +88,8 @@
   let _lectures = [];      // كل المحاضرات (زي ما هي في Firestore)
   let _draft = null;       // نموذج الإضافة/التعديل
   let _loaded = false;
+  let _attLink = null;     // attendanceSettings/{worldId}.useStudySchedule (null = غير معروف/غير متاح → الصف مخفي)
+  let _attLinkWid = null;  // العالم الذي تخصه قيمة _attLink (لو تغيّر العالم النشط يُخفى الصف ولا يُكتب شيء)
 
   function _root() { return document.getElementById("study-schedule-app-root"); }
   function _body() { return document.getElementById("ssBody"); }
@@ -137,11 +139,61 @@
       _lectures = [];
       snap.forEach((d) => { const data = d.data(); if (_worldId && data.worldId === _worldId) _lectures.push({ id: d.id, ...data }); });
       _loaded = true;
+      await _loadAttLink();
       _renderHome();
     } catch (e) {
       if (body) body.innerHTML = `<div class="ss-empty"><div class="ss-empty-title">تعذّر تحميل الجدول الدراسي</div></div>`;
     }
   }
+
+  /* ─────────────────────────────────────────
+     ربط الحضور والغياب بهذا الجدول (أدمن/مالك فقط)
+     ▸ المفتاح: attendanceSettings/{worldId}.useStudySchedule — حقل واحد بـ merge، لا يمس enabled ولا أي حقل آخر.
+     ▸ true → الحضور يقرأ حصصه من studySchedule مباشرة (بدون نسخ). false/غير موجود → النظام اليدوي الحالي.
+  ───────────────────────────────────────── */
+  const _curWid = () => (typeof window.activeWorldContext === "function") ? window.activeWorldContext() : null;
+
+  async function _loadAttLink() {
+    _attLink = null; _attLinkWid = null;
+    if (!_isAdmin()) return;
+    try {
+      const wid = (typeof window.activeWorldContext === "function") ? window.activeWorldContext() : null;
+      if (!wid) return;
+      const { db, doc, getDoc } = await _fs();
+      const snap = await getDoc(doc(db, "attendanceSettings", wid));
+      _attLink = snap.exists() && snap.data().useStudySchedule === true;
+      _attLinkWid = wid;
+    } catch (e) { _attLink = null; _attLinkWid = null; }
+  }
+
+  function _attLinkRow() {
+    if (!_isAdmin() || _attLink === null || _attLinkWid !== _curWid()) return "";
+    return `
+      <label class="ss-toggle-row" style="margin-top:0;margin-bottom:12px;">
+        <span>الحضور والغياب</span>
+        <span class="ss-toggle-switch ${_attLink ? "on" : ""}" onclick="window.StudyScheduleModule._toggleAttendance()">
+          <span class="ss-toggle-knob"></span>
+        </span>
+        <span class="ss-toggle-label">${_attLink ? "مفعّل" : "متوقف"}</span>
+      </label>
+      <div class="ss-hint-inline" style="margin:-6px 0 12px;">عند التفعيل يأخذ الحضور والغياب حصصه من هذا الجدول (يعمل فقط لو نظام الحضور نفسه مفعّل).</div>`;
+  }
+
+  window.StudyScheduleModule = window.StudyScheduleModule || {};
+  window.StudyScheduleModule._toggleAttendance = async function () {
+    if (!_isAdmin() || _attLink === null) return;
+    const wid = _curWid();
+    if (!wid || wid !== _attLinkWid) { window.toast?.("لا يوجد عالم نشط — تعذّر الحفظ", "error"); return; }
+    const next = !_attLink;
+    try {
+      const { db, doc, setDoc } = await _fs();
+      await setDoc(doc(db, "attendanceSettings", wid), { useStudySchedule: next }, { merge: true });
+      _attLink = next;
+      window.__attSetLinked?.(next); // يحدّث قفل/ملاحظة جدول الحضور اليدوي فورًا
+      window.toast?.(next ? "تم ربط الحضور والغياب بالجدول الدراسي" : "تم إيقاف الربط — عاد الحضور للجدول اليدوي");
+    } catch (e) { window.toast?.("حصل خطأ — لم يتغير الربط", "error"); }
+    _renderHome();
+  };
 
   const _JSDAY_TO_KEY = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
   function _todayKey() { return _JSDAY_TO_KEY[new Date().getDay()]; }
@@ -173,7 +225,7 @@
     const grouped = _groupByDay(visible);
 
     if (!grouped.length) {
-      body.innerHTML = `
+      body.innerHTML = _attLinkRow() + `
         <div class="ss-empty">
           <div class="ss-empty-icon"><i class="fa-solid fa-calendar-xmark"></i></div>
           <div class="ss-empty-title">${admin ? "لسه مفيش محاضرات مضافة" : "لا يوجد جدول دراسي متاح حاليًا"}</div>
@@ -182,7 +234,7 @@
       return;
     }
 
-    body.innerHTML = `
+    body.innerHTML = _attLinkRow() + `
       <div class="ss-days">
         ${grouped.map((g) => {
           const isToday = g.key === _todayKey();
@@ -479,6 +531,7 @@
     root.style.display = "flex";
     _buildShell();
     if (_loaded) _renderHome(); else _load();
+    if (_loaded && _isAdmin() && _attLinkWid !== _curWid()) _loadAttLink().then(_renderHome); // تغيّر العالم النشط: أعد قراءة حالة الربط له
   };
 
   window.StudyScheduleModule.close = function () {
