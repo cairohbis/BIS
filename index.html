@@ -1743,6 +1743,11 @@ if ("serviceWorker" in navigator) {
           <button class="chat-bg-tab" data-bgtype="rooms" onclick="selectBgTab(this)">الغرف</button>
           <button class="chat-bg-tab" data-bgtype="private" onclick="selectBgTab(this)">الخاص</button>
         </div>
+        <div class="label">الوضع (خلفية مستقلة لكل وضع)</div>
+        <div class="chat-bg-tabs">
+          <button class="chat-bg-tab" data-bgtheme="light" onclick="selectBgTheme(this)">☀️ فاتح</button>
+          <button class="chat-bg-tab" data-bgtheme="dark" onclick="selectBgTheme(this)">🌙 داكن</button>
+        </div>
         <div class="label">رفع خلفية جديدة</div>
         <input type="file" id="chatBgFileInput" accept="image/*" class="inp" style="color:var(--muted);padding:9px;">
         <button class="btn" id="chatBgUploadBtn" onclick="uploadChatBg()"><i class="fa-solid fa-upload"></i> رفع وتطبيق</button>
@@ -8524,7 +8529,7 @@ if (_origSelectChat) {
       window._bgCacheSet?.(data);
       const type = chatId === "public" ? "public"
         : chatId?.startsWith("room:") ? "rooms" : "private";
-      window._applyChatBg?.(type, data[type] || "");
+      window._applyChatBg?.(type, window._chatBgPick ? window._chatBgPick(data, type) : (data[type] || ""));
     }).catch(()=>{});
   };
 }
