@@ -14,6 +14,26 @@
 import { doc, onSnapshot, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 let _currentBgType = "public";
+let _bgThemeSel = null;   // الوضع المختار في لوحة الأدمن للرفع/الإزالة (null = وضع الواجهة الحالي)
+
+// ── خلفيات مستقلة لكل وضع (فاتح/داكن) ──
+// الحقول في appSettings/chatBackgrounds:  {type}_light  و  {type}_dark   (type = public | rooms | private)
+// ▸ كل وضع يقرأ حقله هو فقط — لا يتأثر بالوضع الآخر إطلاقًا.
+// ▸ حقل الوضع غير موجود (لم يُضبط أبدًا) → يُستخدم الحقل القديم المشترك {type} كافتراضي (توافق مع الخلفيات الحالية).
+// ▸ "" (إزالة صريحة) → بدون خلفية في هذا الوضع ولا رجوع للحقل القديم.
+const _bgTheme = () => document.documentElement.classList.contains("theme-light") ? "light" : "dark";
+function _bgPick(data, type, theme) {
+  const v = data ? data[type + "_" + (theme || _bgTheme())] : undefined;
+  return v !== undefined ? (v || "") : ((data && data[type]) || "");
+}
+// تسخين صورتي الوضعين لنوع الشات الحالي (مرة واحدة لكل رابط) ليكون التبديل فوريًا بلا تحميل
+const _bgWarmed = new Set();
+function _bgWarm(data, type) {
+  ["light", "dark"].forEach(t => {
+    const u = _bgPick(data, type, t);
+    if (u && !_bgWarmed.has(u)) { _bgWarmed.add(u); try { const im = new Image(); im.decoding = "async"; im.src = u; } catch (e) {} }
+  });
+}
 const _bgSettingsRef = () => doc(window.db, "appSettings", "chatBackgrounds");
 
 // Apply background to the visible chat container
@@ -99,7 +119,10 @@ function _applyChatBgFromCache(chatId) {
   const id   = chatId || window._currentChatId;
   const type = id === "public" ? "public" : id?.startsWith("room:") ? "rooms" : "private";
   const c    = _bgCacheGet();
-  if (c[type] !== undefined) _applyChatBg(type, c[type] || "");
+  if (c[type] !== undefined || c[type + "_light"] !== undefined || c[type + "_dark"] !== undefined) {
+    _applyChatBg(type, _bgPick(c, type));
+    _bgWarm(c, type);
+  }
 }
 
 // Listen for background changes in real-time
@@ -113,17 +136,43 @@ function _listenChatBg() {
     _bgCacheSet(data);
     const type = window._currentChatId === "public" ? "public"
       : window._currentChatId?.startsWith("room:") ? "rooms" : "private";
-    _applyChatBg(type, data[type] || "");
+    _applyChatBg(type, _bgPick(data, type));
+    _bgWarm(data, type);
   }, () => {});
 }
 
+// تبديل الوضع (يدوي/تلقائي): أعد تطبيق خلفية الوضع الجديد فورًا من الكاش المحلي (بدون شبكة ولا قراءة Firestore)
+let _bgLastTheme = null;
+function _syncBgThemeTabs() {
+  const t = _bgThemeSel || _bgTheme();
+  document.querySelectorAll("[data-bgtheme]").forEach(b => b.classList.toggle("active", b.dataset.bgtheme === t));
+}
+try {
+  _bgLastTheme = _bgTheme();
+  new MutationObserver(() => {
+    const t = _bgTheme();
+    if (t === _bgLastTheme) return;
+    _bgLastTheme = t;
+    _applyChatBgFromCache();
+    _syncBgThemeTabs();
+  }).observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+  _syncBgThemeTabs();
+} catch (e) {}
+
 // Admin: select bg tab
 function selectBgTab(btn) {
-  document.querySelectorAll(".chat-bg-tab").forEach(b => b.classList.remove("active"));
+  btn.parentElement.querySelectorAll(".chat-bg-tab").forEach(b => b.classList.remove("active"));
   btn.classList.add("active");
   _currentBgType = btn.dataset.bgtype;
 }
 window.selectBgTab = selectBgTab;
+
+// Admin: اختيار الوضع (فاتح/داكن) المراد رفع/إزالة خلفيته
+function selectBgTheme(btn) {
+  _bgThemeSel = btn.dataset.bgtheme;
+  _syncBgThemeTabs();
+}
+window.selectBgTheme = selectBgTheme;
 
 // Admin: upload background
 async function uploadChatBg() {
@@ -144,9 +193,10 @@ async function uploadChatBg() {
   btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جارٍ الرفع...';
   try {
     const { url } = await window.uploadToCloudinaryWithProgress(file, ()=>{});
-    await setDoc(_bgSettingsRef(), { [_currentBgType]: url }, { merge: true });
-    _bgCacheSet({ ..._bgCacheGet(), [_currentBgType]: url });
-    toast("✅ تم تطبيق الخلفية على الجميع");
+    const key = _currentBgType + "_" + (_bgThemeSel || _bgTheme());
+    await setDoc(_bgSettingsRef(), { [key]: url }, { merge: true });
+    _bgCacheSet({ ..._bgCacheGet(), [key]: url });
+    toast("✅ تم تطبيق خلفية الوضع " + ((_bgThemeSel || _bgTheme()) === "light" ? "الفاتح" : "الداكن") + " على الجميع");
   } catch(e) {
     toast("فشل رفع الخلفية","error"); console.error(e);
   } finally {
@@ -165,9 +215,10 @@ async function removeChatBg() {
   const toast = window.toast;
   if (!isAdmin && !isOwner) { toast("غير مصرح","error"); return; }
   try {
-    await setDoc(_bgSettingsRef(), { [_currentBgType]: "" }, { merge: true });
-    _bgCacheSet({ ..._bgCacheGet(), [_currentBgType]: "" });
-    toast("✅ تمت إزالة الخلفية");
+    const key = _currentBgType + "_" + (_bgThemeSel || _bgTheme());
+    await setDoc(_bgSettingsRef(), { [key]: "" }, { merge: true });
+    _bgCacheSet({ ..._bgCacheGet(), [key]: "" });
+    toast("✅ تمت إزالة خلفية الوضع " + ((_bgThemeSel || _bgTheme()) === "light" ? "الفاتح" : "الداكن"));
   } catch(e) {
     toast("فشل إزالة الخلفية","error");
   }
@@ -179,3 +230,4 @@ window._applyChatBgFromCache = _applyChatBgFromCache;
 window._listenChatBg = _listenChatBg;
 window._bgCacheGet = _bgCacheGet;
 window._bgCacheSet = _bgCacheSet;
+window._chatBgPick = _bgPick;
