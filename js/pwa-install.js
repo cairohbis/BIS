@@ -10,7 +10,13 @@ window.installPWAFromCard = async function () {
   var standalone = (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) || window.navigator.standalone === true;
   if (standalone || window.__pwaInstalled) { window.toast && window.toast("التطبيق مثبت بالفعل", "info"); return; }
   var evt = window.__pwaInstallEvt;
-  if (!evt) { window.toast && window.toast("التثبيت غير متاح حاليًا من هذا المتصفح", "error"); return; }
+  if (!evt) {
+    /* متصفحات Chromium لا تُطلق beforeinstallprompt إذا كان التطبيق مثبتًا بالفعل على الجهاز */
+    var chromium = "BeforeInstallPromptEvent" in window;
+    if (chromium) window.toast && window.toast("التطبيق مثبت بالفعل", "info");
+    else window.toast && window.toast("التثبيت غير متاح حاليًا من هذا المتصفح", "error");
+    return;
+  }
   window.__pwaInstallEvt = null;
   try { evt.prompt(); await evt.userChoice; } catch (e) {}
 };
