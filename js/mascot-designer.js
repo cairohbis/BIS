@@ -152,6 +152,9 @@
     try { localStorage.setItem(DRAFT_KEY, JSON.stringify(cfg)); return true; }
     catch (e) { return false; }
   }
+  /* حفظ تلقائي: أي اختيار تعمله يتحفظ في المسودة فورًا، فيرجع كما هو عند فتح المصمم تاني */
+  var _dirty = false;
+  function persist() { _dirty = true; if (_draft) saveDraft(_draft); if (typeof refreshChips === "function" && _modal) refreshChips(); }
 
   /* ── واجهة النافذة ── */
   function imageOptionsHTML() {
@@ -177,55 +180,70 @@
       "<div class=\"md-title\">مصمم بريق</div>" +
     "</div>" +
     "<div class=\"md-body\">" +
-      "<div class=\"md-preview\">" +
+      "<div class=\"md-preview md-sticky\">" +
         "<div class=\"md-stage\"><div class=\"toast show success md-toast\" id=\"mdToast\">" +
           "<span class=\"mascot-toast-slot\" id=\"mdSlot\"></span><span id=\"mdMsg\"></span>" +
         "</div>" +
         "<div class=\"md-placebox\" id=\"mdPlaceBox\" style=\"display:none\"><span id=\"mdPlaceSlot\"></span><div class=\"md-placecap\" id=\"mdPlaceCap\"></div></div></div>" +
-        "<div class=\"md-lbl\">حالات شريط الإشعارات</div>" +
-        "<div class=\"md-states\" id=\"mdStates\">" +
-          STATES.map(function (st) {
-            return "<button class=\"md-chip\" data-st=\"" + st.id + "\" data-sel=\"" + st.id + "\">" + st.label + "</button>";
-          }).join("") +
-        "</div>" +
-        "<div class=\"md-lbl\" style=\"margin-top:10px\">أماكن العرض (الصورة فقط — الحجم ثابت)</div>" +
-        "<div class=\"md-states\" id=\"mdPlaces\">" +
+        "<div class=\"md-cur\" id=\"mdCur\"></div>" +
+      "</div>" +
+      "<div class=\"md-seg\" role=\"tablist\">" +
+        "<button type=\"button\" class=\"md-seg-b on\" data-tab=\"notif\">الإشعارات <i id=\"mdCntAll\"></i></button>" +
+        "<button type=\"button\" class=\"md-seg-b\" data-tab=\"places\">أماكن العرض <i id=\"mdCntPl\"></i></button>" +
+      "</div>" +
+      "<div class=\"md-card\" id=\"mdGrpNotif\">" +
+        "<div class=\"md-h\"><span>حالات شريط الإشعارات</span><b class=\"md-pill\" id=\"mdCntA\"></b></div>" +
+        "<div class=\"md-states\" id=\"mdStates\"></div>" +
+        "<div class=\"md-h md-h2\"><span>حالات شريط الإشعارات فارغة</span><b class=\"md-pill md-pill-empty\" id=\"mdCntB\"></b></div>" +
+        "<div class=\"md-states\" id=\"mdStatesEmpty\"></div>" +
+      "</div>" +
+      "<div class=\"md-card\" id=\"mdGrpPlaces\" style=\"display:none\">" +
+        "<div class=\"md-h\"><span>أماكن العرض</span><em>الصورة فقط — الحجم ثابت</em></div>" +
+        "<div class=\"md-states two\" id=\"mdPlaces\">" +
           placeList().map(function (pl) {
             return "<button class=\"md-chip\" data-pl=\"" + pl.id + "\" data-sel=\"place:" + pl.id + "\">" + esc(pl.label) + "</button>";
           }).join("") +
         "</div>" +
       "</div>" +
-      "<div class=\"md-sec\">صورة بريق</div>" +
-      "<div class=\"md-row\"><label for=\"mdPick\">اختيار الصورة</label>" +
-        "<select id=\"mdImg\" style=\"display:none\"></select>" +
-        "<button type=\"button\" class=\"md-pick\" id=\"mdPick\"><img id=\"mdPickImg\" alt=\"\"><span id=\"mdPickTxt\"></span><i>▾</i></button>" +
-        "<div class=\"md-list\" id=\"mdList\" style=\"display:none\"></div></div>" +
-      "<div class=\"md-row\"><label for=\"mdFile\">صورة مخصصة (معاينة فقط)</label>" +
-        "<input type=\"file\" class=\"md-in\" id=\"mdFile\" accept=\"image/*\"></div>" +
-      "<div class=\"md-row\"><label for=\"mdPath\">أو مسار صورة داخل المشروع</label>" +
-        "<div class=\"md-line\"><input type=\"text\" class=\"md-in\" id=\"mdPath\" dir=\"ltr\" placeholder=\"images/mascot/actions/bell-ring.webp\">" +
-        "<button class=\"md-mini\" id=\"mdPathApply\">تطبيق</button></div></div>" +
-      "<div class=\"md-row\"><button class=\"md-mini danger\" id=\"mdCustomClear\" style=\"display:none\">إزالة الصورة المخصصة</button></div>" +
-      "<div id=\"mdShape\">" +
-      "<div class=\"md-sec\">إعدادات الشكل (للإشعارات فقط)</div>" +
-      "<div class=\"md-row\"><label for=\"mdSize\">الحجم</label><select class=\"md-in\" id=\"mdSize\">" +
-        Object.keys(SIZES).map(function (k) { return "<option value=\"" + k + "\">" + SIZES[k] + "</option>"; }).join("") +
-      "</select></div>" +
-      "<div class=\"md-row\"><label for=\"mdAnim\">الحركة</label><select class=\"md-in\" id=\"mdAnim\">" +
-        Object.keys(ANIMS).map(function (k) { return "<option value=\"" + k + "\">" + ANIMS[k] + "</option>"; }).join("") +
-      "</select></div>" +
-      "<div class=\"md-row\"><label for=\"mdMsgIn\">نص المعاينة</label><input type=\"text\" class=\"md-in\" id=\"mdMsgIn\" maxlength=\"80\"></div>" +
-      "<div class=\"md-row\"><label for=\"mdLabel\">وصف الصورة (إتاحة، اختياري)</label><input type=\"text\" class=\"md-in\" id=\"mdLabel\" maxlength=\"60\"></div>" +
+      "<div class=\"md-card\">" +
+        "<div class=\"md-h\"><span>صورة بريق</span></div>" +
+        "<div class=\"md-row\"><label for=\"mdPick\">اختيار الصورة</label>" +
+          "<select id=\"mdImg\" style=\"display:none\"></select>" +
+          "<button type=\"button\" class=\"md-pick\" id=\"mdPick\"><img id=\"mdPickImg\" alt=\"\"><span id=\"mdPickTxt\"></span><i>▾</i></button>" +
+          "<div class=\"md-list\" id=\"mdList\" style=\"display:none\"></div></div>" +
+        "<details class=\"md-adv\"><summary>صورة مخصصة (خيارات متقدمة)</summary>" +
+          "<div class=\"md-row\"><label for=\"mdFile\">صورة من الجهاز (معاينة فقط)</label>" +
+            "<input type=\"file\" class=\"md-in\" id=\"mdFile\" accept=\"image/*\"></div>" +
+          "<div class=\"md-row\"><label for=\"mdPath\">أو مسار صورة داخل المشروع</label>" +
+            "<div class=\"md-line\"><input type=\"text\" class=\"md-in\" id=\"mdPath\" dir=\"ltr\" placeholder=\"images/mascot/actions/bell-ring.webp\">" +
+            "<button class=\"md-mini\" id=\"mdPathApply\">تطبيق</button></div></div>" +
+          "<div class=\"md-row\"><button class=\"md-mini danger\" id=\"mdCustomClear\" style=\"display:none\">إزالة الصورة المخصصة</button></div>" +
+        "</details>" +
       "</div>" +
-      "<div class=\"md-sec\">النشر على الموقع</div>" +
+      "<div class=\"md-card\" id=\"mdShape\">" +
+        "<div class=\"md-h\"><span>إعدادات الشكل</span><em>للإشعارات فقط</em></div>" +
+        "<div class=\"md-grid2\">" +
+          "<div class=\"md-row\"><label for=\"mdSize\">الحجم</label><select class=\"md-in\" id=\"mdSize\">" +
+            Object.keys(SIZES).map(function (k) { return "<option value=\"" + k + "\">" + SIZES[k] + "</option>"; }).join("") +
+          "</select></div>" +
+          "<div class=\"md-row\"><label for=\"mdAnim\">الحركة</label><select class=\"md-in\" id=\"mdAnim\">" +
+            Object.keys(ANIMS).map(function (k) { return "<option value=\"" + k + "\">" + ANIMS[k] + "</option>"; }).join("") +
+          "</select></div>" +
+        "</div>" +
+        "<div class=\"md-row\"><label for=\"mdMsgIn\">نص المعاينة</label><input type=\"text\" class=\"md-in\" id=\"mdMsgIn\" maxlength=\"80\"></div>" +
+        "<div class=\"md-row\"><label for=\"mdLabel\">وصف الصورة (إتاحة، اختياري)</label><input type=\"text\" class=\"md-in\" id=\"mdLabel\" maxlength=\"60\"></div>" +
+      "</div>" +
+      "<div class=\"md-card\">" +
+      "<div class=\"md-h\"><span>النشر على الموقع</span></div>" +
       "<div class=\"md-pubinfo\" id=\"mdPubInfo\"></div>" +
-      "<div class=\"md-line\">" +
+      "<div class=\"md-line md-publine\">" +
         "<button class=\"md-mini\" id=\"mdPublish\">نشر على الموقع</button>" +
         "<button class=\"md-mini\" id=\"mdLoadPub\">تحميل المنشور</button>" +
         "<button class=\"md-mini danger\" id=\"mdUnpublish\">إلغاء النشر</button>" +
       "</div>" +
       "<div class=\"md-status\" id=\"mdStatus\"></div>" +
-      "<div class=\"md-note\">«حفظ المسودة» بيحفظ على جهازك فقط. «نشر على الموقع» بيطبّق على إشعارات كل المستخدمين الصورة والحجم والحركة ووصف الصورة، وعلى أماكن العرض الصورة فقط (الحجم ثابت)؛ صور الجهاز ونص المعاينة معاينة فقط. اضغط زر النشر مرتين للتأكيد. «إلغاء النشر» بيرجّع النظام الأصلي.</div>" +
+      "<details class=\"md-adv\"><summary>ملاحظات</summary><div class=\"md-note\">«حفظ المسودة» بيحفظ على جهازك فقط. «نشر على الموقع» بيطبّق على إشعارات كل المستخدمين الصورة والحجم والحركة ووصف الصورة، وعلى أماكن العرض الصورة فقط (الحجم ثابت)؛ صور الجهاز ونص المعاينة معاينة فقط. اضغط زر النشر مرتين للتأكيد. «إلغاء النشر» بيرجّع النظام الأصلي.</div></details>" +
+      "</div>" +
     "</div>" +
     "<div class=\"md-foot\">" +
       "<button class=\"md-b md-save\" id=\"mdSaveDraft\">حفظ المسودة</button>" +
@@ -288,7 +306,49 @@
     l.style.display = "block";
   }
 
+  /* توزيع حالات الإشعارات: عليها صورة بريق ← "حالات شريط الإشعارات"، بدون صورة ← "حالات شريط الإشعارات فارغة" */
+  function stateHasImage(id) {
+    var d = _draft && _draft.states && _draft.states[id];
+    return !!(d && (d.imageKey || d.customImage));
+  }
+  function stateChipHTML(st) {
+    return "<button class=\"md-chip\" data-st=\"" + st.id + "\" data-sel=\"" + st.id + "\">" + st.label + "</button>";
+  }
+  function refreshChips() {
+    var withImg = [], empty = [];
+    STATES.forEach(function (st) { (stateHasImage(st.id) ? withImg : empty).push(st); });
+    var a = byId("mdStates"), b = byId("mdStatesEmpty");
+    if (!a || !b) return;
+    var ca = byId("mdCntA"), cb2 = byId("mdCntB"), cAll = byId("mdCntAll"), cPl = byId("mdCntPl");
+    if (ca) ca.textContent = withImg.length;
+    if (cb2) cb2.textContent = empty.length;
+    if (cAll) cAll.textContent = STATES.length;
+    if (cPl) cPl.textContent = placeList().length;
+    a.innerHTML = withImg.length ? withImg.map(stateChipHTML).join("") : "<div class=\"md-none\">لا توجد حالة عليها صورة بريق بعد — اختر من الفارغة بالأسفل</div>";
+    b.innerHTML = empty.length ? empty.map(stateChipHTML).join("") : "<div class=\"md-none\">كل الحالات عليها صورة بريق</div>";
+    Array.prototype.forEach.call(document.querySelectorAll("#mascotDesignerModal .md-chip"), function (c) {
+      c.classList.toggle("on", c.getAttribute("data-sel") === _sel);
+    });
+    markPublished();
+  }
+
+  /* تبويب (الإشعارات | أماكن العرض) — تقليل الزحام: مجموعة واحدة ظاهرة في كل مرة */
+  function setTab(name) {
+    var n = name === "places" ? "places" : "notif";
+    var gn = byId("mdGrpNotif"), gp = byId("mdGrpPlaces");
+    if (gn) gn.style.display = n === "notif" ? "" : "none";
+    if (gp) gp.style.display = n === "places" ? "" : "none";
+    Array.prototype.forEach.call(document.querySelectorAll("#mascotDesignerModal .md-seg-b"), function (b) {
+      b.classList.toggle("on", b.getAttribute("data-tab") === n);
+    });
+  }
+  function updateCur() {
+    var el = byId("mdCur"), def = curDef();
+    if (el && def) el.textContent = "المحدّد الآن: " + (def.label || "");
+  }
+
   function syncControls() {
+    updateCur();
     var d = cur(), def = curDef(), place = isPlace();
     if (!d || !def) return;
     closeList();
@@ -372,6 +432,7 @@
 
   function setCustom(ci) {
     cur().customImage = ci;
+    persist();
     byId("mdCustomClear").style.display = ci ? "" : "none";
     updatePick();
     renderPreview();
@@ -405,6 +466,7 @@
   function open() {
     if (!(window.isOwner && window.isOwner())) return;
     var hasDraft = false;
+    _dirty = false;
     try { hasDraft = !!localStorage.getItem(DRAFT_KEY); } catch (e) {}
     _draft = loadDraft();
     var pub = window.MascotOverride && window.MascotOverride.getConfig();
@@ -416,6 +478,8 @@
       document.body.appendChild(_modal);
 
       _modal.addEventListener("click", function (e) {
+        var seg = e.target.closest && e.target.closest(".md-seg-b");
+        if (seg) { setTab(seg.getAttribute("data-tab")); return; }
         var chip = e.target.closest && e.target.closest(".md-chip");
         if (chip) { _sel = chip.getAttribute("data-sel"); setStatus(""); syncControls(); renderPreview(); return; }
         if (e.target.closest && e.target.closest("#mdPick")) { toggleList(); return; }
@@ -448,6 +512,9 @@
         else if (id === "mdAnim") { if (ANIMS[e.target.value]) { d.animation = e.target.value; renderPreview(); } }
         else if (id === "mdFile") { onFile(e.target.files && e.target.files[0]); }
       });
+      /* بعد معالجات التغيير الأصلية (الترتيب مهم): حفظ تلقائي للمسودة */
+      _modal.addEventListener("change", function () { persist(); });
+      _modal.addEventListener("input", function () { persist(); });
       byId("mdPathApply").onclick = applyPath;
       byId("mdCustomClear").onclick = function () { byId("mdPath").value = ""; byId("mdFile").value = ""; setCustom(null); };
       byId("mdReplay").onclick = renderPreview;
@@ -456,6 +523,7 @@
       byId("mdReset").onclick = function () {
         if (isPlace()) _draft.places[_sel.slice(6)] = placeDefaults();
         else _draft.states[_sel] = stateDefaults(stateById(_sel));
+        persist();
         setStatus("");
         syncControls();
         renderPreview();
@@ -474,6 +542,7 @@
           var btn = byId("mdPublish"); btn.disabled = true;
           var r = await MO.publish(_draft);
           btn.disabled = false;
+          if (r && r.ok) persist(); /* اللي اتنشر يفضل محفوظ في المصمم */
           markPublished();
           setStatus(r.ok
             ? "تم النشر وتفعيل الـ Override: " + r.states + " إشعار + " + r.places + " مكان" + (r.skipped ? " — صور الجهاز لم تُنشر (معاينة فقط)" : "")
@@ -487,6 +556,7 @@
           markPublished();
           if (!cfg) { setStatus("لا يوجد تصميم منشور"); return; }
           _draft = normalize(cfg);
+          persist();
           syncControls();
           renderPreview();
           setStatus("تم تحميل التصميم المنشور");
@@ -506,11 +576,22 @@
       };
     }
     setStatus("");
+    setTab(isPlace() ? "places" : "notif");
+    refreshChips();
     syncControls();
     markPublished();
     _modal.style.display = "flex";
     renderPreview();
-    if (window.MascotOverride) window.MascotOverride.load(false).then(markPublished);
+    if (window.MascotOverride) window.MascotOverride.load(false).then(function (cfg) {
+      markPublished();
+      /* مفيش مسودة ولسه ماغيّرتش حاجة: حمّل التصميم المنشور اللي وصل متأخر بدل الشكل الافتراضي */
+      if (!hasDraft && !_dirty && cfg && _modal && _modal.style.display !== "none") {
+        _draft = normalize(cfg);
+        refreshChips();
+        syncControls();
+        renderPreview();
+      }
+    });
   }
 
   function close() {
