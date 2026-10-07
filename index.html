@@ -97,6 +97,7 @@ if ("serviceWorker" in navigator) {
 <link rel="stylesheet" href="css/quick-notifications.css">
 <link rel="stylesheet" href="css/disclaimer-consent.css">
 <link rel="stylesheet" href="css/apk-prompt.css">
+<link rel="stylesheet" href="css/update-notice.css">
 <link rel="stylesheet" href="css/qr-share.css">
 
 <!-- ══ Critical inline CSS — يُطبَّق فورًا بدون انتظار أي ملف خارجي، لعرض خلفية محايدة بدل الفراغ الأبيض/الفلاش قبل تحميل باقي الصفحة ══ -->
@@ -1840,6 +1841,31 @@ if ("serviceWorker" in navigator) {
               </div>
               <div style="font-size:12px;color:var(--muted);margin-top:10px;line-height:1.6;">
                 عند التفعيل: يتم منع جميع المستخدمين من استخدام الموقع وعرض صفحة الصيانة فقط، بينما يحتفظ المالك بالوصول الكامل.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ قسم: نشر تحديث (Global — config/appUpdate) ══ -->
+      <div class="owner-collapse-item" style="margin-top:10px;">
+        <div class="owner-collapse-header" onclick="ownerToggleSection(this)">
+          <div class="owner-collapse-icon-wrap"><i class="fa-solid fa-arrows-rotate"></i></div>
+          <div class="owner-collapse-body-text">
+            <div class="owner-collapse-title">نشر تحديث</div>
+            <div class="owner-collapse-sub">إشعار تحديث لجميع المستخدمين</div>
+          </div>
+          <i class="fa-solid fa-chevron-down owner-collapse-arrow"></i>
+        </div>
+        <div class="owner-collapse-panel">
+          <div class="owner-collapse-inner">
+            <div class="panel-sec">
+              <div class="label">رقم التحديث التالي: <span id="updNextNum" style="font-weight:800;">—</span></div>
+              <div id="updLastInfo" style="font-size:12px;color:var(--muted);margin-top:4px;">—</div>
+              <textarea class="inp" id="updMsg" rows="4" maxlength="500" placeholder="اكتب ما الجديد في هذا التحديث…" style="margin-top:8px;resize:vertical;"></textarea>
+              <button class="btn" id="updPublishBtn" style="width:100%;margin-top:8px;" onclick="publishAppUpdate()"><i class="fa-solid fa-paper-plane"></i> نشر تحديث</button>
+              <div style="font-size:12px;color:var(--muted);margin-top:10px;line-height:1.6;">
+                يظهر الإشعار لجميع المستخدمين (بمن فيهم أنت). انشره بعد وصول النسخة الجديدة للموقع بدقائق.
               </div>
             </div>
           </div>
@@ -3594,6 +3620,7 @@ onAuthStateChanged(auth, _authStateHandler = async (user) => {
     window._dmsStopListeners?.(); // لا تُبقِ أي مستمع/قائمة DM بعد الخروج (مهما كان سبب الخروج)
     window._maintenanceApply?.();
     window.__apkPromptHide?.();
+    window.__updateNoticeStop?.();
     window.AuthUI?.sessionEnded?.(); // انتهت الجلسة أثناء انتظار تأكيد البريد
     showPage("page-login"); return;
   }
@@ -3612,6 +3639,7 @@ onAuthStateChanged(auth, _authStateHandler = async (user) => {
   goTab("tab-home");
   window.checkAttendancePopup?.().catch(() => {});
   try { window.__apkPromptAfterLogin?.(); } catch (_) {} // اقتراح تحميل التطبيق (متصفح فقط) — يعمل أيضًا مع الجلسة المحفوظة
+  try { window.__updateNoticeStart?.(); } catch (_) {} // إشعار نشر تحديث عالمي — مستمع واحد على config/appUpdate
 
   let userData = null;
   let _readSucceeded = false;
@@ -9453,6 +9481,7 @@ try { window._listenPinnedMsg?.(); } catch(e) {}
 <script type="module" src="js/quick-notifications.js"></script>
 <script type="module" src="js/disclaimer-consent.js"></script>
 <script type="module" src="js/apk-prompt.js"></script>
+<script type="module" src="js/update-notice.js"></script>
 <script src="js/why-here-forum.js"></script>
 <script type="module" src="js/forum-badges.js"></script>
 
