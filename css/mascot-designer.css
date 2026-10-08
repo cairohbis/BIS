@@ -84,3 +84,21 @@
 #mascotDesignerModal .md-status{margin:8px 2px 0}
 #mascotDesignerModal .md-note{line-height:1.7}
 #mascotDesignerModal .md-foot{padding-bottom:calc(10px + env(safe-area-inset-bottom,0px))}
+
+/* ══ قائمة كل إشعارات الموقع: بحث + فلتر + صفوف مرتبة ══ */
+#mascotDesignerModal .md-tools{display:flex;flex-direction:column;gap:10px;margin-bottom:14px}
+#mascotDesignerModal .md-search{width:100%;box-sizing:border-box}
+#mascotDesignerModal .md-flts{display:flex;flex-wrap:wrap;gap:6px}
+#mascotDesignerModal .md-flt{padding:6px 12px;border-radius:999px;border:1px solid var(--t-border);background:var(--t-bg2);color:#9fb0c8;font:inherit;font-size:12px;cursor:pointer}
+#mascotDesignerModal .md-flt.on{background:#c9a96e;border-color:#c9a96e;color:#060d1a;font-weight:700}
+#mascotDesignerModal .md-nlist{display:flex;flex-direction:column;gap:6px}
+#mascotDesignerModal .md-nrow{justify-content:flex-start;text-align:right;gap:10px;min-height:40px;padding:8px 12px;width:100%;box-sizing:border-box}
+#mascotDesignerModal .md-nrow .md-rl{flex:1;font-size:12.5px;line-height:1.45}
+#mascotDesignerModal .md-nrow em{font-style:normal;font-size:10px;padding:1px 7px;border-radius:999px;background:rgba(201,169,110,.16);color:#c9a96e;flex:none}
+#mascotDesignerModal .md-dot{width:8px;height:8px;border-radius:50%;flex:none;background:#7f93b3}
+#mascotDesignerModal .md-dot.t-success{background:#22c55e}
+#mascotDesignerModal .md-dot.t-error{background:#ef4444}
+#mascotDesignerModal .md-dot.t-warn{background:#f59e0b}
+#mascotDesignerModal .md-dot.t-info{background:#38bdf8}
+#mascotDesignerModal .md-more{margin-top:2px;padding:9px;border:1px dashed var(--t-border);border-radius:12px;background:transparent;color:#c9a96e;font:inherit;font-size:12.5px;cursor:pointer}
+
