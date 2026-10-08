@@ -54,6 +54,33 @@
     { id: "info",    label: "معلومات", defaultKey: "happy",    tone: "",        msg: "معلومة" }
   ];
 
+  /* كتالوج الإشعارات الفعلية (js/mascot-notifs.js): كل إشعار بيظهر في الموقع كعنصر مستقل */
+  var TYPE_META = {
+    success: { key: "success",   tone: "success" },
+    warn:    { key: "surprised", tone: "warn" },
+    info:    { key: "happy",     tone: "" },
+    error:   { key: "error",     tone: "error" }
+  };
+  var TYPE_ORDER = ["success", "warn", "info", "error"];
+  var TYPE_LABELS = { success: "نجاح", error: "خطأ", warn: "تحذير", info: "معلومات" };
+  var _notifCache = null;
+  function notifList() {
+    if (_notifCache) return _notifCache;
+    var n = window.MascotNotifs, src = (n && n.items) ? n.items.slice() : [];
+    src.sort(function (a, b) {
+      var d = TYPE_ORDER.indexOf(a.type) - TYPE_ORDER.indexOf(b.type);
+      return d || a.label.localeCompare(b.label, "ar");
+    });
+    _notifCache = src.map(function (it) {
+      var m = TYPE_META[it.type] || TYPE_META.info;
+      return { id: it.id, label: it.label, defaultKey: m.key, tone: m.tone, type: it.type, msg: it.label.replace(/…$/, ""), notif: true };
+    });
+    return _notifCache;
+  }
+  function allStates() { return STATES.concat(notifList()); }
+  function typeOf(def) { return def.type || (def.tone === "" ? "info" : def.tone); }
+  var LIMIT = 8, _q = "", _ft = "all", _expA = false, _expB = false;
+
   var _draft = null;
   var _sel = "success"; // "success" | ... | "place:<id>"
   var _modal = null;
@@ -67,7 +94,8 @@
   }
   function byId(id) { return document.getElementById(id); }
   function stateById(id) {
-    for (var i = 0; i < STATES.length; i++) if (STATES[i].id === id) return STATES[i];
+    var all = allStates();
+    for (var i = 0; i < all.length; i++) if (all[i].id === id) return all[i];
     return STATES[0];
   }
 
@@ -98,7 +126,7 @@
   }
   function getDefaults() {
     var cfg = { version: VERSION, states: {}, places: {} };
-    STATES.forEach(function (st) { cfg.states[st.id] = stateDefaults(st); });
+    allStates().forEach(function (st) { cfg.states[st.id] = stateDefaults(st); });
     placeList().forEach(function (pl) { cfg.places[pl.id] = placeDefaults(); });
     return cfg;
   }
@@ -130,7 +158,7 @@
       if (validKey(r.imageKey)) d.imageKey = r.imageKey;
       d.customImage = normalizeCustom(r.customImage);
     });
-    STATES.forEach(function (st) {
+    allStates().forEach(function (st) {
       var r = raw.states && raw.states[st.id];
       if (!r || typeof r !== "object") return;
       var d = cfg.states[st.id];
@@ -192,10 +220,16 @@
         "<button type=\"button\" class=\"md-seg-b\" data-tab=\"places\">أماكن العرض <i id=\"mdCntPl\"></i></button>" +
       "</div>" +
       "<div class=\"md-card\" id=\"mdGrpNotif\">" +
+        "<div class=\"md-tools\"><input type=\"search\" class=\"md-in md-search\" id=\"mdSearch\" placeholder=\"ابحث في الإشعارات…\" autocomplete=\"off\">" +
+          "<div class=\"md-flts\" id=\"mdFlts\">" +
+            [["all", "الكل"], ["success", "نجاح"], ["error", "خطأ"], ["warn", "تحذير"], ["info", "معلومات"]].map(function (f) {
+              return "<button type=\"button\" class=\"md-flt" + (f[0] === "all" ? " on" : "") + "\" data-f=\"" + f[0] + "\">" + f[1] + "</button>";
+            }).join("") +
+          "</div></div>" +
         "<div class=\"md-h\"><span>حالات شريط الإشعارات</span><b class=\"md-pill\" id=\"mdCntA\"></b></div>" +
-        "<div class=\"md-states\" id=\"mdStates\"></div>" +
+        "<div class=\"md-nlist\" id=\"mdStates\"></div>" +
         "<div class=\"md-h md-h2\"><span>حالات شريط الإشعارات فارغة</span><b class=\"md-pill md-pill-empty\" id=\"mdCntB\"></b></div>" +
-        "<div class=\"md-states\" id=\"mdStatesEmpty\"></div>" +
+        "<div class=\"md-nlist\" id=\"mdStatesEmpty\"></div>" +
       "</div>" +
       "<div class=\"md-card\" id=\"mdGrpPlaces\" style=\"display:none\">" +
         "<div class=\"md-h\"><span>أماكن العرض</span><em>الصورة فقط — الحجم ثابت</em></div>" +
@@ -312,20 +346,40 @@
     return !!(d && (d.imageKey || d.customImage));
   }
   function stateChipHTML(st) {
-    return "<button class=\"md-chip\" data-st=\"" + st.id + "\" data-sel=\"" + st.id + "\">" + st.label + "</button>";
+    return "<button class=\"md-chip md-nrow\" data-st=\"" + st.id + "\" data-sel=\"" + st.id + "\">" +
+      "<span class=\"md-dot t-" + typeOf(st) + "\"></span><span class=\"md-rl\">" + esc(st.label) + "</span>" +
+      (st.notif ? "" : "<em>عامة</em>") + "</button>";
+  }
+  function passFilter(st) {
+    if (_ft !== "all" && typeOf(st) !== _ft) return false;
+    return !_q || (st.label + " " + (st.msg || "")).toLowerCase().indexOf(_q) > -1;
+  }
+  function listHTMLFor(arr, exp, key, emptyMsg) {
+    if (!arr.length) return "<div class=\"md-none\">" + emptyMsg + "</div>";
+    var shown = exp ? arr : arr.slice(0, LIMIT);
+    if (!exp) { /* المحدّد دائمًا ظاهر حتى لو خارج أول القائمة */
+      var sel = arr.filter(function (x) { return x.id === _sel; })[0];
+      if (sel && shown.indexOf(sel) < 0) shown = shown.concat([sel]);
+    }
+    return shown.map(stateChipHTML).join("") +
+      (arr.length > LIMIT ? "<button type=\"button\" class=\"md-more\" data-more=\"" + key + "\">" + (exp ? "عرض أقل" : "عرض الكل (" + arr.length + ")") + "</button>" : "");
   }
   function refreshChips() {
     var withImg = [], empty = [];
-    STATES.forEach(function (st) { (stateHasImage(st.id) ? withImg : empty).push(st); });
+    allStates().filter(passFilter).forEach(function (st) { (stateHasImage(st.id) ? withImg : empty).push(st); });
     var a = byId("mdStates"), b = byId("mdStatesEmpty");
     if (!a || !b) return;
     var ca = byId("mdCntA"), cb2 = byId("mdCntB"), cAll = byId("mdCntAll"), cPl = byId("mdCntPl");
     if (ca) ca.textContent = withImg.length;
     if (cb2) cb2.textContent = empty.length;
-    if (cAll) cAll.textContent = STATES.length;
+    if (cAll) cAll.textContent = allStates().length;
     if (cPl) cPl.textContent = placeList().length;
-    a.innerHTML = withImg.length ? withImg.map(stateChipHTML).join("") : "<div class=\"md-none\">لا توجد حالة عليها صورة بريق بعد — اختر من الفارغة بالأسفل</div>";
-    b.innerHTML = empty.length ? empty.map(stateChipHTML).join("") : "<div class=\"md-none\">كل الحالات عليها صورة بريق</div>";
+    var filtered = _q || _ft !== "all";
+    a.innerHTML = listHTMLFor(withImg, _expA, "a", filtered ? "لا نتائج مطابقة" : "لا توجد حالة عليها صورة بريق بعد — اختر من الفارغة بالأسفل");
+    b.innerHTML = listHTMLFor(empty, _expB, "b", filtered ? "لا نتائج مطابقة" : "كل الحالات عليها صورة بريق");
+    Array.prototype.forEach.call(document.querySelectorAll("#mdFlts .md-flt"), function (f) {
+      f.classList.toggle("on", f.getAttribute("data-f") === _ft);
+    });
     Array.prototype.forEach.call(document.querySelectorAll("#mascotDesignerModal .md-chip"), function (c) {
       c.classList.toggle("on", c.getAttribute("data-sel") === _sel);
     });
@@ -478,6 +532,10 @@
       document.body.appendChild(_modal);
 
       _modal.addEventListener("click", function (e) {
+        var flt = e.target.closest && e.target.closest(".md-flt");
+        if (flt) { _ft = flt.getAttribute("data-f"); _expA = _expB = false; refreshChips(); return; }
+        var more = e.target.closest && e.target.closest(".md-more");
+        if (more) { if (more.getAttribute("data-more") === "a") _expA = !_expA; else _expB = !_expB; refreshChips(); return; }
         var seg = e.target.closest && e.target.closest(".md-seg-b");
         if (seg) { setTab(seg.getAttribute("data-tab")); return; }
         var chip = e.target.closest && e.target.closest(".md-chip");
@@ -513,8 +571,11 @@
         else if (id === "mdFile") { onFile(e.target.files && e.target.files[0]); }
       });
       /* بعد معالجات التغيير الأصلية (الترتيب مهم): حفظ تلقائي للمسودة */
-      _modal.addEventListener("change", function () { persist(); });
-      _modal.addEventListener("input", function () { persist(); });
+      _modal.addEventListener("change", function (e) { if (e.target && e.target.id === "mdSearch") return; persist(); });
+      _modal.addEventListener("input", function (e) {
+        if (e.target && e.target.id === "mdSearch") { _q = String(e.target.value || "").trim().toLowerCase(); _expA = _expB = false; refreshChips(); return; }
+        persist();
+      });
       byId("mdPathApply").onclick = applyPath;
       byId("mdCustomClear").onclick = function () { byId("mdPath").value = ""; byId("mdFile").value = ""; setCustom(null); };
       byId("mdReplay").onclick = renderPreview;
@@ -576,6 +637,8 @@
       };
     }
     setStatus("");
+    _q = ""; _ft = "all"; _expA = _expB = false;
+    var _sb = byId("mdSearch"); if (_sb) _sb.value = "";
     setTab(isPlace() ? "places" : "notif");
     refreshChips();
     syncControls();

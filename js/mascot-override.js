@@ -33,6 +33,11 @@ import { doc, getDoc, setDoc, deleteDoc, serverTimestamp } from "https://www.gst
     success: "success", save: "success", add: "success", copy: "success", delete: "success", update: "success",
     error: "error", warn: "surprised", info: "happy"
   };
+  /* حالات الإشعارات = الحالات العامة + كل إشعار بعينه من كتالوج js/mascot-notifs.js */
+  function allIds() {
+    var n = window.MascotNotifs;
+    return n && n.ids ? STATE_IDS.concat(n.ids) : STATE_IDS;
+  }
   var SIZES = { sm: 1, md: 1, lg: 1, xl: 1 };
   var ANIMS = { none: 1, pop: 1, shake: 1, wiggle: 1, spin: 1, run: 1 };
   var IMG_REL = /^images\/[\w\-.\/]+\.(webp|png|jpe?g|gif|svg)$/i;
@@ -97,7 +102,7 @@ import { doc, getDoc, setDoc, deleteDoc, serverTimestamp } from "https://www.gst
       if (Object.keys(o).length) out.places[pl.id] = o;
     });
     if (!raw.states || typeof raw.states !== "object") return out;
-    STATE_IDS.forEach(function (id) {
+    allIds().forEach(function (id) {
       var r = raw.states[id];
       if (!r || typeof r !== "object") return;
       var o = {};
@@ -302,7 +307,9 @@ import { doc, getDoc, setDoc, deleteDoc, serverTimestamp } from "https://www.gst
   function applyToToast(msg, type, explicit) {
     if (!_cfg || !window.Mascot) return;
     var id = stateFor(msg, type, explicit);
-    var ov = _cfg.states[id];
+    /* إشعار بعينه له تصميمه؟ وإلا الحالة العامة (نجاح/خطأ/...) */
+    var nid = window.MascotNotifs ? window.MascotNotifs.match(msg) : null;
+    var ov = (nid && _cfg.states[nid]) || _cfg.states[id];
     if (!ov) return; // مفيش Override للحالة دي = النظام الأصلي زي ما هو
     var toastEl = document.getElementById("toast");
     var slot = toastEl && toastEl.querySelector(".mascot-toast-slot");
@@ -368,7 +375,7 @@ import { doc, getDoc, setDoc, deleteDoc, serverTimestamp } from "https://www.gst
       }
       if (Object.keys(o).length) out.places[pl.id] = o;
     });
-    STATE_IDS.forEach(function (id) {
+    allIds().forEach(function (id) {
       var d = draft && draft.states && draft.states[id];
       if (!d) return;
       var o = {};
