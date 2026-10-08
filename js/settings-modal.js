@@ -77,14 +77,16 @@
     }
     // theme: "dark" | "light" | "auto"
     _themeChoice = theme;
+    var _themeAt = Date.now();
     localStorage.setItem(THEME_KEY, theme);
+    try { localStorage.setItem("app_theme_at", String(_themeAt)); } catch(e) {}
     _applyThemeDOM(_resolveTheme(theme));
     /* Also persist to Firestore if user is logged in */
     const uid = window.currentUser?.uid;
     if (uid && window.db) {
       try {
         const { doc, setDoc } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
-        await setDoc(doc(window.db, "users", uid, "settings", "appPrefs"), { theme }, { merge: true });
+        await setDoc(doc(window.db, "users", uid, "settings", "appPrefs"), { theme, themeAt: _themeAt }, { merge: true });
       } catch(e) {}
     }
   };
@@ -98,9 +100,18 @@
       if (snap.exists()) {
         const d = snap.data();
         if (d.theme) {
-          _themeChoice = d.theme;
-          localStorage.setItem(THEME_KEY, d.theme);
-          _applyThemeDOM(_resolveTheme(d.theme));
+          /* لو اختيارك المحلي أحدث من المحفوظ على الخادم: نبقيه ونرفعه للخادم —
+             بدل ما الثيم (والخلفية) يرجع للقديم بعد ثوانٍ من فتح الموقع */
+          var _localAt = +(localStorage.getItem("app_theme_at") || 0), _serverAt = +(d.themeAt || 0);
+          var _localChoice = localStorage.getItem(THEME_KEY);
+          if (_localAt > _serverAt && _localChoice && _localChoice !== d.theme) {
+            try { await setDoc(doc(window.db, "users", uid, "settings", "appPrefs"), { theme: _localChoice, themeAt: _localAt }, { merge: true }); } catch(_e) {}
+          } else {
+            _themeChoice = d.theme;
+            localStorage.setItem(THEME_KEY, d.theme);
+            if (_serverAt) { try { localStorage.setItem("app_theme_at", String(_serverAt)); } catch(_e) {} }
+            _applyThemeDOM(_resolveTheme(d.theme));
+          }
         }
         if (typeof d.chatFontSize === "number") { localStorage.setItem(FS_KEY, d.chatFontSize); _applyChatFontSizeDOM(d.chatFontSize); }
         if (typeof d.chatFontWeight === "number") {
