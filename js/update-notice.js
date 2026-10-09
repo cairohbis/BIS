@@ -159,3 +159,55 @@ window.publishAppUpdate = async function () {
     if (btn) btn.disabled = false;
   }
 };
+
+/* ══════════════════════════════════════════
+   احتياطي لو نسخة index.html قديمة/مخزّنة (تفتقد كارت الأونر أو استدعاءات التشغيل)
+   ▸ كارت «نشر تحديث» يُضاف تلقائيًا بعد «وضع الصيانة» إن لم يكن موجودًا (مرة واحدة، بلا تكرار).
+   ▸ التشغيل/الإيقاف يتبع حالة الدخول بنفسه (idempotent: لا مستمع ثانٍ لو index.html يستدعيه أيضًا).
+══════════════════════════════════════════ */
+const _OWNER_CARD_HTML =
+  '<div class="owner-collapse-item" style="margin-top:10px;">' +
+    '<div class="owner-collapse-header" onclick="ownerToggleSection(this)">' +
+      '<div class="owner-collapse-icon-wrap"><i class="fa-solid fa-arrows-rotate"></i></div>' +
+      '<div class="owner-collapse-body-text">' +
+        '<div class="owner-collapse-title">نشر تحديث</div>' +
+        '<div class="owner-collapse-sub">إشعار تحديث لجميع المستخدمين</div>' +
+      '</div>' +
+      '<i class="fa-solid fa-chevron-down owner-collapse-arrow"></i>' +
+    '</div>' +
+    '<div class="owner-collapse-panel"><div class="owner-collapse-inner"><div class="panel-sec">' +
+      '<div class="label">رقم التحديث التالي: <span id="updNextNum" style="font-weight:800;">—</span></div>' +
+      '<div id="updLastInfo" style="font-size:12px;color:var(--muted);margin-top:4px;">—</div>' +
+      '<textarea class="inp" id="updMsg" rows="4" maxlength="500" placeholder="اكتب ما الجديد في هذا التحديث…" style="margin-top:8px;resize:vertical;"></textarea>' +
+      '<button class="btn" id="updPublishBtn" style="width:100%;margin-top:8px;" onclick="publishAppUpdate()"><i class="fa-solid fa-paper-plane"></i> نشر تحديث</button>' +
+      '<div style="font-size:12px;color:var(--muted);margin-top:10px;line-height:1.6;">يظهر الإشعار لجميع المستخدمين (بمن فيهم أنت). انشره بعد وصول النسخة الجديدة للموقع بدقائق.</div>' +
+    '</div></div></div>' +
+  '</div>';
+
+function _ensureOwnerCard() {
+  if (document.getElementById("updPublishBtn")) return;
+  const body = document.querySelector("#page-owner .panel-body");
+  if (!body) return;
+  const wrap = document.createElement("div");
+  wrap.innerHTML = _OWNER_CARD_HTML;
+  const card = wrap.firstChild;
+  if (!card) return;
+  let anchor = null;
+  body.querySelectorAll(".owner-collapse-title").forEach((t) => {
+    if (!anchor && (t.textContent || "").trim() === "وضع الصيانة") anchor = t.closest(".owner-collapse-item");
+  });
+  if (anchor && anchor.parentNode) anchor.parentNode.insertBefore(card, anchor.nextSibling);
+  else body.appendChild(card);
+}
+try { _ensureOwnerCard(); } catch (e) {}
+
+function _autoStart(n) {
+  if (window.db) { window.__updateNoticeStart(); return; }
+  if (n < 10) setTimeout(() => _autoStart(n + 1), 500);
+}
+(async () => {
+  try {
+    const a = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js");
+    a.onAuthStateChanged(a.getAuth(), (u) => { if (u) _autoStart(0); else window.__updateNoticeStop(); });
+  } catch (e) {}
+})();

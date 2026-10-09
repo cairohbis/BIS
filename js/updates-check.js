@@ -215,3 +215,20 @@ window._checkForUpdates = async function () {
     if (reload) _ucReload();
   }
 };
+
+/* احتياطي: لو index.html المنشور لا يربط إشعار «نشر تحديث» (نسخة قديمة/مخزّنة) يُحمَّل هنا مرة واحدة.
+   لا يفعل شيئًا إذا كان الربط موجودًا أصلًا. */
+(function () {
+  try {
+    if (!document.querySelector('link[href*="update-notice.css"]')) {
+      const l = document.createElement("link");
+      l.rel = "stylesheet"; l.href = "css/update-notice.css";
+      document.head.appendChild(l);
+    }
+    if (!document.querySelector('script[src*="update-notice.js"]')) {
+      const s = document.createElement("script");
+      s.type = "module"; s.src = "js/update-notice.js";
+      document.head.appendChild(s);
+    }
+  } catch (e) {}
+})();

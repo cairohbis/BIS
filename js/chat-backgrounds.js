@@ -97,6 +97,9 @@ function _applyChatBg(type, url) {
   const currentType = window._currentChatId === "public" ? "public"
     : window._currentChatId?.startsWith("room:") ? "rooms" : "private";
   if (type !== currentType) return;
+  // الرابط يُحسم هنا حسب الوضع الحالي من آخر بيانات محفوظة — فلا يتغلب عليه استدعاء قديم (من نسخة index.html قديمة) يمرّر الحقل المشترك فقط
+  const _c = _bgCacheGet();
+  if (_c[type] !== undefined || _c[type + "_light"] !== undefined || _c[type + "_dark"] !== undefined) url = _bgPick(_c, type);
   if (url) {
     // ✅ عرض الصورة كاملة بنسبتها الأصلية (contain) بدون قص أو تكرار أو تمدد،
     // والمساحة الفاضية حواليها بتتملي بنسخة مغبّشة من نفس الصورة (CSS تحت).
@@ -143,7 +146,22 @@ function _listenChatBg() {
 
 // تبديل الوضع (يدوي/تلقائي): أعد تطبيق خلفية الوضع الجديد فورًا من الكاش المحلي (بدون شبكة ولا قراءة Firestore)
 let _bgLastTheme = null;
+// لو index.html لا يحوي صف «فاتح / داكن» (نسخة قديمة/مخزّنة) يُضاف هنا مرة واحدة فقط
+function _ensureBgThemeTabs() {
+  if (document.querySelector("[data-bgtheme]")) return;
+  const panel = document.querySelector("#chatBgSec .chat-bg-panel");
+  if (!panel) return;
+  const labels = panel.querySelectorAll(".label");
+  const anchor = labels.length ? labels[labels.length - 1] : null;   // «رفع خلفية جديدة»
+  const wrap = document.createElement("div");
+  wrap.innerHTML = '<div class="label">الوضع (خلفية مستقلة لكل وضع)</div>' +
+    '<div class="chat-bg-tabs">' +
+    '<button class="chat-bg-tab" data-bgtheme="light" onclick="selectBgTheme(this)">☀️ فاتح</button>' +
+    '<button class="chat-bg-tab" data-bgtheme="dark" onclick="selectBgTheme(this)">🌙 داكن</button></div>';
+  while (wrap.firstChild) panel.insertBefore(wrap.firstChild, anchor);
+}
 function _syncBgThemeTabs() {
+  try { _ensureBgThemeTabs(); } catch (e) {}
   const t = _bgThemeSel || _bgTheme();
   document.querySelectorAll("[data-bgtheme]").forEach(b => b.classList.toggle("active", b.dataset.bgtheme === t));
 }
