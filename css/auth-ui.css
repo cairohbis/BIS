@@ -727,3 +727,37 @@ html.theme-light .lp-hint { color: #6b83a3; }
 
 
 #page-login .inp, .av-screen .inp { text-overflow: ellipsis; }
+
+/* ══ زر السقوط (دخول/خروج) — كل الألوان من نظام ألوان الموقع ══ */
+.fb{--figure-duration:100;--transform-figure:none;--walking-duration:100;--transform-arm1:none;--transform-wrist1:none;--transform-arm2:none;--transform-wrist2:none;--transform-leg1:none;--transform-calf1:none;--transform-leg2:none;--transform-calf2:none;position:relative;perspective:100px;-webkit-tap-highlight-color:transparent}
+.fb>i{display:none}
+.fb .fb-text{position:relative;z-index:10}
+.fb svg{display:block;position:absolute;pointer-events:none}
+.fb .figure{bottom:5px;right:18px;width:30px;z-index:4;fill:var(--gold);transform:var(--transform-figure);transition:transform calc(var(--figure-duration) * 1ms) cubic-bezier(.2,.1,.8,.9)}
+.fb .door,.fb .doorway{bottom:4px;right:12px;width:32px}
+.fb .doorway{z-index:3;fill:currentColor}
+.fb .door{z-index:5;transform:none;transform-origin:100% 50%;transform-style:preserve-3d;transition:transform 200ms ease}
+.fb .door path{fill:var(--gold);stroke:var(--gold);stroke-width:4}
+.fb--in .figure{fill:currentColor}
+html:not(.theme-light) .fb .figure{fill:var(--text)}
+.fb--in .door path{fill:currentColor;stroke:currentColor}
+.fb--in .door circle{fill:var(--gold)}
+.fb--in .doorway{opacity:.45}
+.fb .bang{opacity:0}
+.fb .arm1,.fb .wrist1,.fb .arm2,.fb .wrist2,.fb .leg1,.fb .calf1,.fb .leg2,.fb .calf2{transition:transform calc(var(--walking-duration) * 1ms) ease-in-out}
+.fb .arm1{transform:var(--transform-arm1);transform-origin:52% 45%}
+.fb .wrist1{transform:var(--transform-wrist1);transform-origin:59% 55%}
+.fb .arm2{transform:var(--transform-arm2);transform-origin:47% 43%}
+.fb .wrist2{transform:var(--transform-wrist2);transform-origin:35% 47%}
+.fb .leg1{transform:var(--transform-leg1);transform-origin:47% 64.5%}
+.fb .calf1{transform:var(--transform-calf1);transform-origin:55.5% 71.5%}
+.fb .leg2{transform:var(--transform-leg2);transform-origin:43% 63%}
+.fb .calf2{transform:var(--transform-calf2);transform-origin:41.5% 73%}
+.fb.door-open .door{transform:rotateY(35deg)}
+.fb.door-slammed .door{transform:none;transition:transform 100ms ease-in 250ms}
+.fb.falling{animation:fb-shake 200ms linear}
+.fb.falling .bang{animation:fb-flash 300ms linear}
+.fb.falling .figure{animation:fb-spin 1000ms infinite linear;bottom:-600px;opacity:0;right:1px;z-index:1;transition:transform calc(var(--figure-duration) * 1ms) linear,bottom calc(var(--figure-duration) * 1ms) cubic-bezier(.7,.1,1,1) 100ms,opacity calc(var(--figure-duration) * .25ms) linear calc(var(--figure-duration) * .75ms)}
+@keyframes fb-spin{from{transform:rotate(0deg) scale(.94)}to{transform:rotate(359deg) scale(.94)}}
+@keyframes fb-shake{0%{transform:rotate(-1deg)}50%{transform:rotate(2deg)}100%{transform:rotate(-1deg)}}
+@keyframes fb-flash{0%{opacity:.4}100%{opacity:0}}
