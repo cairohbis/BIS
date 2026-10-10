@@ -61,3 +61,19 @@
   #page-owner .panel-body,
   #page-admin .owner-sections-list { grid-template-columns: 1fr; }
 }
+
+/* ── كروت المنتدى: عمودان دائمًا (من أكبر شاشة لأصغر هاتف) ──
+   يضمن العمودين حتى لو نسخة style.css تحتوي قاعدة عمود واحد للشاشات الضيقة. minmax(0,1fr) يمنع كسر الشبكة بالنص الطويل. */
+.forum-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.forum-grid > .forum-section-card { min-width: 0; }
+@media (max-width: 360px) {
+  .forum-grid { gap: 8px; }
+  .forum-grid .forum-section-card { padding: 12px 10px 10px; }
+  .forum-grid .forum-card-title,
+  .forum-grid .forum-card-sub { overflow-wrap: anywhere; }
+}
+
+/* ── تثبيت صارم: كل كروت المنتدى (عدا «البوابة الرسمية») كارتان في كل صف بحجم نصف الصف دائمًا ──
+   لا تتمدد ولا تنهار لعمود واحد مهما كان العرض أو أي قاعدة/سطر مضمّن آخر. «البوابة الرسمية» تبقى بعرض الصف كله (grid-column:1/-1 في index.html). */
+#forum-landing.forum-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; grid-auto-flow: row; }
+#forum-landing .forum-section-card:not(.forum-card-portal) { grid-column: auto / span 1 !important; min-width: 0; }
