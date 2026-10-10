@@ -5,7 +5,8 @@ import { doc, onSnapshot, runTransaction, serverTimestamp } from "https://www.gs
    ▸ المستند: config/appUpdate { number, updateId, message, publishedAt, by } — Global بلا worldId
    ▸ مستمع واحد بعد الدخول (يُوقف عند الخروج) — بدون Polling وبدون قراءات إضافية عند الإغلاق/الضغط
    ▸ الضغط على «تحديث» يستدعي window._checkForUpdates() الموجودة (js/updates-check.js) كما هي
-   ▸ منع التكرار: localStorage["bariq_last_seen_update"] = آخر رقم تم الضغط على «تحديث» له
+   ▸ تظهر لكل رقم تحديث مرة واحدة فقط على الجهاز: يُسجَّل الرقم فور ظهورها (حتى لو أُغلقت بدون ضغط)،
+     ولا تظهر أبدًا لرقم ≤ آخر رقم مسجَّل. التسجيل في localStorage["bariq_last_seen_update"] + كوكي لمدة 10 سنوات + الذاكرة (احتياط).
 ══════════════════════════════════════════ */
 
 const TAG = "update-notice";
@@ -17,8 +18,22 @@ let _dismissedNum = null;   // أُغلقت بالنقر الخارجي في ه�
 let _open = false, _pending = false;
 let _overlay = null;
 
-function _lastSeen() { try { return localStorage.getItem(LS_KEY); } catch (_) { return null; } }
-function _markSeen(n) { try { localStorage.setItem(LS_KEY, String(n)); } catch (_) {} }
+let _memSeen = 0;
+// آخر رقم تحديث ظهر للمستخدم — يُقرأ من أكثر من مكان (أيّها أكبر) حتى لا يعود الإشعار لو مُسح أحدها أو تعذّر التخزين
+function _lastSeen() {
+  let m = _memSeen;
+  try { const v = Number(localStorage.getItem(LS_KEY)); if (Number.isFinite(v) && v > m) m = v; } catch (_) {}
+  try { const c = document.cookie.match(/(?:^|;\s*)bariq_last_seen_update=(\d+)/); if (c && Number(c[1]) > m) m = Number(c[1]); } catch (_) {}
+  return m;
+}
+function _markSeen(n) {
+  n = Number(n);
+  if (!(n > 0)) return;
+  const v = Math.max(n, _lastSeen());
+  _memSeen = v;
+  try { localStorage.setItem(LS_KEY, String(v)); } catch (_) {}
+  try { document.cookie = "bariq_last_seen_update=" + v + "; max-age=315360000; path=/; SameSite=Lax"; } catch (_) {}
+}
 
 /* Chrome يتخطّى عند زر Back أي سجل pushState أُنشئ بدون تفاعل المستخدم → لا نعرض النافذة قبل أول تفاعل */
 function _whenActive(fn) {
@@ -51,11 +66,16 @@ function _build() {
   document.body.appendChild(_overlay);
 }
 
+function _fill() {
+  _overlay.querySelector(".upd-num").textContent = "#" + _cur.num;
+  _overlay.querySelector(".upd-msg").textContent = _cur.message || "";
+}
+
 function _show() {
   if (!_cur || _open) return;
   _build();
-  _overlay.querySelector(".upd-num").textContent = "#" + _cur.num;
-  _overlay.querySelector(".upd-msg").textContent = _cur.message || "";
+  _fill();
+  _markSeen(_cur.num);   // مرة واحدة فقط: يُسجَّل فور ظهورها (إغلاقها أو الضغط عليها أو إعادة التحميل لا تعيدها)
   _open = true;
   requestAnimationFrame(() => _overlay.classList.add("show"));
   if (window._navPush) window._navPush(TAG, _onBack);
@@ -66,7 +86,7 @@ function _scheduleShow() {
   _pending = true;
   _whenActive(() => {
     _pending = false;
-    if (_cur && !_open && String(_cur.num) !== _lastSeen() && _dismissedNum !== _cur.num) _show();
+    if (_cur && !_open && _cur.num > _lastSeen() && _dismissedNum !== _cur.num) _show();
   });
 }
 
@@ -108,8 +128,8 @@ window.__updateNoticeStart = function () {
     if (!num) { _cur = null; _ownerUI(0, null); _hide(); return; }
     _cur = { num, message: d.message || "" };
     _ownerUI(num, d);
-    if (String(num) === _lastSeen()) { _hide(); return; }
-    _scheduleShow();
+    if (_open) { _fill(); _markSeen(num); return; }   // مفتوحة الآن: حدّث نصها فقط (لا تُخفى ولا تتكرر)
+    if (num > _lastSeen()) _scheduleShow();
   }, () => {});
 };
 
