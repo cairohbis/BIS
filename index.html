@@ -2299,6 +2299,7 @@ async function _notifyPrivateMsg(peerUid, senderName, text) {
   );
 }
 window._notifyPrivateMsg = _notifyPrivateMsg; // ← تصدير: محتاجها js/chat-core.js (module منفصل)
+window._sendNotification = _sendNotification; // ← تصدير فقط (للمكالمات: js/calls.js) — بدون تغيير المسار
 
 /* ── Mention notification (@name) ── */
 async function _notifyMentions(text, senderName) {
@@ -8608,6 +8609,7 @@ try { window._listenPinnedMsg?.(); } catch(e) {}
 <script type="module" src="js/dms-page.js"></script>
 <script type="module" src="js/dm-extras.js"></script>
 <script src="js/chat-presence-text.js"></script>
+<script src="js/calls.js" defer></script>
 <script type="module" src="js/attendance.js"></script>
 <script src="js/ai-config.js"></script>
 <script src="js/bubble-color.js" defer></script>
