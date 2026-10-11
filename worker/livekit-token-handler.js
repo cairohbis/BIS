@@ -20,13 +20,17 @@
    الرد:   { token, url, room, identity }
    ========================================================================== */
 
-const LK_ALLOWED_ORIGINS = null; // null = يعكس الـ Origin الطالب؛ ضع مصفوفة لتقييده
+const LK_ALLOWED_ORIGINS = ["https://cairohbis.github.io"]; // الأصول المسموحة فقط
 
+function lkOriginAllowed(request) {
+  const origin = request.headers.get("Origin");
+  return origin === null || LK_ALLOWED_ORIGINS.includes(origin); // بدون Origin = ليس طلب متصفح عبر نطاق؛ التوكن مطلوب في كل الأحوال
+}
 function lkCors(request) {
-  const origin = request.headers.get("Origin") || "*";
-  const ok = !LK_ALLOWED_ORIGINS || LK_ALLOWED_ORIGINS.includes(origin);
+  const origin = request.headers.get("Origin");
+  if (!origin || !LK_ALLOWED_ORIGINS.includes(origin)) return { "Vary": "Origin" };
   return {
-    "Access-Control-Allow-Origin": ok ? origin : "null",
+    "Access-Control-Allow-Origin": origin,
     "Access-Control-Allow-Headers": "Authorization, Content-Type",
     "Access-Control-Allow-Methods": "POST, OPTIONS",
     "Access-Control-Max-Age": "86400",
@@ -56,7 +60,7 @@ const strToB64u = (s) => bytesToB64u(new TextEncoder().encode(s));
 let _jwkCache = { at: 0, keys: null };
 async function lkGetJwks() {
   if (_jwkCache.keys && Date.now() - _jwkCache.at < 3600e3) return _jwkCache.keys;
-  const r = await fetch("https://www.googleapis.com/service_account/v1/jwk/securetoken@system.gserviceaccount.com");
+  const r = await fetch("https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com");
   if (!r.ok) throw new Error("jwks");
   _jwkCache = { at: Date.now(), keys: (await r.json()).keys };
   return _jwkCache.keys;
@@ -79,7 +83,7 @@ async function lkVerifyFirebaseToken(idToken, projectId) {
   if (payload.aud !== projectId) throw new Error("aud");
   if (payload.iss !== "https://securetoken.google.com/" + projectId) throw new Error("iss");
   if (!payload.sub || typeof payload.sub !== "string") throw new Error("sub");
-  if (payload.exp <= now - 5) throw new Error("exp");
+  if (!(payload.exp > now)) throw new Error("exp");
   if (payload.iat > now + 60) throw new Error("iat");
   return payload;
 }
@@ -113,6 +117,7 @@ async function lkSign(env, { identity, name, room }) {
 }
 
 export async function handleLiveKitToken(request, env) {
+  if (!lkOriginAllowed(request)) return lkJson(request, 403, { error: "origin-not-allowed" });
   if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: lkCors(request) });
   if (request.method !== "POST") return lkJson(request, 405, { error: "method-not-allowed" });
   if (!env.LIVEKIT_API_KEY || !env.LIVEKIT_API_SECRET || !env.LIVEKIT_URL || !env.FIREBASE_PROJECT_ID)
