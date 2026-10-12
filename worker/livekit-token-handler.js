@@ -84,7 +84,7 @@ async function lkVerifyFirebaseToken(idToken, projectId) {
   if (payload.iss !== "https://securetoken.google.com/" + projectId) throw new Error("iss");
   if (!payload.sub || typeof payload.sub !== "string") throw new Error("sub");
   if (!(payload.exp > now)) throw new Error("exp");
-  if (payload.iat > now + 60) throw new Error("iat");
+  if (typeof payload.iat !== "number" || !Number.isFinite(payload.iat) || payload.iat > now + 60) throw new Error("iat");
   return payload;
 }
 
