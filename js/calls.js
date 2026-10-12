@@ -13,7 +13,7 @@
 
   var TOKEN_URL = window.BIS_LIVEKIT_TOKEN_URL ||
     "https://falling-sea-c753.mrn57907.workers.dev/livekit-token";
-  var SDK_URL = "https://cdn.jsdelivr.net/npm/livekit-client@2.5.7/dist/livekit-client.umd.js";
+  var SDK_URL = "https://cdn.jsdelivr.net/npm/livekit-client@2.22.4/dist/livekit-client.umd.js";
 
   var lkRoom = null, active = false, starting = false, timerId = null, t0 = 0, audioEls = {}, callUid = null;
 
@@ -66,7 +66,8 @@
 
   function errText(e) {
     var m = e && e.message;
-    if (m === "not-participant" || m === "world-mismatch" || m === "room-not-accessible") return "غير مسموح لك بدخول هذه المكالمة";
+    if (m === "not-participant") return "لا توجد محادثة بينكما بعد. أرسل رسالة أولًا ثم حاول الاتصال"; /* DM فقط */
+    if (m === "world-mismatch" || m === "room-not-accessible") return "غير مسموح لك بدخول هذه المكالمة";
     if (e && e.status === 401) return "انتهت الجلسة، سجّل الدخول من جديد";
     if (m === "livekit-not-configured") return "خدمة المكالمات غير مفعّلة بعد";
     if (m === "sdk-load") return "تعذّر تحميل مكتبة المكالمات، تأكد من الإنترنت";
