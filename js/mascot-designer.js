@@ -219,6 +219,7 @@
       "<div class=\"md-seg\" role=\"tablist\">" +
         "<button type=\"button\" class=\"md-seg-b on\" data-tab=\"notif\">الإشعارات <i id=\"mdCntAll\"></i></button>" +
         "<button type=\"button\" class=\"md-seg-b\" data-tab=\"places\">أماكن العرض <i id=\"mdCntPl\"></i></button>" +
+        "<button type=\"button\" class=\"md-seg-b\" data-tab=\"popups\">نوافذ منبثقة <i id=\"mdCntPo\"></i></button>" +
       "</div>" +
       "<div class=\"md-card\" id=\"mdGrpNotif\">" +
         "<div class=\"md-tools\"><input type=\"search\" class=\"md-in md-search\" id=\"mdSearch\" placeholder=\"ابحث في الإشعارات…\" autocomplete=\"off\">" +
@@ -235,7 +236,15 @@
       "<div class=\"md-card\" id=\"mdGrpPlaces\" style=\"display:none\">" +
         "<div class=\"md-h\"><span>أماكن العرض</span><em>الصورة فقط — الحجم ثابت</em></div>" +
         "<div class=\"md-states two\" id=\"mdPlaces\">" +
-          placeList().map(function (pl) {
+          placeList().filter(function (pl) { return pl.group !== "popup"; }).map(function (pl) {
+            return "<button class=\"md-chip\" data-pl=\"" + pl.id + "\" data-sel=\"place:" + pl.id + "\">" + esc(pl.label) + "</button>";
+          }).join("") +
+        "</div>" +
+      "</div>" +
+      "<div class=\"md-card\" id=\"mdGrpPopups\" style=\"display:none\">" +
+        "<div class=\"md-h\"><span>نوافذ منبثقة</span><em>الصورة فقط — الحجم ثابت — الافتراضي بدون صورة</em></div>" +
+        "<div class=\"md-states two\" id=\"mdPopups\">" +
+          placeList().filter(function (pl) { return pl.group === "popup"; }).map(function (pl) {
             return "<button class=\"md-chip\" data-pl=\"" + pl.id + "\" data-sel=\"place:" + pl.id + "\">" + esc(pl.label) + "</button>";
           }).join("") +
         "</div>" +
@@ -297,7 +306,7 @@
     var cb = d.customImage && d.customImage.type === "path" ? customByFile(d.customImage.value) : null;
     var txt = cb ? cb.label : d.customImage ? "صورة مخصصة"
       : d.imageKey ? (KEY_LABELS[d.imageKey] || d.imageKey)
-      : "الافتراضي" + (def.defaultKey ? " (" + (KEY_LABELS[def.defaultKey] || def.defaultKey) + ")" : (def.kind === "avatar" ? " (الأيقونة الأصلية)" : ""));
+      : "الافتراضي" + (def.defaultKey ? " (" + (KEY_LABELS[def.defaultKey] || def.defaultKey) + ")" : (def.kind === "avatar" || def.mode === "replace" ? " (الأيقونة الأصلية)" : (def.kind === "popup" ? " (بدون صورة)" : "")));
     var pi = byId("mdPickImg");
     if (url) { pi.src = url; pi.style.display = ""; } else { pi.removeAttribute("src"); pi.style.display = "none"; }
     byId("mdPickTxt").textContent = txt;
@@ -370,11 +379,12 @@
     allStates().filter(passFilter).forEach(function (st) { (stateHasImage(st.id) ? withImg : empty).push(st); });
     var a = byId("mdStates"), b = byId("mdStatesEmpty");
     if (!a || !b) return;
-    var ca = byId("mdCntA"), cb2 = byId("mdCntB"), cAll = byId("mdCntAll"), cPl = byId("mdCntPl");
+    var ca = byId("mdCntA"), cb2 = byId("mdCntB"), cAll = byId("mdCntAll"), cPl = byId("mdCntPl"), cPo = byId("mdCntPo");
     if (ca) ca.textContent = withImg.length;
     if (cb2) cb2.textContent = empty.length;
     if (cAll) cAll.textContent = allStates().length;
-    if (cPl) cPl.textContent = placeList().length;
+    if (cPl) cPl.textContent = placeList().filter(function (pl) { return pl.group !== "popup"; }).length;
+    if (cPo) cPo.textContent = placeList().filter(function (pl) { return pl.group === "popup"; }).length;
     var filtered = _q || _ft !== "all";
     a.innerHTML = listHTMLFor(withImg, _expA, "a", filtered ? "لا نتائج مطابقة" : "لا توجد حالة عليها صورة بريق بعد — اختر من الفارغة بالأسفل");
     b.innerHTML = listHTMLFor(empty, _expB, "b", filtered ? "لا نتائج مطابقة" : "كل الحالات عليها صورة بريق");
@@ -389,10 +399,11 @@
 
   /* تبويب (الإشعارات | أماكن العرض) — تقليل الزحام: مجموعة واحدة ظاهرة في كل مرة */
   function setTab(name) {
-    var n = name === "places" ? "places" : "notif";
-    var gn = byId("mdGrpNotif"), gp = byId("mdGrpPlaces");
+    var n = name === "places" || name === "popups" ? name : "notif";
+    var gn = byId("mdGrpNotif"), gp = byId("mdGrpPlaces"), gpo = byId("mdGrpPopups");
     if (gn) gn.style.display = n === "notif" ? "" : "none";
     if (gp) gp.style.display = n === "places" ? "" : "none";
+    if (gpo) gpo.style.display = n === "popups" ? "" : "none";
     Array.prototype.forEach.call(document.querySelectorAll("#mascotDesignerModal .md-seg-b"), function (b) {
       b.classList.toggle("on", b.getAttribute("data-tab") === n);
     });
@@ -444,6 +455,13 @@
         byId("mdPlaceSlot").innerHTML = "<span class=\"md-avring\"><span class=\"md-av\">" +
           (aurl ? "<img alt=\"\" src=\"" + esc(aurl) + "\">" : "<i class=\"fa-solid fa-sparkles\"></i>") + "</span></span>";
         byId("mdPlaceCap").textContent = "بتتظبط تلقائياً دائرية على مساحة صورة البروفايل (cover) — في هيدر شات المساعد وقائمة الدردشات";
+        return;
+      }
+      if (def.kind === "popup") {
+        var purl = d.customImage ? d.customImage.value : (d.imageKey ? fileFor(d.imageKey) : "");
+        byId("mdPlaceSlot").innerHTML = purl ? "<img class=\"md-popimg\" alt=\"\" src=\"" + esc(purl) + "\">"
+          : (def.mode === "replace" ? "<span class=\"md-popic\"><i class=\"fa-solid " + esc(def.icon || "fa-window-maximize") + "\"></i></span>" : "<span class=\"md-popnone\">بدون صورة</span>");
+        byId("mdPlaceCap").textContent = def.mode === "replace" ? "بتحل محل الأيقونة الأصلية في النافذة — الحجم ثابت" : "بتظهر أعلى كارت النافذة — الحجم ثابت";
         return;
       }
       var size = { sm: 1, md: 1, lg: 1, xl: 1 }[def.size] ? def.size : "md";
@@ -640,7 +658,7 @@
     setStatus("");
     _q = ""; _ft = "all"; _expA = _expB = false;
     var _sb = byId("mdSearch"); if (_sb) _sb.value = "";
-    setTab(isPlace() ? "places" : "notif");
+    setTab(isPlace() ? ((curDef() || {}).group === "popup" ? "popups" : "places") : "notif");
     refreshChips();
     syncControls();
     markPublished();
