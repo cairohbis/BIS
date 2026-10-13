@@ -63,7 +63,9 @@ import { doc, getDoc, setDoc, deleteDoc, serverTimestamp } from "https://www.gst
     { id: "apkDone",    label: "اكتمال تحميل التطبيق",   defaultKey: "love",         size: "ثابت", sel: ".apk-done img" },
     { id: "aiAssistant",label: "المساعد الذكي",          defaultKey: "sleep",        size: "ثابت", sel: "img:not(.mascot__img)[src$=\"actions/sleep.webp\"]" },
     /* صورة بروفايل المساعد الذكي (هيدر شات المساعد + قائمة الدردشات): بتتظبط دائرية cover زي صور الطلاب */
-    { id: "aiProfile",  label: "بروفايل المساعد الذكي",   defaultKey: null,           size: "بروفايل", kind: "avatar", sel: "#page-ai-chat .ai-avatar, .dms-conv-avatar.ai-avatar" }
+    { id: "aiProfile",  label: "بروفايل المساعد الذكي",   defaultKey: null,           size: "بروفايل", kind: "avatar", sel: "#page-ai-chat .ai-avatar, .dms-conv-avatar.ai-avatar" },
+    /* نوافذ منبثقة (group:"popup"): الافتراضي بدون صورة. mode "replace" = الصورة تحل محل أيقونة النافذة، "prepend" = تظهر أعلى كارت النافذة */
+    { id: "popAttendance", label: "نافذة الحضور والغياب", defaultKey: null, size: "ثابت", kind: "popup", group: "popup", mode: "replace", icon: "fa-clipboard-check", sel: ".att-popup-icon" }
   ];
   var PLACE_BY_ID = {};
   PLACES.forEach(function (pl) { PLACE_BY_ID[pl.id] = pl; });
@@ -243,8 +245,36 @@ import { doc, getDoc, setDoc, deleteDoc, serverTimestamp } from "https://www.gst
     img.src = want;
     if (!cur) { el.innerHTML = ""; el.appendChild(img); }
   }
+  /* نوافذ منبثقة: replace = الصورة مكان الأيقونة (وبنرجّعها لو اتلغى النشر/الصورة فشلت)، prepend = الصورة أول عنصر في الكارت */
+  var _popOrig = new WeakMap();
+  function restorePopup(el) {
+    if (_popOrig.has(el)) { el.innerHTML = _popOrig.get(el); _popOrig.delete(el); }
+    else { var x = el.querySelector("img.mdp-pop-img"); if (x) x.remove(); }
+    el.classList.remove("mdp-pop-rep");
+    el.removeAttribute("data-mdp-pop");
+  }
+  function applyPopup(el, id, def, ov) {
+    var want = placeSrc(ov);
+    if (!want) return;
+    var cur = el.querySelector("img.mdp-pop-img");
+    if (cur && cur.getAttribute("src") === want) return;
+    var rep = def.mode === "replace";
+    if (!el.hasAttribute("data-mdp-pop")) {
+      if (rep) { _popOrig.set(el, el.innerHTML); el.classList.add("mdp-pop-rep"); }
+      el.setAttribute("data-mdp-pop", id);
+    }
+    var img = cur || document.createElement("img");
+    img.className = "mdp-pop-img";
+    img.alt = "";
+    img.decoding = "async";
+    img.onerror = function () { restorePopup(el); };
+    img.src = want;
+    if (!cur) { if (rep) { el.innerHTML = ""; el.appendChild(img); } else el.insertBefore(img, el.firstChild); }
+  }
   function applyTarget(el, id, def, ov) {
-    if (def.kind === "avatar") applyAvatar(el, id, ov); else applyPlaceImg(el, id, ov);
+    if (def.kind === "avatar") applyAvatar(el, id, ov);
+    else if (def.kind === "popup") applyPopup(el, id, def, ov);
+    else applyPlaceImg(el, id, ov);
   }
   function applyPlacesIn(root) {
     var pl = _cfg && _cfg.places;
@@ -269,6 +299,8 @@ import { doc, getDoc, setDoc, deleteDoc, serverTimestamp } from "https://www.gst
     }
     var av = document.querySelectorAll("[data-mdp-avatar]");
     for (var a = 0; a < av.length; a++) restoreAvatar(av[a]);
+    var pp = document.querySelectorAll("[data-mdp-pop]");
+    for (var q = 0; q < pp.length; q++) restorePopup(pp[q]);
   }
   function syncPlaces() {
     var has = !!(_cfg && _cfg.places && Object.keys(_cfg.places).length);
@@ -301,6 +333,10 @@ import { doc, getDoc, setDoc, deleteDoc, serverTimestamp } from "https://www.gst
     var avs = document.querySelectorAll("[data-mdp-avatar]");
     for (var m = 0; m < avs.length; m++) {
       if (!_cfg.places[avs[m].getAttribute("data-mdp-avatar")]) restoreAvatar(avs[m]);
+    }
+    var pps = document.querySelectorAll("[data-mdp-pop]");
+    for (var n = 0; n < pps.length; n++) {
+      if (!_cfg.places[pps[n].getAttribute("data-mdp-pop")]) restorePopup(pps[n]);
     }
   }
 
@@ -435,7 +471,7 @@ import { doc, getDoc, setDoc, deleteDoc, serverTimestamp } from "https://www.gst
     VERSION: VERSION,
     PATH: COL + "/" + DOC,
     STATE_IDS: STATE_IDS.slice(),
-    PLACES: PLACES.map(function (p) { return { id: p.id, label: p.label, defaultKey: p.defaultKey, size: p.size, file: p.file || null, kind: p.kind || null }; }),
+    PLACES: PLACES.map(function (p) { return { id: p.id, label: p.label, defaultKey: p.defaultKey, size: p.size, file: p.file || null, kind: p.kind || null, group: p.group || null, mode: p.mode || null, icon: p.icon || null }; }),
     getConfig: function () { return _cfg ? JSON.parse(JSON.stringify(_cfg)) : null; },
     load: load,
     publish: publish,
