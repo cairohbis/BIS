@@ -324,6 +324,8 @@
       }
     } catch (e) {
       // يفضل في الفورم لو فشل الحفظ
+      console.error("[Sheetaty] saveSubject failed:", e);
+      window.toast?.("تعذّر حفظ المادة: " + ((e && (e.code || e.message)) || "خطأ غير معروف"), "error");
     } finally { _busy = false; }
   };
 
@@ -385,7 +387,7 @@
   window.SheetatyModule._saveSheet = async function () {
     if (_busy || !_draftSheet || !_currentSubjectId) return;
     const page = (_draftSheet.page || "").trim();
-    if (!page || !_draftSheet.dueDate) return;
+    if (!page || !_draftSheet.dueDate) { window.toast?.("اكتب صفحة الكتاب وتاريخ التسليم", "error"); return; }
     _busy = true;
     try {
       const { db, doc, updateDoc, collection, runTransaction, serverTimestamp, increment } = await _fs();
@@ -417,6 +419,8 @@
       await window.SheetatyModule._openSubject(_currentSubjectId);
     } catch (e) {
       // يفضل في الفورم لو فشل الحفظ
+      console.error("[Sheetaty] saveSheet failed:", e);
+      window.toast?.("تعذّر حفظ الشيت: " + ((e && (e.code || e.message)) || "خطأ غير معروف"), "error");
     } finally { _busy = false; }
   };
   window.SheetatyModule._deleteSheet = async function (id) {
