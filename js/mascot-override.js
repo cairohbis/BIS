@@ -46,31 +46,47 @@ import { doc, getDoc, setDoc, deleteDoc, serverTimestamp } from "https://www.gst
   /* أماكن عرض بريق خارج الإشعارات: الصورة فقط بتتغير، الحجم والحركة والمكان ثابتين.
      sel بيستهدف عنصر <img> نفسه. الأماكن بتتعرف بالحاوية (slot) اللي كل adapter بيعملها. */
   var PLACES = [
-    { id: "dialog",     label: "حوار التأكيد",           defaultKey: "thinking",     size: "md", sel: ".mascot-dialog-slot .mascot__img" },
-    { id: "notifPanel", label: "لوحة الإشعارات",         defaultKey: "happy",        size: "md", sel: ".mascot-notification-slot .mascot__img" },
+    { id: "dialog", group: "popup",     label: "حوار التأكيد",           defaultKey: "thinking",     size: "md", sel: ".mascot-dialog-slot .mascot__img" },
+    { id: "notifPanel", group: "popup", label: "لوحة الإشعارات",         defaultKey: "happy",        size: "md", sel: ".mascot-notification-slot .mascot__img" },
     { id: "empty",      label: "حالة فارغة",             defaultKey: "empty",        size: "xl", sel: ".mascot-empty-state-slot .mascot[data-mood=\"empty\"] .mascot__img" },
     { id: "emptyChat",  label: "شات فارغ",               defaultKey: "emptyChat",    size: "xl", sel: ".mascot-empty-state-slot .mascot[data-mood=\"emptyChat\"] .mascot__img" },
     { id: "underdev",   label: "قيد التطوير / موقوف",    defaultKey: "construction", size: "xl", sel: ".mascot-underdev-slot .mascot__img" },
     { id: "loading",    label: "التحميل",                defaultKey: "thinking",     size: "sm", sel: ".mascot-loading-slot .mascot__img" },
     { id: "grades",     label: "الدرجات",                defaultKey: "thinking",     size: "sm", sel: ".mascot-grades-slot .mascot__img" },
     { id: "login",      label: "تسجيل الدخول",           defaultKey: "happy",        size: "sm", sel: ".mascot-login-slot .mascot__img" },
-    { id: "settings",   label: "الإعدادات",              defaultKey: "happy",        size: "sm", sel: ".mascot-settings-slot .mascot__img" },
+    { id: "settings", group: "popup",   label: "الإعدادات",              defaultKey: "happy",        size: "sm", sel: ".mascot-settings-slot .mascot__img" },
     { id: "splash",     label: "شاشة البداية",           defaultKey: "wave",         size: "lg", sel: ".mascot-splash-slot .mascot__img" },
     { id: "military",   label: "الخدمة العسكرية",        defaultKey: "salute",       size: "md", sel: ".mascot-mil-title-slot .mascot__img" },
-    { id: "quickNotif", label: "إخطار سريع",             defaultKey: null,           size: "ثابت", file: "images/mascot/actions/bell-ring.webp", sel: "#qnMascotSlot img" },
-    { id: "apkMain",    label: "نافذة تحميل التطبيق",    defaultKey: "run",          size: "ثابت", sel: ".apk-overlay img.apk-img" },
-    { id: "apkMini",    label: "تذكير التطبيق (مصغر)",   defaultKey: "sad",          size: "ثابت", sel: "img.apk-mini" },
-    { id: "apkDone",    label: "اكتمال تحميل التطبيق",   defaultKey: "love",         size: "ثابت", sel: ".apk-done img" },
+    { id: "quickNotif", group: "popup", label: "إخطار سريع",             defaultKey: null,           size: "ثابت", file: "images/mascot/actions/bell-ring.webp", sel: "#qnMascotSlot img" },
+    { id: "apkMain", group: "popup",    label: "نافذة تحميل التطبيق",    defaultKey: "run",          size: "ثابت", sel: ".apk-overlay img.apk-img" },
+    { id: "apkMini", group: "popup",    label: "تذكير التطبيق (مصغر)",   defaultKey: "sad",          size: "ثابت", sel: "img.apk-mini" },
+    { id: "apkDone", group: "popup",    label: "اكتمال تحميل التطبيق",   defaultKey: "love",         size: "ثابت", sel: ".apk-done img" },
     { id: "aiAssistant",label: "المساعد الذكي",          defaultKey: "sleep",        size: "ثابت", sel: "img:not(.mascot__img)[src$=\"actions/sleep.webp\"]" },
     /* صورة بروفايل المساعد الذكي (هيدر شات المساعد + قائمة الدردشات): بتتظبط دائرية cover زي صور الطلاب */
     { id: "aiProfile",  label: "بروفايل المساعد الذكي",   defaultKey: null,           size: "بروفايل", kind: "avatar", sel: "#page-ai-chat .ai-avatar, .dms-conv-avatar.ai-avatar" },
     /* نوافذ منبثقة (group:"popup"): الافتراضي بدون صورة. mode "replace" = الصورة تحل محل أيقونة النافذة، "prepend" = تظهر أعلى كارت النافذة */
-    { id: "popAttendance", label: "نافذة الحضور والغياب", defaultKey: null, size: "ثابت", kind: "popup", group: "popup", mode: "replace", icon: "fa-clipboard-check", sel: ".att-popup-icon" }
+    { id: "popAttendance", label: "نافذة الحضور والغياب", defaultKey: null, size: "ثابت", kind: "popup", group: "popup", mode: "replace", icon: "fa-clipboard-check", sel: ".att-popup-icon" },
+    { id: "popUpdate", label: "نافذة التحديث الجديد", defaultKey: null, size: "ثابت", group: "popup", file: "images/mascot/ui/loading.webp", sel: ".upd-img" },
+    { id: "popDisclaimer", label: "نافذة الشروط والموافقة", defaultKey: null, size: "ثابت", kind: "popup", group: "popup", mode: "prepend", sel: ".dc-card" },
+    { id: "popReport", label: "نافذة التبليغ", defaultKey: null, size: "ثابت", kind: "popup", group: "popup", mode: "prepend", sel: ".rpt-card" },
+    { id: "popForward", label: "نافذة إعادة التوجيه", defaultKey: null, size: "ثابت", kind: "popup", group: "popup", mode: "prepend", sel: "#fwdCard" },
+    { id: "popQrShare", label: "نافذة مشاركة رابط الدخول", defaultKey: null, size: "ثابت", kind: "popup", group: "popup", mode: "prepend", sel: ".qrshare-card" },
+    { id: "popPoll", label: "نافذة إنشاء استطلاع", defaultKey: null, size: "ثابت", kind: "popup", group: "popup", mode: "prepend", sel: "#pollModal .poll-sheet-body" },
+    { id: "popVip", label: "نافذة تعيين VIP", defaultKey: null, size: "ثابت", kind: "popup", group: "popup", mode: "prepend", sel: ".vip-assign-modal" },
+    { id: "popAttSchedule", label: "نافذة إضافة جدول الحضور", defaultKey: null, size: "ثابت", kind: "popup", group: "popup", mode: "prepend", sel: ".att-schedule-modal" },
+    { id: "popLfDelete", label: "تأكيد حذف منشور (راحت فين؟)", defaultKey: null, size: "ثابت", kind: "popup", group: "popup", mode: "prepend", sel: ".lf-confirm-delete" },
+    { id: "popLfReason", label: "سبب الرفض أو الملاحظة (راحت فين؟)", defaultKey: null, size: "ثابت", kind: "popup", group: "popup", mode: "prepend", sel: ".lf-reason-modal" },
+    { id: "popSheetConfirm", label: "نافذة تأكيد (شيتاتي)", defaultKey: null, size: "ثابت", kind: "popup", group: "popup", mode: "prepend", sel: ".sht-confirm-box" },
+    { id: "popDocConfirm", label: "نافذة تأكيد (مستنداتي)", defaultKey: null, size: "ثابت", kind: "popup", group: "popup", mode: "prepend", sel: ".md-confirm-box" }
   ];
   var PLACE_BY_ID = {};
   PLACES.forEach(function (pl) { PLACE_BY_ID[pl.id] = pl; });
 
   var _cfg = null;        // الإعداد الفعّال في الذاكرة (null = مفيش Override)
+  /* لازم تتعرّف هنا (قبل أول syncPlaces() تحت): الكاش الطازج بينفّذ التطبيق وقت تحميل الملف */
+  var _obs = null;
+  var _avOrig = new WeakMap();
+  var _popOrig = new WeakMap();
   var _loaded = false;    // اتحمّل من كاش طازج أو من Firestore في الجلسة دي
   var _loading = false;
   var _attempts = 0;
@@ -205,7 +221,6 @@ import { doc, getDoc, setDoc, deleteDoc, serverTimestamp } from "https://www.gst
     try { var s = window.Mascot.getRegistrySnapshot("default"); return (s[key] && s[key].file) || null; } catch (e) { return null; }
   }
   /* ── أماكن العرض: تغيير src الصورة فقط (الحجم/الحركة/الحاوية من الـ adapter زي ما هي) ── */
-  var _obs = null;
   function placeSrc(ov) {
     if (ov.customImage) return ov.customImage.value;
     if (ov.imageKey) return defaultFile(ov.imageKey);
@@ -226,7 +241,6 @@ import { doc, getDoc, setDoc, deleteDoc, serverTimestamp } from "https://www.gst
     img.src = want;
   }
   /* أفاتار (حاوية فيها أيقونة): بنحط <img> دائرية cover مكان الأيقونة، ونرجّع الأيقونة الأصلية لو الصورة فشلت/اتلغى النشر */
-  var _avOrig = new WeakMap();
   function restoreAvatar(el) {
     if (_avOrig.has(el)) { el.innerHTML = _avOrig.get(el); _avOrig.delete(el); }
     el.removeAttribute("data-mdp-avatar");
@@ -246,7 +260,6 @@ import { doc, getDoc, setDoc, deleteDoc, serverTimestamp } from "https://www.gst
     if (!cur) { el.innerHTML = ""; el.appendChild(img); }
   }
   /* نوافذ منبثقة: replace = الصورة مكان الأيقونة (وبنرجّعها لو اتلغى النشر/الصورة فشلت)، prepend = الصورة أول عنصر في الكارت */
-  var _popOrig = new WeakMap();
   function restorePopup(el) {
     if (_popOrig.has(el)) { el.innerHTML = _popOrig.get(el); _popOrig.delete(el); }
     else { var x = el.querySelector("img.mdp-pop-img"); if (x) x.remove(); }
