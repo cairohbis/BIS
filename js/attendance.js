@@ -24,7 +24,7 @@
 
 import {
   collection, doc, getDoc, getDocs,
-  writeBatch, setDoc, query, where
+  writeBatch, setDoc, query, where, documentId
 } from "./firestore-safe.js";
 
 function _db() { return window.db; }
@@ -62,14 +62,10 @@ function _cairoNow() {
 //   ونهاية 23:59 (نفس قيمة الحفظ اليدوي الحالي) ومواد مرتبة بوقتها (subject ثم subject2 لو موجودة، بلا تكرار).
 const _WEEKDAY_TO_SS_KEY = { sunday: "sun", monday: "mon", tuesday: "tue", wednesday: "wed", thursday: "thu", friday: "fri", saturday: "sat" };
 
-async function _studyScheduleDay(wid, weekday) {
-  const key = _WEEKDAY_TO_SS_KEY[weekday];
-  if (!key) return null;
-  const snap = await getDocs(query(collection(_db(), "studySchedule"), where("worldId", "==", wid), where("day", "==", key)));
+function _buildStudyDay(lectures) {
   const items = [];
-  snap.forEach(d => {
-    const l = d.data();
-    if (l.worldId !== wid || l.enabled === false) return; // عزل العالم + الحصص المتوقفة لا تدخل الحضور
+  lectures.forEach(l => {
+    if (l.enabled === false) return; // الحصص المتوقفة لا تدخل الحضور
     if ((l.subject || "").trim() && l.startTime) items.push({ name: l.subject.trim(), time: l.startTime });
     if ((l.subject2 || "").trim() && l.startTime2) items.push({ name: l.subject2.trim(), time: l.startTime2 });
   });
@@ -85,53 +81,144 @@ async function _studyScheduleDay(wid, weekday) {
   return { enabled: true, startTime: items[0].time, endTime: "23:59", subjects };
 }
 
+// جداول الأسبوع كله دفعة واحدة: { sunday: sched|null, ... } — استعلام واحد للجدول الدراسي أو 7 مستندات يدوية
+async function _loadScheds(wid, linked) {
+  const out = {};
+  if (linked) {
+    const snap = await getDocs(query(collection(_db(), "studySchedule"), where("worldId", "==", wid)));
+    const byDay = {};
+    snap.forEach(d => { const l = d.data(); if (l.worldId === wid) (byDay[l.day] = byDay[l.day] || []).push(l); }); // عزل العالم
+    DAY_ORDER.forEach(wd => { out[wd] = _buildStudyDay(byDay[_WEEKDAY_TO_SS_KEY[wd]] || []); });
+  } else {
+    await Promise.all(DAY_ORDER.map(async wd => {
+      const sn = await getDoc(doc(_db(), "attendanceSchedules", `${wid}_${wd}`));
+      out[wd] = sn.exists() ? sn.data() : null;
+    }));
+  }
+  return out;
+}
+
+function _dateParts(dateStr) { return dateStr.split("-").map(Number); }
+function _cairoDateMinus(dateStr, n) {
+  const [y, m, d] = _dateParts(dateStr);
+  const t = new Date(Date.UTC(y, m - 1, d - n));
+  return `${t.getUTCFullYear()}-${String(t.getUTCMonth() + 1).padStart(2, "0")}-${String(t.getUTCDate()).padStart(2, "0")}`;
+}
+function _weekdayOf(dateStr) {
+  const [y, m, d] = _dateParts(dateStr);
+  return DAY_ORDER[new Date(Date.UTC(y, m - 1, d)).getUTCDay()];
+}
+function _cairoDateOf(date) {
+  const parts = {};
+  new Intl.DateTimeFormat("en-US", { timeZone: "Africa/Cairo", year: "numeric", month: "2-digit", day: "2-digit" })
+    .formatToParts(date).forEach(p => { parts[p.type] = p.value; });
+  return `${parts.year}-${parts.month}-${parts.day}`;
+}
+
 /* ══════════════════════════════════════════
    جانب المستخدم — نافذة تسجيل الحضور اليومية
 ══════════════════════════════════════════ */
 let _pendingDate = null;
 let _pendingSubjects = [];
 
+// ── طابور الأسئلة: أيام فاتت بلا سجل (الأقدم أولًا، حتى LOOKBACK_DAYS) ثم اليوم الحالي في معاد ظهوره ──
+const LOOKBACK_DAYS = 14;
+let _queue = [];          // [{ date, at, subjects }]
+let _queueUid = null;     // صاحب الطابور الحالي (تبديل الحساب بدون Reload يصفّره)
+let _todayTimer = null;   // setTimeout واحد فقط لمعاد اليوم الحالي — بلا Polling
+let _checkedDate = null;  // تاريخ القاهرة وقت آخر فحص
+let _checking = false;
+
+function _isPopupShown() { return !!_el("attPopupBackdrop")?.classList.contains("show"); }
+
 export async function checkAttendancePopup() {
+  if (_checking) return;
+  _checking = true;
   try {
     const uid = window.currentUser?.uid;
     if (!uid) return;
+    if (_queueUid !== uid) {
+      _queue = []; _queueUid = uid;
+      if (_todayTimer) { clearTimeout(_todayTimer); _todayTimer = null; }
+    }
+    if (_isPopupShown()) return;
 
     const wid = _worldId();
     if (!wid) return; // ✅ World Isolation: بلا عالم صالح لا تُعرض أي بيانات حضور
 
     const cfgSnap = await getDoc(doc(_db(), "attendanceSettings", wid));
-    if (!cfgSnap.exists() || cfgSnap.data().enabled !== true) return;
+    if (!cfgSnap.exists() || cfgSnap.data().enabled !== true) { _queue = []; return; }
 
-    const { dateStr, hhmm, weekday } = _cairoNow();
-    let sched;
-    if (cfgSnap.data().useStudySchedule === true) {
-      sched = await _studyScheduleDay(wid, weekday); // المصدر: الجدول الدراسي (studySchedule)
-      if (!sched) return;
-    } else {
-      const schedSnap = await getDoc(doc(_db(), "attendanceSchedules", `${wid}_${weekday}`));
-      if (!schedSnap.exists()) return;
-      sched = schedSnap.data();
+    const { dateStr, hhmm } = _cairoNow();
+    _checkedDate = dateStr;
+    let from = _cairoDateMinus(dateStr, LOOKBACK_DAYS);
+    const created = window._currentUserData?.createdAt?.toDate?.();
+    if (created) { const cd = _cairoDateOf(created); if (cd > from) from = cd; } // لا نسأل عن أيام قبل إنشاء الحساب
+
+    const scheds = await _loadScheds(wid, cfgSnap.data().useStudySchedule === true);
+    const recSnap = await getDocs(query(collection(_db(), "users", uid, "attendance"), where(documentId(), ">=", from)));
+    const done = new Set();
+    recSnap.forEach(d => done.add(d.id));
+
+    const queue = [];
+    for (let i = LOOKBACK_DAYS; i >= 0; i--) {
+      const ds = _cairoDateMinus(dateStr, i);
+      if (ds < from || done.has(ds)) continue;
+      const sc = scheds[_weekdayOf(ds)];
+      if (!sc || !sc.enabled || !Array.isArray(sc.subjects) || !sc.subjects.length) continue;
+      const isToday = ds === dateStr;
+      if (isToday && sc.endTime && hhmm > sc.endTime) continue;
+      queue.push({
+        date: ds,
+        at: isToday ? (sc.startTime || "00:00") : "00:00",
+        subjects: sc.subjects.slice().sort((a, b) => (a.order || 0) - (b.order || 0))
+      });
     }
-    if (!sched.enabled) return;
-    if (!Array.isArray(sched.subjects) || !sched.subjects.length) return;
-    if (hhmm < (sched.startTime || "00:00")) return;
-    if (sched.endTime && hhmm > sched.endTime) return;
-
-    // لو المستخدم سجّل حالة اليوم قبل كده (أي حالة) — منسألوش تاني
-    const recSnap = await getDoc(doc(_db(), "users", uid, "attendance", dateStr));
-    if (recSnap.exists()) return;
-
-    _pendingDate = dateStr;
-    _pendingSubjects = sched.subjects.slice().sort((a, b) => (a.order || 0) - (b.order || 0));
-    _showMainStep();
+    _queue = queue;
+    _showNext();
   } catch (e) { console.error(e); }
+  finally { _checking = false; }
 }
+
+function _showNext() {
+  if (_todayTimer) { clearTimeout(_todayTimer); _todayTimer = null; }
+  if (!_queue.length || window.currentUser?.uid !== _queueUid || _isPopupShown()) return;
+  const it = _queue[0];
+  const { dateStr, hhmm } = _cairoNow();
+  if (it.date === dateStr && hhmm < it.at) {
+    const [h, m] = it.at.split(":").map(Number);
+    const [ch, cm] = hhmm.split(":").map(Number);
+    _todayTimer = setTimeout(_showNext, Math.max(1000, ((h * 60 + m) - (ch * 60 + cm)) * 60000));
+    return;
+  }
+  _pendingDate = it.date;
+  _pendingSubjects = it.subjects;
+  _showMainStep();
+}
+
+function _afterSave(savedDate) {
+  if (_queue[0] && _queue[0].date === savedDate) _queue.shift();
+  setTimeout(_showNext, 350);
+}
+
+// بدون Polling: إعادة فحص فقط عند رجوع التبويب لو اتغيّر اليوم، أو إكمال الطابور لو معاده جه
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState !== "visible" || !_queueUid) return;
+  if (_cairoNow().dateStr !== _checkedDate) { checkAttendancePopup(); return; }
+  if (_queue.length) _showNext();
+});
 
 function _el(id) { return document.getElementById(id); }
 
 function _showMainStep() {
   const bd = _el("attPopupBackdrop");
   if (!bd) return;
+  const isToday = _pendingDate === _cairoNow().dateStr;
+  const dayLabel = DAY_LABELS[_weekdayOf(_pendingDate)] || "";
+  const titleEl = _el("attPopupStepMain").querySelector(".att-popup-title");
+  const subEl = _el("attPopupStepMain").querySelector(".att-popup-sub");
+  if (titleEl) titleEl.textContent = isToday ? "حضور اليوم" : `حضور يوم ${dayLabel} ${_pendingDate}`;
+  if (subEl) subEl.textContent = isToday ? "هل حضرت الجامعة اليوم؟" : `هل حضرت الجامعة يوم ${dayLabel}؟`;
   _el("attPopupStepMain").style.display = "";
   _el("attPopupStepSubjects").style.display = "none";
   bd.classList.add("show");
@@ -178,16 +265,20 @@ async function _saveRecord(status, subjects) {
       completedAt: new Date().toISOString()
     });
     window.toast?.("تم تسجيل حضورك بنجاح ✅");
+    return true;
   } catch (e) {
     console.error(e);
     window.toast?.("حصل خطأ أثناء حفظ الحضور", "error");
+    return false;
   }
 }
 
 window.__attAnswerNo = async () => {
+  const savedDate = _pendingDate;
   const subjects = _pendingSubjects.map(s => ({ name: s.name, status: "absent" }));
-  await _saveRecord("absent", subjects);
+  const ok = await _saveRecord("absent", subjects);
   _hidePopup();
+  if (ok) _afterSave(savedDate);
 };
 window.__attAnswerYes = () => { _renderSubjectsStep(); };
 window.__attSaveSubjects = async () => {
@@ -198,8 +289,10 @@ window.__attSaveSubjects = async () => {
   }));
   const presentCount = subjects.filter(s => s.status === "present").length;
   const status = presentCount === subjects.length ? "present" : (presentCount === 0 ? "absent" : "partial");
-  await _saveRecord(status, subjects);
+  const savedDate = _pendingDate;
+  const ok = await _saveRecord(status, subjects);
   _hidePopup();
+  if (ok) _afterSave(savedDate);
 };
 
 /* ══════════════════════════════════════════
