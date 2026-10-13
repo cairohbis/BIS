@@ -3648,7 +3648,6 @@ onAuthStateChanged(auth, _authStateHandler = async (user) => {
   window.qnStartListening?.(); // بدء/إعادة بدء مستمع الإخطار السريع بعد تأكيد الجلسة (quick-notifications.js)
   showPage("page-home");
   goTab("tab-home");
-  window.checkAttendancePopup?.().catch(() => {});
   try { window.__apkPromptAfterLogin?.(); } catch (_) {} // اقتراح تحميل التطبيق (متصفح فقط) — يعمل أيضًا مع الجلسة المحفوظة
   try { window.__updateNoticeStart?.(); } catch (_) {} // إشعار نشر تحديث عالمي — مستمع واحد على config/appUpdate
 
@@ -3729,6 +3728,8 @@ onAuthStateChanged(auth, _authStateHandler = async (user) => {
     window._activeWorld = (typeof window.isValidWorldId === "function" && window.isValidWorldId(_savedWorld))
       ? _savedWorld : "is_2";
   }
+
+  window.checkAttendancePopup?.().catch(() => {}); // بعد تحميل userData وتحديد العالم (activeWorldContext صالح)
 
   const email = userData.email || user.email || "";
   const bio   = userData.bio   || "";
