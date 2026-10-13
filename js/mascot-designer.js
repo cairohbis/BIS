@@ -34,7 +34,8 @@
   /* صور مضافة للمشروع (images/mascot/custom/...) — بتظهر في قائمة اختيار الصور. أضف سطر لكل صورة جديدة بعد رفعها على GitHub */
   var CUSTOM_IMAGES = [
     { file: "images/mascot/ui/ai-bariq.webp", label: "بريق الذكاء الاصطناعي" },
-    { file: "images/mascot/ui/attendance-bariq.webp", label: "بريق الحضور والغياب" }
+    { file: "images/mascot/ui/attendance-bariq.webp", label: "بريق الحضور والغياب" },
+    { file: "images/mascot/ui/terms-bariq.webp", label: "بريق الشروط والخصوصية" }
   ];
   function customByFile(f) {
     for (var i = 0; i < CUSTOM_IMAGES.length; i++) if (CUSTOM_IMAGES[i].file === f) return CUSTOM_IMAGES[i];
