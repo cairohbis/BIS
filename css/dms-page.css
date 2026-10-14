@@ -342,3 +342,43 @@ html.theme-light .dms-ud-title { color: #000; }
 html.theme-light .dms-tabs { background: rgba(255,255,255,.6); border-color: rgba(0,0,0,.1); }
 html.theme-light .dms-tab { color: rgba(0,0,0,.4); }
 html.theme-light .dms-tab.active { color: var(--gold); }
+
+/* ══════════════════════════════════════════
+   الشريط الرئيسي داخل صفحة الدردشات (شريط واحد للموقع) + الدائرة العائمة
+══════════════════════════════════════════ */
+.bottom-nav.dms-mode { z-index: 201; }
+.bottom-nav.dms-mode .nav-item.active { color: var(--muted); background: none; }
+.bottom-nav.dms-mode .nav-item.active .nav-avatar { border-color: transparent; }
+.bottom-nav.dms-mode #navChatsItem { color: var(--gold); background: rgba(201,169,110,.16); }
+
+.dms-fab {
+  position: absolute; left: 18px; bottom: calc(env(safe-area-inset-bottom, 0px) + 96px);
+  z-index: 7; display: flex; flex-direction: column-reverse; align-items: center; gap: 10px;
+  pointer-events: none;
+}
+.dms-fab-items { display: flex; flex-direction: column-reverse; align-items: center; gap: 10px; }
+.dms-fab-btn, .dms-fab-item {
+  display: flex; align-items: center; justify-content: center;
+  padding: 0; border-radius: 50%; cursor: pointer; font-family: inherit;
+  color: var(--gold);
+  background: rgba(var(--t-bg2-rgb), var(--glass-a));
+  backdrop-filter: blur(14px) saturate(150%);
+  -webkit-backdrop-filter: blur(14px) saturate(150%);
+  border: 1px solid var(--panel-border);
+  box-shadow: 0 8px 24px rgba(0,0,0,.28);
+  -webkit-tap-highlight-color: transparent;
+}
+.dms-fab-btn { width: 54px; height: 54px; pointer-events: auto; }
+.dms-fab-item {
+  width: 46px; height: 46px; color: var(--text);
+  opacity: 0; transform: translateY(14px) scale(.6); pointer-events: none;
+  transition: opacity .2s ease, transform .2s ease;
+}
+.dms-fab-item.active { color: var(--gold); background: rgba(224,178,60,.14); }
+.dms-fab.open .dms-fab-item { opacity: 1; transform: none; pointer-events: auto; }
+.dms-fab.open .dms-fab-item:nth-child(2) { transition-delay: .04s; }
+.dms-fab.open .dms-fab-item:nth-child(3) { transition-delay: .08s; }
+.dms-fab-ic-x { display: none; }
+.dms-fab.open .dms-fab-ic-grid { display: none; }
+.dms-fab.open .dms-fab-ic-x { display: block; }
+
