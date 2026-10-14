@@ -19,7 +19,7 @@ document.getElementById("sidebarHeaderSearchInp")?.addEventListener("input", e =
 // لم يُلمس الـ Listener أعلاه إطلاقاً (لا يزال يخدم الشريط الجانبي القديم
 // المستخدم فعليًا في أماكن أخرى). هذا Listener جديد كليًا لعنصر مختلف.
 document.getElementById("dmsSearchInp")?.addEventListener("input", e => {
-  const activePanel = document.querySelector("#page-dms .dms-tab.active")?.dataset.panel;
+  const activePanel = document.querySelector("#page-dms .dms-panel.active")?.id.replace("dmspanel-", "");
   if (activePanel !== "members") return;
   const q = e.target.value.trim();
   clearTimeout(_membersSearchDebounce);

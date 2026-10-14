@@ -285,6 +285,7 @@ window._dmsOpenArchive = function () {
 window._dmsSwitchTab = function(btn, panel) {
   _dmsCurTab = panel;
   document.querySelectorAll(".dms-tab").forEach(t => t.classList.remove("active"));
+  document.querySelectorAll(".dms-fab-item").forEach(t => t.classList.remove("active"));
   document.querySelectorAll(".dms-panel").forEach(p => p.classList.remove("active"));
   btn.classList.add("active");
   document.getElementById("dmspanel-" + panel)?.classList.add("active");
@@ -307,6 +308,20 @@ window._dmsSwitchTab = function(btn, panel) {
   }
   window._dmsRefreshFoldEffects?.();
 };
+
+/* ── الدائرة العائمة (حالات / مكالمات / أعضاء) ── */
+window._dmsFabToggle = function(force) {
+  const w = document.getElementById("dmsFab");
+  if (!w) return;
+  const open = typeof force === "boolean" ? force : !w.classList.contains("open");
+  w.classList.toggle("open", open);
+  document.getElementById("dmsFabMain")?.setAttribute("aria-expanded", open ? "true" : "false");
+};
+window._dmsFabClose = function() { window._dmsFabToggle(false); };
+document.addEventListener("click", e => {
+  const w = document.getElementById("dmsFab");
+  if (w && w.classList.contains("open") && !w.contains(e.target)) window._dmsFabToggle(false);
+});
 
 /* ── بحث ── */
 document.addEventListener("DOMContentLoaded", () => {
@@ -604,6 +619,8 @@ window._dmsPageInit = function() {
   _dmsCurTab    = "chats";
   document.querySelectorAll(".dms-chip").forEach((c,i) => c.classList.toggle("active",i===0));
   document.querySelectorAll(".dms-tab").forEach((t,i)  => t.classList.toggle("active",i===0));
+  document.querySelectorAll(".dms-fab-item").forEach(t => t.classList.remove("active"));
+  window._dmsFabClose?.();
   document.querySelectorAll(".dms-panel").forEach((p,i) => p.classList.toggle("active",i===0));
   const filters = document.getElementById("dmsFilters"); if (filters) filters.style.display = "";
 
