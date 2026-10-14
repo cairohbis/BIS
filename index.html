@@ -644,17 +644,18 @@ if ("serviceWorker" in navigator) {
 
   </div>
 
-  <!-- BOTTOM NAV -->
-  <div class="bottom-nav">
-    <div class="nav-item active" data-nav="tab-home"><i class="fa-solid fa-house" style="color:#3b82f6"></i><span>الرئيسية</span></div>
-    <div class="nav-item" onclick="openChatPage()" style="display:none;"><i class="fa-solid fa-comments"></i><span>الشات</span></div>
-    <div class="nav-item" onclick="openDmsPanel()">
-      <div class="nav-dms-wrap"><i class="fa-regular fa-comment-dots" style="color:#14b8a6"></i><span class="nav-dms-badge" id="navDmsBadge" style="display:none;"></span></div>
-      <span>المحادثات</span>
-    </div>
-    <div class="nav-item" data-nav="tab-forum"><i class="fa-solid fa-layer-group" style="color:#a78bfa"></i><span>المنتدى</span></div>
-    <div class="nav-item" data-nav="tab-profile"><div class="nav-avatar" id="navProfileAvatar"><i class="fa-solid fa-circle-user"></i></div><span>بروفايلي</span></div>
+</div>
+
+<!-- BOTTOM NAV — شريط واحد للرئيسية والدردشات (بيتحكم فيه showPage: يظهر في page-home و page-dms بس) -->
+<div class="bottom-nav" id="mainBottomNav" style="display:none;">
+  <div class="nav-item active" data-nav="tab-home"><i class="fa-solid fa-house" style="color:#3b82f6"></i><span>الرئيسية</span></div>
+  <div class="nav-item" onclick="openChatPage()" style="display:none;"><i class="fa-solid fa-comments"></i><span>الشات</span></div>
+  <div class="nav-item" id="navChatsItem" onclick="openDmsPanel()">
+    <div class="nav-dms-wrap"><i class="fa-regular fa-comment-dots" style="color:#14b8a6"></i><span class="nav-dms-badge" id="navDmsBadge" style="display:none;"></span></div>
+    <span>المحادثات</span>
   </div>
+  <div class="nav-item" data-nav="tab-forum"><i class="fa-solid fa-layer-group" style="color:#a78bfa"></i><span>المنتدى</span></div>
+  <div class="nav-item" data-nav="tab-profile"><div class="nav-avatar" id="navProfileAvatar"><i class="fa-solid fa-circle-user"></i></div><span>بروفايلي</span></div>
 </div>
 
 <!-- ══════════════════════════════════════════
@@ -930,27 +931,26 @@ if ("serviceWorker" in navigator) {
 
   </div>
 
-  <!-- Inner Bottom Tabs -->
-  <div class="dms-tabs">
-    <button class="dms-tab active" data-panel="chats" onclick="_dmsSwitchTab(this,'chats')">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M4 4h16a2 2 0 012 2v10a2 2 0 01-2 2H8l-4 4V6a2 2 0 012-2z"/></svg>
-      <span>دردشات</span>
+  <!-- الدائرة العائمة: حالات / مكالمات / أعضاء (كانت أزرار الشريط الداخلي القديم) -->
+  <div class="dms-fab" id="dmsFab">
+    <button type="button" class="dms-fab-btn" id="dmsFabMain" onclick="_dmsFabToggle()" aria-expanded="false" aria-label="المزيد">
+      <svg class="dms-fab-ic-grid" width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><circle cx="7" cy="7" r="2.4"/><circle cx="17" cy="7" r="2.4"/><circle cx="7" cy="17" r="2.4"/><circle cx="17" cy="17" r="2.4"/></svg>
+      <svg class="dms-fab-ic-x" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
     </button>
-    <button class="dms-tab" data-panel="status" onclick="_dmsSwitchTab(this,'status')">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+    <div class="dms-fab-items">
+      <button type="button" class="dms-fab-item" data-panel="status" onclick="_dmsSwitchTab(this,'status');_dmsFabClose()" aria-label="حالات">
+        <svg width="21" height="21" viewBox="0 0 24 24" fill="none">
         <circle cx="12" cy="12" r="9.2" stroke="currentColor" stroke-width="1.8" stroke-dasharray="4 3"/>
         <circle cx="12" cy="12" r="6.2" fill="currentColor" opacity="0.12"/>
       </svg>
-      <span>حالات</span>
-    </button>
-    <button class="dms-tab" data-panel="calls" onclick="_dmsSwitchTab(this,'calls')">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.9v3a2 2 0 01-2.2 2 19.8 19.8 0 01-8.6-3.1 19.5 19.5 0 01-6-6A19.8 19.8 0 012.1 4.2 2 2 0 014.1 2h3a2 2 0 012 1.7c.1.9.3 1.8.6 2.7a2 2 0 01-.5 2.1L8 9.7a16 16 0 006 6l1.2-1.2a2 2 0 012.1-.5c.9.3 1.8.5 2.7.6a2 2 0 011.7 2z"/></svg>
-      <span>مكالمات</span>
-    </button>
-    <button class="dms-tab" data-panel="members" onclick="_dmsSwitchTab(this,'members')">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a8 8 0 0116 0v1"/></svg>
-      <span>أعضاء</span>
-    </button>
+      </button>
+      <button type="button" class="dms-fab-item" data-panel="calls" onclick="_dmsSwitchTab(this,'calls');_dmsFabClose()" aria-label="مكالمات">
+        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.9v3a2 2 0 01-2.2 2 19.8 19.8 0 01-8.6-3.1 19.5 19.5 0 01-6-6A19.8 19.8 0 012.1 4.2 2 2 0 014.1 2h3a2 2 0 012 1.7c.1.9.3 1.8.6 2.7a2 2 0 01-.5 2.1L8 9.7a16 16 0 006 6l1.2-1.2a2 2 0 012.1-.5c.9.3 1.8.5 2.7.6a2 2 0 011.7 2z"/></svg>
+      </button>
+      <button type="button" class="dms-fab-item" data-panel="members" onclick="_dmsSwitchTab(this,'members');_dmsFabClose()" aria-label="أعضاء">
+        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a8 8 0 0116 0v1"/></svg>
+      </button>
+    </div>
   </div>
 
 </div>
@@ -3165,7 +3165,10 @@ window.showPage = (id) => {
   document.getElementById(id).classList.add("active");
   window.dispatchEvent(new Event("uniAppReady")); // يقفل شاشة التحميل الحديثة بمجرد ظهور أول صفحة فعلية
   const _bn = document.querySelector(".bottom-nav");
-  if (_bn) _bn.style.display = (id === "page-login") ? "none" : "";
+  if (_bn) {
+    _bn.style.display = (id === "page-home" || id === "page-dms") ? "" : "none";
+    _bn.classList.toggle("dms-mode", id === "page-dms");
+  }
   if (id === "page-owner") {
     loadOwnerStats();
     // Phase 1 / 5.1 — Owner activeWorld: عرض الاختيار الحالي عند فتح اللوحة
@@ -3235,7 +3238,10 @@ window.openPortal = function() { window.open(PORTAL_URL, "_blank", "noopener,nor
 document.querySelectorAll(".tab").forEach(t =>
   t.addEventListener("click", () => goTab(t.dataset.tab)));
 document.querySelectorAll(".nav-item[data-nav]").forEach(n =>
-  n.addEventListener("click", () => goTab(n.dataset.nav)));
+  n.addEventListener("click", () => {
+    if (!document.getElementById("page-home")?.classList.contains("active")) showPage("page-home");
+    goTab(n.dataset.nav);
+  }));
 
 document.getElementById("topbarLeft").addEventListener("click", () => goTab("tab-profile"));
 document.getElementById("ownerBackBtn").addEventListener("click", () => {
