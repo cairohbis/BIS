@@ -382,3 +382,7 @@ html.theme-light .dms-tab.active { color: var(--gold); }
 .dms-fab.open .dms-fab-ic-grid { display: none; }
 .dms-fab.open .dms-fab-ic-x { display: block; }
 
+/* لو تذكير تثبيت التطبيق (.apk-mini) ظاهر في المتصفح: الدائرة تطلع فوقه بدل ما تركب عليه (الأيقونتين بنفس المحاذاة) */
+.dms-fab { transition: bottom .2s ease, left .2s ease; }
+body:has(.apk-mini.show) .dms-fab { left: 12px; bottom: calc(env(safe-area-inset-bottom, 0px) + 150px); }
+
