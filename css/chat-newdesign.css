@@ -391,9 +391,23 @@
   flex: 1;
   min-width: 0;
   overflow-x: auto;
-  justify-content: flex-start;
+  justify-content: space-between;
+  gap: 0;
   padding: 0;
+  scrollbar-width: none;
 }
+.ctx-header-pill .ctx-action-row::-webkit-scrollbar{ display: none; }
+/* الأيقونات تتقلّص تلقائيًا (flex) عشان كلها تظهر في عرض الشاشة بدون سكرول — حتى لو 8 أزرار */
+.ctx-header-pill .msg-ctx-item{
+  flex: 1 1 0;
+  min-width: 0;
+  width: auto;
+  max-width: 40px;
+  height: 40px;
+  border-radius: 12px;
+}
+.ctx-header-pill .msg-ctx-item i{ font-size: 15px; }
+.ctx-header-pill .msg-ctx-sep-v{ height: 20px; margin: 0 1px; }
 .ctx-header-close{
   width: 36px; height: 36px;
   border-radius: 50%;
