@@ -3659,9 +3659,15 @@ onAuthStateChanged(auth, _authStateHandler = async (user) => {
 
   let userData = null;
   let _readSucceeded = false;
+  // نسخة من بيانات المستند تُحفظ فقط لو القراءة نجحت من السيرفر (مش من الكاش) والمستند موجود —
+  // تُمرَّر لـ _ensureUserXPLevel/_checkDailyLoginXP بدل getDoc إضافي. تبقى null في أي حالة أخرى.
+  let _verifiedUserData = null;
   try {
     const snap = await getDoc(doc(db, "users", user.uid));
-    if (snap.exists()) { userData = snap.data(); _readSucceeded = true; }
+    if (snap.exists()) {
+      userData = snap.data(); _readSucceeded = true;
+      if (snap.metadata && snap.metadata.fromCache === false) _verifiedUserData = snap.data();
+    }
     else { _readSucceeded = true; } // القراءة نجحت، والحساب فعلاً غير موجود
   } catch(e) {
     console.error("Firestore read error:", e);
@@ -3681,7 +3687,10 @@ onAuthStateChanged(auth, _authStateHandler = async (user) => {
           await _createUserProfile(user, pending);
           _clearPendingProfile();
           const s2 = await getDoc(doc(db, "users", user.uid));
-          if (s2.exists()) userData = s2.data();
+          if (s2.exists()) {
+            userData = s2.data();
+            if (s2.metadata && s2.metadata.fromCache === false) _verifiedUserData = s2.data();
+          }
         } catch (e) { console.error("auto-complete profile failed:", e); }
       }
       if (!userData) { showPage("page-login"); window.AuthBridge?.needsProfile?.(user); return; }
@@ -3718,10 +3727,12 @@ onAuthStateChanged(auth, _authStateHandler = async (user) => {
   window._maintenanceApply?.();
 
   // ── ضمان وجود XP/Level في Firestore ──────────
-  _ensureUserXPLevel(user.uid);
+  // نمرّر البيانات المقروءة فعلاً (لو موثوقة فقط) بدل getDoc إضافي داخل الدالتين
+  const _trustedUserData = _verifiedUserData ? { ..._verifiedUserData, uid: user.uid } : null;
+  _ensureUserXPLevel(user.uid, _trustedUserData);
 
   // ── XP التسجيل اليومي ──────────────────────
-  _checkDailyLoginXP(user.uid);
+  _checkDailyLoginXP(user.uid, _trustedUserData);
 
   if (user.uid === OWNER_UID && currentRole !== ROLES.OWNER) {
     await updateDoc(doc(db, "users", user.uid), { role: ROLES.OWNER });
@@ -4926,14 +4937,16 @@ window.adminDeleteMsg = async function(docId) {
 window.adminChatBan = async function(uid, name) {
   if (!isAdmin()) return;
   // حماية: لا حظر للمالك
+  let snap;
   try {
-    const snap = await getDoc(doc(db, "users", uid));
+    snap = await getDoc(doc(db, "users", uid));
     if (snap.exists() && snap.data().role === ROLES.OWNER) {
       toast("لا يمكن حظر المالك", "error"); return;
     }
   } catch(e) { toast("فشل التحقق", "error"); return; }
 
-  const isBanned = (await getDoc(doc(db, "users", uid))).data()?.isChatBanned || false;
+  // نفس نتيجة القراءة أعلاه (بدل getDoc ثانٍ لنفس المستند)
+  const isBanned = snap.data()?.isChatBanned || false;
   await toggleChatBan(uid, name, isBanned, null, () => {});
 };
 
@@ -6169,12 +6182,19 @@ function _getLevelFromUser(user) {
    ↳ إذا كان xp/level مفقوداً في Firestore
       نضيفه تلقائياً (fire-and-forget)
 ══════════════════════════════════════════ */
-async function _ensureUserXPLevel(uid) {
+async function _ensureUserXPLevel(uid, knownData) {
   if (!uid) return;
   try {
-    const snap = await getDoc(doc(db, "users", uid));
-    if (!snap.exists()) return;
-    const d = snap.data();
+    // بيانات ممرَّرة وموثوقة (قُرئت من السيرفر ومطابقة للـ uid والحساب الحالي) → بدون قراءة إضافية؛
+    // غير ذلك → المسار القديم (getDoc) كما هو
+    let d;
+    if (knownData && knownData.uid === uid && currentUser?.uid === uid) {
+      d = knownData;
+    } else {
+      const snap = await getDoc(doc(db, "users", uid));
+      if (!snap.exists()) return;
+      d = snap.data();
+    }
     // ✅ نتحقق أيضاً من vipLevel/vipType للمستخدمين الجدد
     //    (لأنهم لم يعودون يُخزَّنان عند إنشاء الحساب بسبب قواعد Firestore)
     const needsUpdate = (
@@ -6265,12 +6285,18 @@ window._awardXP = _awardXP; // ← تصدير: محتاجها js/chat-core.js (m
    _checkDailyLoginXP(uid)
    ↳ +10 XP مرة واحدة كل يوم عند تسجيل الدخول
 ══════════════════════════════════════════ */
-async function _checkDailyLoginXP(uid) {
+async function _checkDailyLoginXP(uid, knownData) {
   if (!uid) return;
   try {
-    const snap = await getDoc(doc(db, "users", uid));
-    if (!snap.exists()) return;
-    const d     = snap.data();
+    // نفس منطق _ensureUserXPLevel: بيانات موثوقة ممرَّرة → بدون قراءة؛ غير ذلك → getDoc كما كان
+    let d;
+    if (knownData && knownData.uid === uid && currentUser?.uid === uid) {
+      d = knownData;
+    } else {
+      const snap = await getDoc(doc(db, "users", uid));
+      if (!snap.exists()) return;
+      d = snap.data();
+    }
     const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
     if ((d.lastLoginDate || "") === today) return; // سبق وحصل على XP اليوم
 
