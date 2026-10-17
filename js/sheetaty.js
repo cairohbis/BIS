@@ -60,6 +60,7 @@
   let _subjects = [];        // كل مواد العالم (نشطة ومؤرشفة)
   let _sheets = [];          // شيتات المادة المفتوحة حاليًا
   let _completions = {};     // sheetId -> {completed, completedAt}
+  let _completionsUid = null; // الحساب اللي _completions اتحمّلت له كاملة بنجاح (null = غير محمّلة → لازم قراءة)
   let _loaded = false;
   let _loadedUid = null;      // الحساب اللي اتحمّلت بياناته آخر مرة — لحماية تبديل الحساب/الـWorld
   let _currentSubjectId = null;
@@ -163,10 +164,16 @@
       sheetsSnap.forEach((d) => _sheets.push({ id: d.id, ...d.data() }));
 
       const uid = _uid();
-      _completions = {};
-      if (uid) {
-        const compSnap = await getDocs(collection(db, `users/${uid}/sheetCompletions`));
-        compSnap.forEach((d) => { _completions[d.id] = d.data(); });
+      // إعادة استخدام إنجازات المستخدم نفسه المحمّلة بنجاح (بدل قراءة المجموعة كاملة مع كل مادة).
+      // القراءة الجديدة تحصل فقط لو: الحساب مختلف / لم تُحمَّل بنجاح بعد / اتصفّرت (فتح الموديول، _resetState).
+      if (_completionsUid !== uid) {
+        _completions = {};          // لا نحتفظ ببيانات حساب سابق، ولا بحالة ناقصة لو فشلت القراءة
+        _completionsUid = null;
+        if (uid) {
+          const compSnap = await getDocs(collection(db, `users/${uid}/sheetCompletions`));
+          compSnap.forEach((d) => { _completions[d.id] = d.data(); });
+          _completionsUid = uid;    // تُعتمد فقط بعد نجاح القراءة كاملة
+        }
       }
       _renderSubject();
     } catch (e) {
@@ -511,6 +518,7 @@
   window.SheetatyModule.open = function () {
     const root = _root();
     if (!root) return;
+    _completionsUid = null; // كل فتح للموديول يبدأ بقراءة إنجازات طازجة (مرة واحدة ثم تُعاد استخدامها بين المواد)
     root.classList.add("sht-open");
     root.style.display = "flex";
     _buildShell();
@@ -536,7 +544,7 @@
     const wasOpen = !!(root && root.classList.contains("sht-open"));
     if (wasOpen) window.SheetatyModule.close();
     _loaded = false; _loadedUid = null;
-    _subjects = []; _sheets = []; _completions = {};
+    _subjects = []; _sheets = []; _completions = {}; _completionsUid = null;
     _view = "home"; _tab = "active";
     _currentSubjectId = null; _draftSubject = null; _draftSheet = null;
   };
