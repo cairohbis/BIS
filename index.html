@@ -3385,6 +3385,9 @@ async function doLogout() {
   // ✅ AVM: إذا كان وضع المشاهدة نشطاً أغلقه أولاً
   if (_avm.active) await exitAdminViewMode(true);
 
+  // حفظ أي تغيير معلّق في تفضيلات الإشعارات قبل ما الحساب يخرج (بحد أقصى مهلة داخلية؛ أي فشل ما بيوقفش الخروج)
+  try { await window._notifPrefsFlush?.(); } catch(e) {}
+
   // تحديث الحضور: offline قبل تسجيل الخروج
   if (currentUser?.uid) {
     try {
